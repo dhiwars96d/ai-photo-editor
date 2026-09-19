@@ -1,5 +1,3 @@
-import { InferenceClient } from "@huggingface/inference";
-
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
@@ -16,24 +14,37 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Image is required" });
     }
 
-    const hf = new InferenceClient(process.env.HF_TOKEN);
+    const imageBuffer = Buffer.from(await image.arrayBuffer());
 
-    const result = await hf.imageTextToImage({
-      model: "black-forest-labs/FLUX.2-dev",
-      inputs: image,
-      prompt: prompt
-    });
+    const response = await fetch(
+      "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-Kontext-dev",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.HF_TOKEN}`,
+          "Content-Type": image.type || "image/jpeg"
+        },
+        body: imageBuffer
+      }
+    );
 
-    const buffer = Buffer.from(await result.arrayBuffer());
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({
+        error: errorText
+      });
+    }
 
-    res.setHeader("Content-Type", "image/png");
-    return res.status(200).send(buffer);
+    const result = await response.arrayBuffer();
+
+    res.setHeader("Content-Type", response.headers.get("content-type") || "image/png");
+    return res.status(200).send(Buffer.from(result));
 
   } catch (error) {
     console.error(error);
+
     return res.status(500).json({
-      error: "AI editing failed",
-      details: error.message
+      error: error.message
     });
   }
 }
