@@ -1,50 +1,71 @@
+import formidable from "formidable";
+import fs from "fs";
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "POST only" });
     }
 
-    const formData = await req.formData();
-    const image = formData.get("image");
-    const prompt =
-      formData.get("prompt") ||
-      "Improve this photo naturally, smooth skin slightly, enhance facial details, keep the person's identity and face unchanged.";
+    const form = formidable({ multiples: false });
 
-    if (!image) {
+    const [fields, files] = await form.parse(req);
+
+    const imageFile = Array.isArray(files.image)
+      ? files.image[0]
+      : files.image;
+
+    if (!imageFile) {
       return res.status(400).json({ error: "Image is required" });
     }
 
-    const imageBuffer = Buffer.from(await image.arrayBuffer());
+    const prompt = Array.isArray(fields.prompt)
+      ? fields.prompt[0]
+      : fields.prompt ||
+        "Improve this photo naturally, smooth skin slightly, enhance facial details, keep the person's identity and face unchanged.";
 
-    const response = await fetch(
+    const imageBuffer = fs.readFileSync(imageFile.filepath);
+
+    const hfResponse = await fetch(
       "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-Kontext-dev",
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.HF_TOKEN}`,
-          "Content-Type": image.type || "image/jpeg"
+          Authorization: `Bearer ${process.env.HF_TOKEN}`,
+          "Content-Type": imageFile.mimetype || "image/jpeg",
         },
-        body: imageBuffer
+        body: imageBuffer,
       }
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return res.status(response.status).json({
-        error: errorText
+    if (!hfResponse.ok) {
+      const errorText = await hfResponse.text();
+
+      return res.status(hfResponse.status).json({
+        error: errorText,
       });
     }
 
-    const result = await response.arrayBuffer();
+    const result = await hfResponse.arrayBuffer();
 
-    res.setHeader("Content-Type", response.headers.get("content-type") || "image/png");
+    res.setHeader(
+      "Content-Type",
+      hfResponse.headers.get("content-type") || "image/png"
+    );
+
     return res.status(200).send(Buffer.from(result));
 
   } catch (error) {
     console.error(error);
 
     return res.status(500).json({
-      error: error.message
+      error: error.message,
     });
   }
 }
