@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@huggingface/inference": "^4.13.30"
+    "@huggingface/inference": "^4.13.30",
+    "formidable": "^3.5.4"
   }
 }
