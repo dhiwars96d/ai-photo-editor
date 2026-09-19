@@ -7,9 +7,11 @@ export const config = {
   },
 };
 
-export default async function handler(req, res) {
+export default function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "POST only" });
+    return res.status(405).json({
+      error: "POST only",
+    });
   }
 
   const form = formidable({
@@ -20,8 +22,11 @@ export default async function handler(req, res) {
   form.parse(req, async (err, fields, files) => {
     try {
       if (err) {
+        console.error("FORM ERROR:", err);
+
         return res.status(400).json({
-          error: "Form parsing failed: " + err.message,
+          error: "Form parsing failed",
+          details: err.message,
         });
       }
 
@@ -32,10 +37,29 @@ export default async function handler(req, res) {
       if (!imageFile) {
         return res.status(400).json({
           error: "Image not received",
+          details: "Frontend se image field nahi mili.",
         });
       }
 
+      const prompt =
+        Array.isArray(fields.prompt)
+          ? fields.prompt[0]
+          : fields.prompt ||
+            "Improve this photo naturally, smooth skin slightly, enhance facial details, keep the person's identity and face unchanged.";
+
       const imageBuffer = fs.readFileSync(imageFile.filepath);
+
+      const hfForm = new FormData();
+
+      hfForm.append(
+        "image",
+        new Blob([imageBuffer], {
+          type: imageFile.mimetype || "image/jpeg",
+        }),
+        imageFile.originalFilename || "photo.jpg"
+      );
+
+      hfForm.append("prompt", prompt);
 
       const hfResponse = await fetch(
         "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-Kontext-dev",
@@ -43,17 +67,19 @@ export default async function handler(req, res) {
           method: "POST",
           headers: {
             Authorization: `Bearer ${process.env.HF_TOKEN}`,
-            "Content-Type": imageFile.mimetype || "image/jpeg",
           },
-          body: imageBuffer,
+          body: hfForm,
         }
       );
 
       if (!hfResponse.ok) {
         const errorText = await hfResponse.text();
 
+        console.error("HF ERROR:", errorText);
+
         return res.status(hfResponse.status).json({
-          error: errorText,
+          error: "Hugging Face error",
+          details: errorText,
         });
       }
 
@@ -67,10 +93,11 @@ export default async function handler(req, res) {
       return res.status(200).send(Buffer.from(result));
 
     } catch (error) {
-      console.error(error);
+      console.error("SERVER ERROR:", error);
 
       return res.status(500).json({
-        error: error.message,
+        error: "Server error",
+        details: error.message,
       });
     }
   });
