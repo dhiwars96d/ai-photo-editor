@@ -3,17 +3,59 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Photo Editor</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #preview {
+            max-width: 100%;
+            max-height: 400px;
+            margin-top: 20px;
+            display: none;
+            border-radius: 10px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 16px;
+        }
+    </style>
 </head>
 
 <body>
+
     <h1>AI Photo Editor</h1>
 
     <p>Apni photo select karein:</p>
 
-    <input type="file" accept="image/*">
+    <input type="file" id="photoInput" accept="image/*">
 
-    <br><br>
+    <br>
+
+    <img id="preview">
+
+    <br>
 
     <button>AI Edit</button>
+
+    <script>
+        const photoInput = document.getElementById("photoInput");
+        const preview = document.getElementById("preview");
+
+        photoInput.addEventListener("change", function() {
+            const file = this.files[0];
+
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = "block";
+            }
+        });
+    </script>
+
 </body>
 </html>
