@@ -24,6 +24,11 @@
             padding: 12px 25px;
             font-size: 16px;
         }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -41,19 +46,70 @@
 
     <br>
 
-    <button>AI Edit</button>
+    <button id="editButton">AI Edit</button>
+
+    <p id="status"></p>
 
     <script>
         const photoInput = document.getElementById("photoInput");
         const preview = document.getElementById("preview");
+        const editButton = document.getElementById("editButton");
+        const status = document.getElementById("status");
 
-        photoInput.addEventListener("change", function() {
-            const file = this.files[0];
+        let selectedFile = null;
 
-            if (file) {
-                preview.src = URL.createObjectURL(file);
+        photoInput.addEventListener("change", function () {
+            selectedFile = this.files[0];
+
+            if (selectedFile) {
+                preview.src = URL.createObjectURL(selectedFile);
                 preview.style.display = "block";
+                status.textContent = "Photo ready hai.";
             }
+        });
+
+        editButton.addEventListener("click", async function () {
+
+            if (!selectedFile) {
+                status.textContent = "Pehle photo select karein.";
+                return;
+            }
+
+            status.textContent = "AI photo edit kar raha hai...";
+            editButton.disabled = true;
+
+            try {
+                const formData = new FormData();
+
+                formData.append("image", selectedFile);
+                formData.append(
+                    "prompt",
+                    "Improve this photo naturally, smooth skin slightly, enhance facial details, keep the person's identity and face unchanged."
+                );
+
+                const response = await fetch("/api/edit", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || "AI editing failed");
+                }
+
+                const blob = await response.blob();
+
+                preview.src = URL.createObjectURL(blob);
+                preview.style.display = "block";
+
+                status.textContent = "AI Edit complete!";
+
+            } catch (error) {
+                console.error(error);
+                status.textContent = "Error: " + error.message;
+            }
+
+            editButton.disabled = false;
         });
     </script>
 
