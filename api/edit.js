@@ -1,5 +1,6 @@
 import formidable from "formidable";
 import fs from "fs";
+import { InferenceClient } from "@huggingface/inference";
 
 export const config = {
   api: {
@@ -22,8 +23,6 @@ export default function handler(req, res) {
   form.parse(req, async (err, fields, files) => {
     try {
       if (err) {
-        console.error("FORM ERROR:", err);
-
         return res.status(400).json({
           error: "Form parsing failed",
           details: err.message,
@@ -37,7 +36,6 @@ export default function handler(req, res) {
       if (!imageFile) {
         return res.status(400).json({
           error: "Image not received",
-          details: "Frontend se image field nahi mili.",
         });
       }
 
@@ -49,54 +47,31 @@ export default function handler(req, res) {
 
       const imageBuffer = fs.readFileSync(imageFile.filepath);
 
-      const hfForm = new FormData();
+      const hf = new InferenceClient(process.env.HF_TOKEN);
 
-      hfForm.append(
-        "image",
-        new Blob([imageBuffer], {
-          type: imageFile.mimetype || "image/jpeg",
-        }),
-        imageFile.originalFilename || "photo.jpg"
+      const result = await hf.imageToImage({
+        provider: "fal-ai",
+        model: "black-forest-labs/FLUX.2-dev",
+        inputs: imageBuffer,
+        prompt: prompt,
+      });
+
+      const resultBuffer = Buffer.from(
+        await result.arrayBuffer()
       );
-
-      hfForm.append("prompt", prompt);
-
-      const hfResponse = await fetch(
-        "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-Kontext-dev",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.HF_TOKEN}`,
-          },
-          body: hfForm,
-        }
-      );
-
-      if (!hfResponse.ok) {
-        const errorText = await hfResponse.text();
-
-        console.error("HF ERROR:", errorText);
-
-        return res.status(hfResponse.status).json({
-          error: "Hugging Face error",
-          details: errorText,
-        });
-      }
-
-      const result = await hfResponse.arrayBuffer();
 
       res.setHeader(
         "Content-Type",
-        hfResponse.headers.get("content-type") || "image/png"
+        result.type || "image/png"
       );
 
-      return res.status(200).send(Buffer.from(result));
+      return res.status(200).send(resultBuffer);
 
     } catch (error) {
-      console.error("SERVER ERROR:", error);
+      console.error("HF ERROR:", error);
 
       return res.status(500).json({
-        error: "Server error",
+        error: "Hugging Face error",
         details: error.message,
       });
     }
