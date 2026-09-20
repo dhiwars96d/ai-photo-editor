@@ -52,7 +52,9 @@ export default function handler(req, res) {
       const result = await hf.imageToImage({
         provider: "fal-ai",
         model: "black-forest-labs/FLUX.2-dev",
-        inputs: imageBuffer,
+        inputs: new Blob([imageBuffer], {
+  type: imageFile.mimetype || "image/jpeg"
+}),
         prompt: prompt,
       });
 
