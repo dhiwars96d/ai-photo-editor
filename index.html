@@ -75,7 +75,20 @@
         const status = document.getElementById("status");
 
         let selectedFile = null;
+let selectedOption = "enhance";
 
+document.querySelectorAll(".optionButton").forEach(function(button) {
+
+    button.addEventListener("click", function() {
+
+        selectedOption = button.dataset.option;
+
+        status.textContent =
+            "Selected: " + button.textContent.trim();
+
+    });
+
+});
         photoInput.addEventListener("change", function () {
 
             selectedFile = photoInput.files[0];
@@ -105,10 +118,15 @@
 
                 formData.append("image", selectedFile);
 
-                formData.append(
-                    "prompt",
-                    "Improve this photo naturally, smooth skin slightly, enhance facial details, keep the person's identity and face unchanged."
-                );
+                let editPrompt =
+    "Enhance this photo naturally. Improve overall image quality, lighting, sharpness and facial details. Keep the person's identity, face and appearance unchanged.";
+
+if (selectedOption === "enhance") {
+    editPrompt =
+        "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
+}
+
+formData.append("prompt", editPrompt);
 
                 const response = await fetch("/api/edit", {
                     method: "POST",
