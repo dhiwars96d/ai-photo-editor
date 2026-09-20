@@ -15,11 +15,11 @@
             max-width: 100%;
             max-height: 400px;
             margin-top: 20px;
-            display: none;
             border-radius: 10px;
+            display: none;
         }
 
-        button {
+        #editButton {
             margin-top: 20px;
             padding: 12px 25px;
             font-size: 16px;
@@ -42,7 +42,7 @@
 
     <br>
 
-    <img id="preview">
+    <img id="preview" alt="Photo Preview">
 
     <br>
 
@@ -59,7 +59,8 @@
         let selectedFile = null;
 
         photoInput.addEventListener("change", function () {
-            selectedFile = this.files[0];
+
+            selectedFile = photoInput.files[0];
 
             if (selectedFile) {
                 preview.src = URL.createObjectURL(selectedFile);
@@ -69,20 +70,23 @@
         });
 
         editButton.addEventListener("click", async function () {
-          alert("AI Edit button working");
+
+            alert("AI Edit button working");
+
             if (!selectedFile) {
                 status.textContent = "Pehle photo select karein.";
                 return;
             }
 
             status.textContent = "AI photo edit kar raha hai...";
-            alert("AI Edit button working");
             editButton.disabled = true;
 
             try {
+
                 const formData = new FormData();
 
                 formData.append("image", selectedFile);
+
                 formData.append(
                     "prompt",
                     "Improve this photo naturally, smooth skin slightly, enhance facial details, keep the person's identity and face unchanged."
@@ -93,11 +97,21 @@
                     body: formData
                 });
 
+                const dataType = response.headers.get("content-type") || "";
+
                 if (!response.ok) {
-                    const error = await response.json().catch(() => ({}));
-                    throw new Error(
-    error.details || error.error || "AI editing failed"
-);
+
+                    let message = "AI editing failed";
+
+                    if (dataType.includes("application/json")) {
+                        const error = await response.json();
+                        message = error.details || error.error || message;
+                    } else {
+                        message = await response.text();
+                    }
+
+                    throw new Error(message);
+                }
 
                 const blob = await response.blob();
 
@@ -107,7 +121,9 @@
                 status.textContent = "AI Edit complete!";
 
             } catch (error) {
+
                 console.error(error);
+
                 status.textContent = "Error: " + error.message;
             }
 
