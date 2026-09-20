@@ -95,8 +95,9 @@
 
                 if (!response.ok) {
                     const error = await response.json().catch(() => ({}));
-                    throw new Error(error.error || "AI editing failed");
-                }
+                    throw new Error(
+    error.details || error.error || "AI editing failed"
+);
 
                 const blob = await response.blob();
 
