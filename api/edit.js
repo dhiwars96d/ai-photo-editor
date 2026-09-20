@@ -1,4 +1,4 @@
-import formidable from "formidable";
+hereimport formidable from "formidable";
 import fs from "fs";
 
 export const config = {
@@ -48,33 +48,49 @@ export default function handler(req, res) {
         imageFile.filepath
       );
 
-      const imageBase64 =
-        imageBuffer.toString("base64");
+      const imageBlob = new Blob(
+        [imageBuffer],
+        {
+          type:
+            imageFile.mimetype ||
+            "image/jpeg",
+        }
+      );
+
+      const cloudflareForm = new FormData();
+
+      cloudflareForm.append(
+        "prompt",
+        prompt
+      );
+
+      cloudflareForm.append(
+        "input_image_0",
+        imageBlob,
+        "photo.jpg"
+      );
+
+      cloudflareForm.append(
+        "width",
+        "1024"
+      );
+
+      cloudflareForm.append(
+        "height",
+        "1024"
+      );
 
       const response = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/runwayml/stable-diffusion-v1-5-img2img`,
+        `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/black-forest-labs/flux-2-klein-4b`,
         {
           method: "POST",
 
           headers: {
-            "Authorization":
+            Authorization:
               `Bearer ${process.env.CF_API_TOKEN}`,
-
-            "Content-Type":
-              "application/json",
           },
 
-          body: JSON.stringify({
-            prompt: prompt,
-
-            image_b64: imageBase64,
-
-            strength: 0.30,
-
-            guidance: 7.5,
-
-            num_steps: 20
-          }),
+          body: cloudflareForm,
         }
       );
 
@@ -89,30 +105,31 @@ export default function handler(req, res) {
         );
 
         return res.status(500).json({
-          error: "Cloudflare AI error",
+          error:
+            "Cloudflare AI error",
+
           details:
             data.errors?.[0]?.message ||
-            "AI editing failed"
+            "AI editing failed",
         });
       }
 
-      const imageBase64Result =
-        data.result;
-
       if (
-        typeof imageBase64Result !==
-        "string"
+        !data.result ||
+        !data.result.image
       ) {
         return res.status(500).json({
-          error: "Invalid image response",
+          error:
+            "Invalid image response",
+
           details:
-            "Cloudflare did not return an image."
+            "Cloudflare did not return an image.",
         });
       }
 
       const outputBuffer =
         Buffer.from(
-          imageBase64Result,
+          data.result.image,
           "base64"
         );
 
@@ -133,8 +150,11 @@ export default function handler(req, res) {
       );
 
       return res.status(500).json({
-        error: "Cloudflare AI error",
-        details: error.message,
+        error:
+          "Cloudflare AI error",
+
+        details:
+          error.message,
       });
     }
   });
