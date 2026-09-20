@@ -19,6 +19,16 @@
             display: none;
         }
 
+        #options {
+            margin-top: 15px;
+        }
+
+        .optionButton {
+            margin: 4px;
+            padding: 8px 14px;
+            font-size: 16px;
+        }
+
         #editButton {
             margin-top: 20px;
             padding: 12px 25px;
@@ -45,72 +55,99 @@
     <img id="preview" alt="Photo Preview">
 
     <br>
-<div id="options">
 
-    <button class="optionButton" data-option="enhance">
-        ✨ Enhance
-    </button>
+    <div id="options">
 
-    <button class="optionButton" data-option="smooth">
-        🧴 Smooth Skin
-    </button>
+        <button class="optionButton" data-option="enhance">
+            ✨ Enhance
+        </button>
 
-    <button class="optionButton" data-option="smile">
-        😊 Smile
-    </button>
+        <button class="optionButton" data-option="smooth">
+            🧴 Smooth Skin
+        </button>
 
-    <button class="optionButton" data-option="hair">
-        💇 Hair Color
-    </button>
+        <button class="optionButton" data-option="smile">
+            😊 Smile
+        </button>
 
-</div>
+        <button class="optionButton" data-option="hair">
+            💇 Hair Color
+        </button>
+
+    </div>
+
+    <br>
+
     <button id="editButton">AI Edit</button>
 
     <p id="status"></p>
 
     <script>
+
         const photoInput = document.getElementById("photoInput");
         const preview = document.getElementById("preview");
         const editButton = document.getElementById("editButton");
         const status = document.getElementById("status");
 
         let selectedFile = null;
-let selectedOption = "enhance";
 
-document.querySelectorAll(".optionButton").forEach(function(button) {
+        let selectedOption = "enhance";
 
-    button.addEventListener("click", function() {
 
-        selectedOption = button.dataset.option;
+        /* OPTION BUTTONS */
 
-        status.textContent =
-            "Selected: " + button.textContent.trim();
+        document.querySelectorAll(".optionButton").forEach(function(button) {
 
-    });
+            button.addEventListener("click", function() {
 
-});
-        photoInput.addEventListener("change", function () {
+                selectedOption = button.dataset.option;
+
+                status.textContent =
+                    "Selected: " + button.textContent.trim();
+
+            });
+
+        });
+
+
+        /* PHOTO SELECT */
+
+        photoInput.addEventListener("change", function() {
 
             selectedFile = photoInput.files[0];
 
             if (selectedFile) {
+
                 preview.src = URL.createObjectURL(selectedFile);
+
                 preview.style.display = "block";
+
                 status.textContent = "Photo ready hai.";
+
             }
+
         });
 
-        editButton.addEventListener("click", async function () {
+
+        /* AI EDIT */
+
+        editButton.addEventListener("click", async function() {
 
             alert("AI Edit button working");
 
             if (!selectedFile) {
-                status.textContent = "Pehle photo select karein.";
+
+                status.textContent =
+                    "Pehle photo select karein.";
+
                 return;
             }
 
-            status.textContent = "AI photo edit kar raha hai...";
+            status.textContent =
+                "AI photo edit kar raha hai...";
+
             editButton.disabled = true;
+
 
             try {
 
@@ -118,53 +155,130 @@ document.querySelectorAll(".optionButton").forEach(function(button) {
 
                 formData.append("image", selectedFile);
 
+
+                /* DEFAULT ENHANCE PROMPT */
+
                 let editPrompt =
-    "Enhance this photo naturally. Improve overall image quality, lighting, sharpness and facial details. Keep the person's identity, face and appearance unchanged.";
+                    "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
 
-if (selectedOption === "enhance") {
-    editPrompt =
-        "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
-}
 
-formData.append("prompt", editPrompt);
+                /* ENHANCE */
+
+                if (selectedOption === "enhance") {
+
+                    editPrompt =
+                        "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
+
+                }
+
+
+                /* SMOOTH SKIN */
+
+                else if (selectedOption === "smooth") {
+
+                    editPrompt =
+                        "Smooth the person's skin naturally. Remove minor blemishes and imperfections while keeping natural skin texture, pores and facial details. Keep the person's identity, face and appearance unchanged. Do not make the skin look artificial or plastic.";
+
+                }
+
+
+                /* SMILE - ABHI BAAD ME */
+
+                else if (selectedOption === "smile") {
+
+                    editPrompt =
+                        "Keep the person's identity and face unchanged. Make the expression look naturally happier with a subtle smile.";
+
+                }
+
+
+                /* HAIR COLOR - ABHI BAAD ME */
+
+                else if (selectedOption === "hair") {
+
+                    editPrompt =
+                        "Keep the person's identity and face unchanged. Naturally improve and enhance the hair appearance while keeping the original hairstyle.";
+
+                }
+
+
+                formData.append("prompt", editPrompt);
+
 
                 const response = await fetch("/api/edit", {
+
                     method: "POST",
+
                     body: formData
+
                 });
 
-                const dataType = response.headers.get("content-type") || "";
+
+                const dataType =
+                    response.headers.get("content-type") || "";
+
 
                 if (!response.ok) {
 
                     let message = "AI editing failed";
 
+
                     if (dataType.includes("application/json")) {
-                        const error = await response.json();
-                        message = error.details || error.error || message;
-                    } else {
-                        message = await response.text();
+
+                        const error =
+                            await response.json();
+
+                        message =
+                            error.details ||
+                            error.error ||
+                            message;
+
                     }
 
+                    else {
+
+                        message =
+                            await response.text();
+
+                    }
+
+
                     throw new Error(message);
+
                 }
 
-                const blob = await response.blob();
 
-                preview.src = URL.createObjectURL(blob);
-                preview.style.display = "block";
+                const blob =
+                    await response.blob();
 
-                status.textContent = "AI Edit complete!";
 
-            } catch (error) {
+                preview.src =
+                    URL.createObjectURL(blob);
+
+                preview.style.display =
+                    "block";
+
+
+                status.textContent =
+                    "AI Edit complete!";
+
+
+            }
+
+            catch (error) {
 
                 console.error(error);
 
-                status.textContent = "Error: " + error.message;
+                status.textContent =
+                    "Error: " + error.message;
+
             }
 
+
             editButton.disabled = false;
+
         });
+
     </script>
 
 </body>
