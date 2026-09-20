@@ -1,6 +1,5 @@
 import formidable from "formidable";
 import fs from "fs";
-import { InferenceClient } from "@huggingface/inference";
 
 export const config = {
   api: {
@@ -43,37 +42,98 @@ export default function handler(req, res) {
         Array.isArray(fields.prompt)
           ? fields.prompt[0]
           : fields.prompt ||
-            "Improve this photo naturally, smooth skin slightly, enhance facial details, keep the person's identity and face unchanged.";
+            "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
 
-      const imageBuffer = fs.readFileSync(imageFile.filepath);
-
-      const hf = new InferenceClient(process.env.HF_TOKEN);
-
-      const result = await hf.imageToImage({
-        provider: "fal-ai",
-        model: "black-forest-labs/FLUX.2-dev",
-        inputs: new Blob([imageBuffer], {
-  type: imageFile.mimetype || "image/jpeg"
-}),
-        prompt: prompt,
-      });
-
-      const resultBuffer = Buffer.from(
-        await result.arrayBuffer()
+      const imageBuffer = fs.readFileSync(
+        imageFile.filepath
       );
+
+      const imageBase64 =
+        imageBuffer.toString("base64");
+
+      const response = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/runwayml/stable-diffusion-v1-5-img2img`,
+        {
+          method: "POST",
+
+          headers: {
+            "Authorization":
+              `Bearer ${process.env.CF_API_TOKEN}`,
+
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            prompt: prompt,
+
+            image_b64: imageBase64,
+
+            strength: 0.30,
+
+            guidance: 7.5,
+
+            num_steps: 20
+          }),
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok || !data.success) {
+
+        console.error(
+          "CLOUDFLARE ERROR:",
+          data
+        );
+
+        return res.status(500).json({
+          error: "Cloudflare AI error",
+          details:
+            data.errors?.[0]?.message ||
+            "AI editing failed"
+        });
+      }
+
+      const imageBase64Result =
+        data.result;
+
+      if (
+        typeof imageBase64Result !==
+        "string"
+      ) {
+        return res.status(500).json({
+          error: "Invalid image response",
+          details:
+            "Cloudflare did not return an image."
+        });
+      }
+
+      const outputBuffer =
+        Buffer.from(
+          imageBase64Result,
+          "base64"
+        );
 
       res.setHeader(
         "Content-Type",
-        result.type || "image/png"
+        "image/png"
       );
 
-      return res.status(200).send(resultBuffer);
+      return res
+        .status(200)
+        .send(outputBuffer);
 
     } catch (error) {
-      console.error("HF ERROR:", error);
+
+      console.error(
+        "CLOUDFLARE ERROR:",
+        error
+      );
 
       return res.status(500).json({
-        error: "Hugging Face error",
+        error: "Cloudflare AI error",
         details: error.message,
       });
     }
