@@ -208,7 +208,41 @@ if (selectedOption === "smile") {
 
     if (maskCanvas) {
         const maskData = maskCanvas.toDataURL("image/png");
-        formData.append("mask", maskData);
+
+        const byteString = atob(maskData.split(",")[1]);
+        const mimeString = maskData
+            .split(",")[0]
+            .match(/:(.*?);/)[1];
+
+        const arrayBuffer = new ArrayBuffer(
+            byteString.length
+        );
+
+        const uint8Array = new Uint8Array(
+            arrayBuffer
+        );
+
+        for (
+            let i = 0;
+            i < byteString.length;
+            i++
+        ) {
+            uint8Array[i] =
+                byteString.charCodeAt(i);
+        }
+
+        const maskBlob = new Blob(
+            [arrayBuffer],
+            {
+                type: mimeString
+            }
+        );
+
+        formData.append(
+            "mask",
+            maskBlob,
+            "mask.png"
+        );
     }
 }
 
