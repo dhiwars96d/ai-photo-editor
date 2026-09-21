@@ -305,7 +305,35 @@ const leftMouth = landmarks[61];
 const rightMouth = landmarks[291];
 const topMouth = landmarks[13];
 const bottomMouth = landmarks[14];
+const canvas = document.getElementById("maskCanvas");
+const ctx = canvas.getContext("2d");
 
+const img = document.getElementById("preview");
+
+canvas.width = img.naturalWidth;
+canvas.height = img.naturalHeight;
+
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+// Mouth ke aas-paas area
+const x1 = Math.min(leftMouth.x, rightMouth.x) * canvas.width;
+const x2 = Math.max(leftMouth.x, rightMouth.x) * canvas.width;
+
+const y1 = Math.min(topMouth.y, bottomMouth.y) * canvas.height;
+const y2 = Math.max(topMouth.y, bottomMouth.y) * canvas.height;
+
+// Thoda extra area
+const paddingX = (x2 - x1) * 0.8;
+const paddingY = (y2 - y1) * 2.0;
+
+ctx.fillStyle = "white";
+
+ctx.fillRect(
+  Math.max(0, x1 - paddingX),
+  Math.max(0, y1 - paddingY),
+  Math.min(canvas.width, x2 - x1 + paddingX * 2),
+  Math.min(canvas.height, y2 - y1 + paddingY * 2)
+);
 console.log("Mouth detected:", {
   left: leftMouth,
   right: rightMouth,
