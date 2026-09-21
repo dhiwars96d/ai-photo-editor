@@ -322,26 +322,31 @@ canvas.height = img.naturalHeight;
 
 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-// Mouth ke aas-paas area
+// Sirf mouth area ka chhota mask
+
 const x1 = Math.min(leftMouth.x, rightMouth.x) * canvas.width;
 const x2 = Math.max(leftMouth.x, rightMouth.x) * canvas.width;
 
 const y1 = Math.min(topMouth.y, bottomMouth.y) * canvas.height;
 const y2 = Math.max(topMouth.y, bottomMouth.y) * canvas.height;
 
-// Thoda extra area
-const paddingX = (x2 - x1) * 0.8;
-const paddingY = (y2 - y1) * 2.0;
+const mouthWidth = x2 - x1;
+const mouthHeight = y2 - y1;
+
+// Bahut kam extra area
+const paddingX = mouthWidth * 0.25;
+const paddingY = mouthHeight * 0.8;
 
 ctx.fillStyle = "white";
 
 ctx.fillRect(
   Math.max(0, x1 - paddingX),
   Math.max(0, y1 - paddingY),
-  Math.min(canvas.width, x2 - x1 + paddingX * 2),
-  Math.min(canvas.height, y2 - y1 + paddingY * 2)
+  Math.min(canvas.width, mouthWidth + paddingX * 2),
+  Math.min(canvas.height, mouthHeight + paddingY * 2)
 );
-      const maskImage = canvas.toDataURL("image/png");
+
+const maskImage = canvas.toDataURL("image/png");
 console.log("Mouth mask created:", maskImage);
 console.log("Mouth detected:", {
   left: leftMouth,
