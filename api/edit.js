@@ -57,7 +57,6 @@ export default function handler(req, res) {
          ========================= */
 
       if (maskFile) {
-
         const maskBuffer = fs.readFileSync(
           maskFile.filepath
         );
@@ -65,7 +64,7 @@ export default function handler(req, res) {
         const cloudflareBody = {
           prompt:
             "Create a subtle natural smile. Change only the mouth expression. Preserve the exact same person, identity, eyes, nose, cheeks, jawline, face shape, skin and hair. Do not change any other part of the face.",
-          
+
           negative_prompt:
             "different person, changed face, changed eyes, changed nose, changed jawline, changed hairstyle, distorted face, unrealistic mouth",
 
@@ -84,7 +83,7 @@ export default function handler(req, res) {
           guidance: 7.5
         };
 
-        const response = await fetch(
+        const smileResponse = await fetch(
           `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/runwayml/stable-diffusion-v1-5-inpainting`,
           {
             method: "POST",
@@ -102,14 +101,13 @@ export default function handler(req, res) {
           }
         );
 
-        const data =
-          await response.json();
-
-        if (!response.ok || !data.success) {
+        if (!smileResponse.ok) {
+          const errorText =
+            await smileResponse.text();
 
           console.error(
             "CLOUDFLARE SMILE ERROR:",
-            data
+            errorText
           );
 
           return res.status(500).json({
@@ -117,28 +115,14 @@ export default function handler(req, res) {
               "Cloudflare Smile AI error",
 
             details:
-              data.errors?.[0]?.message ||
+              errorText ||
               "Smile editing failed",
-          });
-        }
-
-        if (
-          !data.result ||
-          !data.result.image
-        ) {
-          return res.status(500).json({
-            error:
-              "Invalid Smile response",
-
-            details:
-              "Cloudflare did not return an image.",
           });
         }
 
         const outputBuffer =
           Buffer.from(
-            data.result.image,
-            "base64"
+            await smileResponse.arrayBuffer()
           );
 
         res.setHeader(
@@ -150,7 +134,6 @@ export default function handler(req, res) {
           .status(200)
           .send(outputBuffer);
       }
-
 
       /* =========================
          ENHANCE / SMOOTH
@@ -207,7 +190,6 @@ export default function handler(req, res) {
         await response.json();
 
       if (!response.ok || !data.success) {
-
         console.error(
           "CLOUDFLARE ERROR:",
           data
@@ -252,7 +234,6 @@ export default function handler(req, res) {
         .send(outputBuffer);
 
     } catch (error) {
-
       console.error(
         "CLOUDFLARE ERROR:",
         error
@@ -267,4 +248,4 @@ export default function handler(req, res) {
       });
     }
   });
-}
+      }
