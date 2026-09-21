@@ -38,6 +38,10 @@ export default function handler(req, res) {
         });
       }
 
+      const maskFile = Array.isArray(files.mask)
+        ? files.mask[0]
+        : files.mask;
+
       const prompt =
         Array.isArray(fields.prompt)
           ? fields.prompt[0]
@@ -48,6 +52,110 @@ export default function handler(req, res) {
         imageFile.filepath
       );
 
+      /* =========================
+         SMILE - INPAINTING
+         ========================= */
+
+      if (maskFile) {
+
+        const maskBuffer = fs.readFileSync(
+          maskFile.filepath
+        );
+
+        const cloudflareBody = {
+          prompt:
+            "Create a subtle natural smile. Change only the mouth expression. Preserve the exact same person, identity, eyes, nose, cheeks, jawline, face shape, skin and hair. Do not change any other part of the face.",
+          
+          negative_prompt:
+            "different person, changed face, changed eyes, changed nose, changed jawline, changed hairstyle, distorted face, unrealistic mouth",
+
+          image: Array.from(imageBuffer),
+
+          mask: Array.from(maskBuffer),
+
+          width: 1024,
+
+          height: 1024,
+
+          num_steps: 20,
+
+          strength: 0.35,
+
+          guidance: 7.5
+        };
+
+        const response = await fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/runwayml/stable-diffusion-v1-5-inpainting`,
+          {
+            method: "POST",
+
+            headers: {
+              Authorization:
+                `Bearer ${process.env.CF_API_TOKEN}`,
+
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify(cloudflareBody),
+          }
+        );
+
+        const data =
+          await response.json();
+
+        if (!response.ok || !data.success) {
+
+          console.error(
+            "CLOUDFLARE SMILE ERROR:",
+            data
+          );
+
+          return res.status(500).json({
+            error:
+              "Cloudflare Smile AI error",
+
+            details:
+              data.errors?.[0]?.message ||
+              "Smile editing failed",
+          });
+        }
+
+        if (
+          !data.result ||
+          !data.result.image
+        ) {
+          return res.status(500).json({
+            error:
+              "Invalid Smile response",
+
+            details:
+              "Cloudflare did not return an image.",
+          });
+        }
+
+        const outputBuffer =
+          Buffer.from(
+            data.result.image,
+            "base64"
+          );
+
+        res.setHeader(
+          "Content-Type",
+          "image/png"
+        );
+
+        return res
+          .status(200)
+          .send(outputBuffer);
+      }
+
+
+      /* =========================
+         ENHANCE / SMOOTH
+         ========================= */
+
       const imageBlob = new Blob(
         [imageBuffer],
         {
@@ -57,7 +165,8 @@ export default function handler(req, res) {
         }
       );
 
-      const cloudflareForm = new FormData();
+      const cloudflareForm =
+        new FormData();
 
       cloudflareForm.append(
         "prompt",
