@@ -334,6 +334,8 @@ ctx.fillRect(
   Math.min(canvas.width, x2 - x1 + paddingX * 2),
   Math.min(canvas.height, y2 - y1 + paddingY * 2)
 );
+      const maskImage = canvas.toDataURL("image/png");
+console.log("Mouth mask created:", maskImage);
 console.log("Mouth detected:", {
   left: leftMouth,
   right: rightMouth,
