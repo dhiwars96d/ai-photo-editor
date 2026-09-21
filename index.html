@@ -281,5 +281,43 @@
 
     </script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script>
+const faceMesh = new FaceMesh({
+  locateFile: (file) => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+  }
+});
+
+faceMesh.setOptions({
+  maxNumFaces: 1,
+  refineLandmarks: true,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
+});
+
+faceMesh.onResults((results) => {
+  if (results.multiFaceLandmarks &&
+      results.multiFaceLandmarks.length > 0) {
+
+    document.getElementById("status").textContent =
+      "Face detected ✅";
+
+  } else {
+
+    document.getElementById("status").textContent =
+      "Face not detected ❌";
+  }
+});
+
+document.getElementById("preview").addEventListener("load", async () => {
+  try {
+    await faceMesh.send({
+      image: document.getElementById("preview")
+    });
+  } catch (error) {
+    console.error(error);
+  }
+});
+    </script>
 </body>
 </html>
