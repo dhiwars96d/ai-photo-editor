@@ -298,7 +298,20 @@ faceMesh.setOptions({
 faceMesh.onResults((results) => {
   if (results.multiFaceLandmarks &&
       results.multiFaceLandmarks.length > 0) {
+const landmarks = results.multiFaceLandmarks[0];
 
+// Mouth के मुख्य landmarks
+const leftMouth = landmarks[61];
+const rightMouth = landmarks[291];
+const topMouth = landmarks[13];
+const bottomMouth = landmarks[14];
+
+console.log("Mouth detected:", {
+  left: leftMouth,
+  right: rightMouth,
+  top: topMouth,
+  bottom: bottomMouth
+});
     document.getElementById("status").textContent =
       "Face detected ✅";
 
