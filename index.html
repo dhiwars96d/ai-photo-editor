@@ -203,7 +203,14 @@
 
 
                 formData.append("prompt", editPrompt);
+if (selectedOption === "smile") {
+    const maskCanvas = document.getElementById("maskCanvas");
 
+    if (maskCanvas) {
+        const maskData = maskCanvas.toDataURL("image/png");
+        formData.append("mask", maskData);
+    }
+}
 
                 const response = await fetch("/api/edit", {
 
