@@ -61,19 +61,20 @@ export default function handler(req, res) {
           maskFile.filepath
         );
 
-        const imageRaw = await sharp(imageBuffer)
+        const imageData = await sharp(imageBuffer)
   .resize(512, 576, {
     fit: "fill"
   })
-  .removeAlpha()
-  .raw()
+  .jpeg({
+    quality: 60
+  })
   .toBuffer();
-const maskRaw = await sharp(maskBuffer)
+const maskData = await sharp(maskBuffer)
   .resize(512, 576, {
     fit: "fill"
   })
   .greyscale()
-  .raw()
+  .png()
   .toBuffer();
         const cloudflareBody = {
           prompt:
@@ -82,9 +83,9 @@ const maskRaw = await sharp(maskBuffer)
           negative_prompt:
             "different person, changed face, changed eyes, changed nose, changed jawline, changed hairstyle, distorted face, unrealistic mouth",
 
-          image: Array.from(imageRaw),
+          image: Array.from(imageData),
 
-mask: Array.from(maskRaw),
+mask: Array.from(maskData),
 
           width: 512,
 height: 576,
