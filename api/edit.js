@@ -60,7 +60,21 @@ export default function handler(req, res) {
         const maskBuffer = fs.readFileSync(
           maskFile.filepath
         );
+const imageRaw = await sharp(imageBuffer)
+  .resize(1024, 1152, {
+    fit: "fill"
+  })
+  .removeAlpha()
+  .raw()
+  .toBuffer();
 
+const maskRaw = await sharp(maskBuffer)
+  .resize(1024, 1152, {
+    fit: "fill"
+  })
+  .greyscale()
+  .raw()
+  .toBuffer();
         const cloudflareBody = {
           prompt:
             "Create a subtle natural smile. Change only the mouth expression. Preserve the exact same person, identity, eyes, nose, cheeks, jawline, face shape, skin and hair. Do not change any other part of the face.",
@@ -68,13 +82,13 @@ export default function handler(req, res) {
           negative_prompt:
             "different person, changed face, changed eyes, changed nose, changed jawline, changed hairstyle, distorted face, unrealistic mouth",
 
-          image: Array.from(imageBuffer),
+          image: Array.from(imageRaw),
 
-          mask: Array.from(maskBuffer),
+mask: Array.from(maskRaw),
 
           width: 1024,
 
-          height: 1024,
+height: 1152,
 
           num_steps: 20,
 
