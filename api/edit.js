@@ -70,7 +70,7 @@ export default function handler(req, res) {
   })
   .toBuffer();
 const maskData = await sharp(maskBuffer)
-  .resize(512, 576, {
+  .resize(768, 864, {
     fit: "fill"
   })
   .greyscale()
@@ -87,8 +87,8 @@ const maskData = await sharp(maskBuffer)
 
 mask: Array.from(maskData),
 
-          width: 512,
-height: 576,
+          width: 768,
+height: 864,
 
           num_steps: 20,
 
