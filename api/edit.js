@@ -60,13 +60,16 @@ export default function handler(req, res) {
         const maskBuffer = fs.readFileSync(
           maskFile.filepath
         );
-const imageRaw = await sharp(imageBuffer)
-  .resize(512, 576, {
-    fit: "fill"
-  })
-  .removeAlpha()
-  .raw()
-  .toBuffer();
+const imageBase64 = (
+  await sharp(imageBuffer)
+    .resize(512, 576, {
+      fit: "fill"
+    })
+    .jpeg({
+      quality: 70
+    })
+    .toBuffer()
+).toString("base64");
 
 const maskRaw = await sharp(maskBuffer)
   ..resize(512, 576, {
@@ -82,7 +85,7 @@ const maskRaw = await sharp(maskBuffer)
           negative_prompt:
             "different person, changed face, changed eyes, changed nose, changed jawline, changed hairstyle, distorted face, unrealistic mouth",
 
-          image: Array.from(imageRaw),
+          image_b64: imageBase64,
 
 mask: Array.from(maskRaw),
 
