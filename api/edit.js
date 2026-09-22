@@ -1,6 +1,7 @@
 import formidable from "formidable";
 import fs from "fs";
 import sharp from "sharp";
+
 export const config = {
   api: {
     bodyParser: false,
@@ -62,20 +63,22 @@ export default function handler(req, res) {
         );
 
         const imageData = await sharp(imageBuffer)
-  .resize(512, 576, {
-    fit: "fill"
-  })
-  .jpeg({
-    quality: 60
-  })
-  .toBuffer();
-const maskData = await sharp(maskBuffer)
-  .resize(768, 864, {
-    fit: "fill"
-  })
-  .greyscale()
-  .png()
-  .toBuffer();
+          .resize(768, 864, {
+            fit: "fill",
+          })
+          .jpeg({
+            quality: 60,
+          })
+          .toBuffer();
+
+        const maskData = await sharp(maskBuffer)
+          .resize(768, 864, {
+            fit: "fill",
+          })
+          .greyscale()
+          .png()
+          .toBuffer();
+
         const cloudflareBody = {
           prompt:
             "Create a subtle natural smile. Change only the mouth expression. Preserve the exact same person, identity, eyes, nose, cheeks, jawline, face shape, skin and hair. Do not change any other part of the face.",
@@ -85,16 +88,17 @@ const maskData = await sharp(maskBuffer)
 
           image: Array.from(imageData),
 
-mask: Array.from(maskData),
+          mask: Array.from(maskData),
 
           width: 768,
-height: 864,
+
+          height: 864,
 
           num_steps: 20,
 
           strength: 0.20,
 
-          guidance: 7.5
+          guidance: 7.5,
         };
 
         const smileResponse = await fetch(
@@ -139,6 +143,38 @@ height: 864,
             await smileResponse.arrayBuffer()
           );
 
+        /* =========================
+           ORIGINAL + SMILE MASK
+           ========================= */
+
+        const finalMaskBuffer =
+          await sharp(maskBuffer)
+            .resize(768, 864, {
+              fit: "fill",
+            })
+            .greyscale()
+            .png()
+            .toBuffer();
+
+        const finalBuffer =
+          await sharp(imageBuffer)
+            .resize(768, 864, {
+              fit: "fill",
+            })
+            .composite([
+              {
+                input: outputBuffer,
+
+                blend: "over",
+
+                mask: {
+                  input: finalMaskBuffer,
+                },
+              },
+            ])
+            .png()
+            .toBuffer();
+
         res.setHeader(
           "Content-Type",
           "image/png"
@@ -146,7 +182,7 @@ height: 864,
 
         return res
           .status(200)
-          .send(outputBuffer);
+          .send(finalBuffer);
       }
 
       /* =========================
@@ -262,4 +298,4 @@ height: 864,
       });
     }
   });
-      }
+}
