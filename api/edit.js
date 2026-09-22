@@ -138,10 +138,10 @@ export default function handler(req, res) {
           });
         }
 
-        const outputBuffer =
-          Buffer.from(
-            await smileResponse.arrayBuffer()
-          );
+        const smileOutputBuffer =
+  Buffer.from(
+    await smileResponse.arrayBuffer()
+  );
 
         /* =========================
            ORIGINAL + SMILE MASK
@@ -166,7 +166,7 @@ const finalMaskBuffer =
     .toBuffer();
 
 const resizedOutput =
-  await sharp(outputBuffer)
+  await sharp(smileOutputBuffer)
     .resize(
       originalMeta.width,
       originalMeta.height,
@@ -190,6 +190,14 @@ const finalBuffer =
     ])
     .png()
     .toBuffer();
+        res.setHeader(
+  "Content-Type",
+  "image/png"
+);
+
+return res
+  .status(200)
+  .send(finalBuffer);
 
       /* =========================
          ENHANCE / SMOOTH
