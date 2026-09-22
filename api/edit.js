@@ -72,7 +72,7 @@ const imageBase64 = (
 ).toString("base64");
 
 const maskRaw = await sharp(maskBuffer)
-  ..resize(512, 576, {
+  .resize(512, 576, {
     fit: "fill"
   })
   .greyscale()
