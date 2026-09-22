@@ -92,7 +92,7 @@ height: 576,
 
           num_steps: 20,
 
-          strength: 0.35,
+          strength: 0.20,
 
           guidance: 7.5
         };
