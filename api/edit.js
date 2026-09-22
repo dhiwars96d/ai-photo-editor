@@ -62,7 +62,11 @@ export default function handler(req, res) {
         );
 const imageBase64 =
   imageBuffer.toString("base64");
-
+if (!imageBase64 || imageBase64.length < 100) {
+  return res.status(400).json({
+    error: "Image Base64 conversion failed"
+  });
+}
 const maskRaw = await sharp(maskBuffer)
   .resize(512, 576, {
     fit: "fill"
