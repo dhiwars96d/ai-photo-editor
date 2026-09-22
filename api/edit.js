@@ -60,16 +60,8 @@ export default function handler(req, res) {
         const maskBuffer = fs.readFileSync(
           maskFile.filepath
         );
-const imageBase64 = (
-  await sharp(imageBuffer)
-    .resize(512, 576, {
-      fit: "fill"
-    })
-    .jpeg({
-      quality: 70
-    })
-    .toBuffer()
-).toString("base64");
+const imageBase64 =
+  imageBuffer.toString("base64");
 
 const maskRaw = await sharp(maskBuffer)
   .resize(512, 576, {
