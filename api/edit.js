@@ -85,7 +85,7 @@ const maskRaw = await sharp(maskBuffer)
           negative_prompt:
             "different person, changed face, changed eyes, changed nose, changed jawline, changed hairstyle, distorted face, unrealistic mouth",
 
-          image_b64: imageBase64,
+          image_b64: `data:image/jpeg;base64,${imageBase64}`,
 
 mask: Array.from(maskRaw),
 
