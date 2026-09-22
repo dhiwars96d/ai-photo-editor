@@ -62,11 +62,13 @@ export default function handler(req, res) {
         );
 const imageBase64 =
   imageBuffer.toString("base64");
-if (!imageBase64 || imageBase64.length < 100) {
-  return res.status(400).json({
-    error: "Image Base64 conversion failed"
-  });
-}
+const maskRaw = await sharp(maskBuffer)
+  .resize(512, 576, {
+    fit: "fill"
+  })
+  .greyscale()
+  .raw()
+  .toBuffer();
 const maskRaw = await sharp(maskBuffer)
   .resize(512, 576, {
     fit: "fill"
@@ -81,7 +83,7 @@ const maskRaw = await sharp(maskBuffer)
           negative_prompt:
             "different person, changed face, changed eyes, changed nose, changed jawline, changed hairstyle, distorted face, unrealistic mouth",
 
-          image_b64: `data:image/jpeg;base64,${imageBase64}`,
+          image: Array.from(imageRaw),
 
 mask: Array.from(maskRaw),
 
