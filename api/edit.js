@@ -139,65 +139,65 @@ export default function handler(req, res) {
         }
 
         const smileOutputBuffer =
-  Buffer.from(
-    await smileResponse.arrayBuffer()
-  );
+          Buffer.from(
+            await smileResponse.arrayBuffer()
+          );
 
         /* =========================
            ORIGINAL + SMILE MASK
            ========================= */
 
-        
-     
-            const originalMeta =
-  await sharp(imageBuffer).metadata();
+        const originalMeta =
+          await sharp(imageBuffer).metadata();
 
-const finalMaskBuffer =
-  await sharp(maskBuffer)
-    .resize(
-      originalMeta.width,
-      originalMeta.height,
-      {
-        fit: "fill",
-      }
-    )
-    .greyscale()
-    .png()
-    .toBuffer();
+        const finalMaskBuffer =
+          await sharp(maskBuffer)
+            .resize(
+              originalMeta.width,
+              originalMeta.height,
+              {
+                fit: "fill",
+              }
+            )
+            .greyscale()
+            .png()
+            .toBuffer();
 
-const resizedOutput =
-  await sharp(smileOutputBuffer)
-    .resize(
-      originalMeta.width,
-      originalMeta.height,
-      {
-        fit: "fill",
-      }
-    )
-    .png()
-    .toBuffer();
+        const resizedSmileOutput =
+          await sharp(smileOutputBuffer)
+            .resize(
+              originalMeta.width,
+              originalMeta.height,
+              {
+                fit: "fill",
+              }
+            )
+            .png()
+            .toBuffer();
 
-const finalBuffer =
-  await sharp(imageBuffer)
-    .composite([
-      {
-        input: resizedOutput,
-        blend: "over",
-        mask: {
-          input: finalMaskBuffer,
-        },
-      },
-    ])
-    .png()
-    .toBuffer();
+        const finalBuffer =
+          await sharp(imageBuffer)
+            .composite([
+              {
+                input: resizedSmileOutput,
+                blend: "over",
+                mask: {
+                  input: finalMaskBuffer,
+                },
+              },
+            ])
+            .png()
+            .toBuffer();
+
         res.setHeader(
-  "Content-Type",
-  "image/png"
-);
+          "Content-Type",
+          "image/png"
+        );
 
-return res
-  .status(200)
-  .send(finalBuffer);
+        return res
+          .status(200)
+          .send(finalBuffer);
+      }
 
       /* =========================
          ENHANCE / SMOOTH
