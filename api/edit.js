@@ -96,7 +96,7 @@ export default function handler(req, res) {
 
           num_steps: 20,
 
-          strength: 0.20,
+          strength: 0.35,
 
           guidance: 7.5,
         };
@@ -147,43 +147,49 @@ export default function handler(req, res) {
            ORIGINAL + SMILE MASK
            ========================= */
 
-        const finalMaskBuffer =
-          await sharp(maskBuffer)
-            .resize(768, 864, {
-              fit: "fill",
-            })
-            .greyscale()
-            .png()
-            .toBuffer();
+        
+     
+            const originalMeta =
+  await sharp(imageBuffer).metadata();
 
-        const finalBuffer =
-          await sharp(imageBuffer)
-            .resize(768, 864, {
-              fit: "fill",
-            })
-            .composite([
-              {
-                input: outputBuffer,
-
-                blend: "over",
-
-                mask: {
-                  input: finalMaskBuffer,
-                },
-              },
-            ])
-            .png()
-            .toBuffer();
-
-        res.setHeader(
-          "Content-Type",
-          "image/png"
-        );
-
-        return res
-          .status(200)
-          .send(finalBuffer);
+const finalMaskBuffer =
+  await sharp(maskBuffer)
+    .resize(
+      originalMeta.width,
+      originalMeta.height,
+      {
+        fit: "fill",
       }
+    )
+    .greyscale()
+    .png()
+    .toBuffer();
+
+const resizedOutput =
+  await sharp(outputBuffer)
+    .resize(
+      originalMeta.width,
+      originalMeta.height,
+      {
+        fit: "fill",
+      }
+    )
+    .png()
+    .toBuffer();
+
+const finalBuffer =
+  await sharp(imageBuffer)
+    .composite([
+      {
+        input: resizedOutput,
+        blend: "over",
+        mask: {
+          input: finalMaskBuffer,
+        },
+      },
+    ])
+    .png()
+    .toBuffer();
 
       /* =========================
          ENHANCE / SMOOTH
