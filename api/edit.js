@@ -69,13 +69,6 @@ const maskRaw = await sharp(maskBuffer)
   .greyscale()
   .raw()
   .toBuffer();
-const maskRaw = await sharp(maskBuffer)
-  .resize(512, 576, {
-    fit: "fill"
-  })
-  .greyscale()
-  .raw()
-  .toBuffer();
         const cloudflareBody = {
           prompt:
             "Create a subtle natural smile. Change only the mouth expression. Preserve the exact same person, identity, eyes, nose, cheeks, jawline, face shape, skin and hair. Do not change any other part of the face.",
