@@ -61,7 +61,7 @@ export default function handler(req, res) {
           maskFile.filepath
         );
 const imageRaw = await sharp(imageBuffer)
-  .resize(1024, 1152, {
+  .resize(512, 576, {
     fit: "fill"
   })
   .removeAlpha()
@@ -69,7 +69,7 @@ const imageRaw = await sharp(imageBuffer)
   .toBuffer();
 
 const maskRaw = await sharp(maskBuffer)
-  .resize(1024, 1152, {
+  ..resize(512, 576, {
     fit: "fill"
   })
   .greyscale()
@@ -86,9 +86,8 @@ const maskRaw = await sharp(maskBuffer)
 
 mask: Array.from(maskRaw),
 
-          width: 1024,
-
-height: 1152,
+          width: 512,
+height: 576,
 
           num_steps: 20,
 
