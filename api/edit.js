@@ -47,7 +47,8 @@ export default function handler(req, res) {
         Array.isArray(fields.prompt)
           ? fields.prompt[0]
           : fields.prompt ||
-            "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
+            prompt =
+  "Make a very subtle natural photo enhancement. Improve clarity, lighting, exposure and fine details while keeping the original photograph realistic. Preserve the exact same person, identity, facial features, skin texture, skin pores, eyes, nose, mouth, face shape, hair and background. Do not redraw or reconstruct the face. Do not make the skin look smooth, plastic, painted, cartoon-like or AI-generated. Keep natural imperfections and realistic photographic texture. Make the result look like the same original photo taken with a better camera.";
 
       const imageBuffer = fs.readFileSync(
         imageFile.filepath
