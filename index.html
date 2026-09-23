@@ -1,73 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AI Photo Editor</title>
 
 <style>
+*{box-sizing:border-box}
 body{
-    font-family:Arial,sans-serif;
-    text-align:center;
-    margin:0;
-    padding:20px;
-    background:#f5f5f5;
+  margin:0;
+  padding:20px;
+  font-family:Arial,sans-serif;
+  text-align:center;
+  background:#f5f5f5;
 }
-
-h1{
-    margin-bottom:10px;
-}
-
-#photoInput{
-    margin:15px 0;
-}
-
+h1{margin:10px 0}
 #preview{
-    max-width:100%;
-    max-height:500px;
-    display:none;
-    margin:15px auto;
-    border-radius:10px;
+  display:none;
+  max-width:100%;
+  max-height:60vh;
+  margin:15px auto;
+  border-radius:10px;
 }
-
-#workCanvas{
-    display:none;
+#options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+  margin:15px 0;
 }
-
-.optionButton{
-    padding:10px 14px;
-    margin:5px;
-    border:none;
-    border-radius:8px;
-    background:#ddd;
-    font-size:15px;
+.optionButton,#editButton{
+  border:0;
+  border-radius:10px;
+  padding:12px 15px;
+  font-size:15px;
+  cursor:pointer;
 }
-
-.optionButton.selected{
-    background:#222;
-    color:white;
-}
-
+.optionButton{background:#ddd}
+.optionButton.active{background:#222;color:white}
 #editButton{
-    margin-top:15px;
-    padding:12px 25px;
-    border:none;
-    border-radius:8px;
-    background:#007bff;
-    color:white;
-    font-size:17px;
+  background:#007bff;
+  color:white;
+  width:90%;
+  max-width:350px;
 }
-
 #status{
-    margin-top:15px;
-    font-size:15px;
+  min-height:24px;
+  font-size:14px;
+  margin-top:15px;
 }
+canvas{display:none}
 </style>
 </head>
 
 <body>
 
 <h1>AI Photo Editor</h1>
-
 <p>Apni photo select karein:</p>
 
 <input type="file" id="photoInput" accept="image/*">
@@ -75,1536 +62,326 @@ h1{
 <img id="preview" alt="Photo Preview">
 
 <canvas id="workCanvas"></canvas>
+<canvas id="maskCanvas"></canvas>
 
 <div id="options">
-
-<button class="optionButton selected" data-option="enhance">
-✨ Enhance
-</button>
-
-<button class="optionButton" data-option="smooth">
-🧴 Smooth Skin
-</button>
-
-<button class="optionButton" data-option="smile">
-😊 Smile
-</button>
-
-<button class="optionButton" data-option="hair">
-💇 Hair Color
-</button>
-
+  <button class="optionButton active" data-option="enhance">✨ Enhance</button>
+  <button class="optionButton" data-option="smooth">🧴 Smooth Skin</button>
+  <button class="optionButton" data-option="smile">😊 Smile</button>
+  <button class="optionButton" data-option="hair">💇 Hair Color</button>
 </div>
 
-<button id="editButton">
-AI Edit
-</button>
+<button id="editButton">AI Edit</button>
 
 <p id="status"></p>
-
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 
 <script>
+const photoInput=document.getElementById("photoInput");
+const preview=document.getElementById("preview");
+const workCanvas=document.getElementById("workCanvas");
+const maskCanvas=document.getElementById("maskCanvas");
+const editButton=document.getElementById("editButton");
+const status=document.getElementById("status");
+const buttons=document.querySelectorAll(".optionButton");
 
-const photoInput =
-document.getElementById("photoInput");
+let selectedFile=null;
+let selectedOption="enhance";
+let landmarks=null;
 
-const preview =
-document.getElementById("preview");
-
-const workCanvas =
-document.getElementById("workCanvas");
-
-const editButton =
-document.getElementById("editButton");
-
-const status =
-document.getElementById("status");
-
-
-let selectedFile = null;
-let selectedOption = "enhance";
-
-let faceLandmarks = null;
-let faceReady = false;
-
-
-/* =========================
-   OPTIONS
-========================= */
-
-document.querySelectorAll(".optionButton")
-.forEach(button => {
-
-    button.addEventListener("click",() => {
-
-        document.querySelectorAll(".optionButton")
-        .forEach(b =>
-            b.classList.remove("selected")
-        );
-
-        button.classList.add("selected");
-
-        selectedOption =
-        button.dataset.option;
-
-        status.innerText =
-        "Selected: " + selectedOption;
-
-    });
-
+buttons.forEach(button=>{
+  button.onclick=()=>{
+    buttons.forEach(b=>b.classList.remove("active"));
+    button.classList.add("active");
+    selectedOption=button.dataset.option;
+    status.textContent="Selected: "+button.textContent;
+  };
 });
 
+photoInput.onchange=()=>{
+  const file=photoInput.files[0];
+  if(!file)return;
 
-/* =========================
-   PHOTO
-========================= */
+  selectedFile=file;
+  preview.src=URL.createObjectURL(file);
+  preview.style.display="block";
+  status.textContent="Photo ready hai.";
 
-photoInput.addEventListener("change",() => {
+  if(selectedOption==="smile"){
+    setTimeout(detectFace,500);
+  }
+};
 
-    if(
-        !photoInput.files ||
-        !photoInput.files[0]
-    ){
-        return;
-    }
-
-    selectedFile =
-    photoInput.files[0];
-
-    const url =
-    URL.createObjectURL(selectedFile);
-
-    preview.src = url;
-
-    preview.style.display = "block";
-
-    faceReady = false;
-    faceLandmarks = null;
-
-    status.innerText =
-    "Photo load ho rahi hai...";
-
+const faceMesh=new FaceMesh({
+  locateFile:file=>
+    `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
 });
-
-
-/* =========================
-   FACE MESH
-========================= */
-
-const faceMesh =
-new FaceMesh({
-
-    locateFile:(file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-    }
-
-});
-
 
 faceMesh.setOptions({
-
-    maxNumFaces:1,
-
-    refineLandmarks:true,
-
-    minDetectionConfidence:0.3,
-
-    minTrackingConfidence:0.3
-
+  maxNumFaces:1,
+  refineLandmarks:true,
+  minDetectionConfidence:.3,
+  minTrackingConfidence:.3
 });
 
+faceMesh.onResults(results=>{
+  if(results.multiFaceLandmarks &&
+     results.multiFaceLandmarks.length){
 
-faceMesh.onResults((results) => {
-
-    if(
-        results.multiFaceLandmarks &&
-        results.multiFaceLandmarks.length > 0
-    ){
-
-        faceLandmarks =
-        results.multiFaceLandmarks[0];
-
-        faceReady = true;
-
-        status.innerText =
-        "Face detected ✓";
-
-    }else{
-
-        faceLandmarks = null;
-
-        faceReady = false;
-
-        status.innerText =
-        "Face not detected";
-
-    }
-
+    landmarks=results.multiFaceLandmarks[0];
+    status.textContent="Face detected ✓";
+  }else{
+    landmarks=null;
+    status.textContent="Face not detected";
+  }
 });
 
+async function detectFace(){
+  if(!preview.complete)return;
 
-preview.addEventListener("load",async() => {
-
-    if(!preview.src) return;
-
-    try{
-
-        await faceMesh.send({
-            image:preview
-        });
-
-    }catch(error){
-
-        console.log(error);
-
-        faceReady = false;
-
-        status.innerText =
-        "Face detection error";
-
-    }
-
-});
-
-
-/* =========================
-   POINT
-========================= */
-
-function getPoint(index){
-
-    const p =
-    faceLandmarks[index];
-
-    return {
-        x:p.x * preview.naturalWidth,
-        y:p.y * preview.naturalHeight
-    };
-
+  try{
+    await faceMesh.send({image:preview});
+  }catch(e){
+    console.log(e);
+    landmarks=null;
+    status.textContent="Face detection error";
+  }
 }
 
+preview.onload=()=>{
+  if(selectedOption==="smile")detectFace();
+};
 
-/* =========================
-   LOCAL SMILE
-========================= */
+function point(index,w,h){
+  return {
+    x:landmarks[index].x*w,
+    y:landmarks[index].y*h
+  };
+}
+
+function clamp(v,min,max){
+  return Math.max(min,Math.min(max,v));
+}
+
+function sample(ctx,x,y,w,h){
+  x=clamp(x,0,w-1);
+  y=clamp(y,0,h-1);
+
+  const x0=Math.floor(x);
+  const y0=Math.floor(y);
+  const x1=Math.min(x0+1,w-1);
+  const y1=Math.min(y0+1,h-1);
+
+  const fx=x-x0;
+  const fy=y-y0;
+
+  const a=ctx.getImageData(x0,y0,1,1).data;
+  const b=ctx.getImageData(x1,y0,1,1).data;
+  const c=ctx.getImageData(x0,y1,1,1).data;
+  const d=ctx.getImageData(x1,y1,1,1).data;
+
+  return [
+    a[0]*(1-fx)*(1-fy)+b[0]*fx*(1-fy)+
+    c[0]*(1-fx)*fy+d[0]*fx*fy,
+
+    a[1]*(1-fx)*(1-fy)+b[1]*fx*(1-fy)+
+    c[1]*(1-fx)*fy+d[1]*fx*fy,
+
+    a[2]*(1-fx)*(1-fy)+b[2]*fx*(1-fy)+
+    c[2]*(1-fx)*fy+d[2]*fx*fy
+  ];
+}
 
 function makeSmile(){
 
-    if(
-        !faceReady ||
-        !faceLandmarks
-    ){
+  if(!landmarks){
+    status.textContent="Pehle face detect hona zaroori hai.";
+    return false;
+  }
 
-        status.innerText =
-        "Face detect nahi hua.";
+  const w=preview.naturalWidth;
+  const h=preview.naturalHeight;
 
-        return null;
+  workCanvas.width=w;
+  workCanvas.height=h;
+
+  maskCanvas.width=w;
+  maskCanvas.height=h;
+
+  const src=workCanvas.getContext("2d");
+  const out=workCanvas.getContext("2d");
+  const mask=maskCanvas.getContext("2d");
+
+  src.clearRect(0,0,w,h);
+  src.drawImage(preview,0,0,w,h);
+
+  const left=point(61,w,h);
+  const right=point(291,w,h);
+  const upper=point(13,w,h);
+  const lower=point(14,w,h);
+
+  const mouthWidth=Math.abs(right.x-left.x);
+  const mouthHeight=Math.abs(lower.y-upper.y);
+
+  const padX=mouthWidth*.9;
+  const padY=Math.max(mouthHeight*4,40);
+
+  const x0=Math.max(0,Math.floor(left.x-padX));
+  const y0=Math.max(0,Math.floor(upper.y-padY));
+  const x1=Math.min(w,Math.ceil(right.x+padX));
+  const y1=Math.min(h,Math.ceil(lower.y+padY));
+
+  const cw=x1-x0;
+  const ch=y1-y0;
+
+  const temp=document.createElement("canvas");
+  temp.width=cw;
+  temp.height=ch;
+
+  const tc=temp.getContext("2d");
+  tc.drawImage(preview,x0,y0,cw,ch);
+
+  const original=tc.getImageData(0,0,cw,ch);
+  const result=tc.createImageData(cw,ch);
+
+  const lift=clamp(mouthWidth*.055,5,14);
+
+  const centerX=(left.x+right.x)/2-x0;
+  const centerY=(upper.y+lower.y)/2-y0;
+
+  for(let y=0;y<ch;y++){
+
+    for(let x=0;x<cw;x++){
+
+      const nx=(x-centerX)/(mouthWidth*.9);
+      const ny=(y-centerY)/(mouthHeight*3.5);
+
+      const dist=Math.sqrt(nx*nx+ny*ny);
+
+      let influence=0;
+
+      if(dist<1){
+        const corner=Math.abs(nx);
+        influence=(1-dist)*Math.pow(corner,1.5);
+      }
+
+      const sourceX=x;
+      const sourceY=y+lift*influence;
+
+      const sx=clamp(Math.floor(sourceX),0,cw-1);
+      const sy=clamp(Math.floor(sourceY),0,ch-1);
+
+      const si=(sy*cw+sx)*4;
+      const di=(y*cw+x)*4;
+
+      result.data[di]=original.data[si];
+      result.data[di+1]=original.data[si+1];
+      result.data[di+2]=original.data[si+2];
+      result.data[di+3]=original.data[si+3];
+    }
+  }
+
+  tc.putImageData(result,0,0);
+
+  out.clearRect(0,0,w,h);
+  out.drawImage(preview,0,0,w,h);
+  out.drawImage(temp,x0,y0);
+
+  mask.clearRect(0,0,w,h);
+
+  const gradient=mask.createRadialGradient(
+    centerX+x0,
+    centerY+y0,
+    mouthWidth*.2,
+    centerX+x0,
+    centerY+y0,
+    mouthWidth*.9
+  );
+
+  gradient.addColorStop(0,"white");
+  gradient.addColorStop(.65,"rgba(255,255,255,.7)");
+  gradient.addColorStop(1,"transparent");
+
+  mask.fillStyle=gradient;
+  mask.fillRect(x0,y0,cw,ch);
+
+  preview.src=workCanvas.toDataURL("image/jpeg",.95);
+
+  status.textContent="Smile effect applied ✓";
+
+  return true;
+}
+
+async function aiEdit(){
+
+  if(!selectedFile){
+    status.textContent="Pehle photo select karein.";
+    return;
+  }
+
+  if(selectedOption==="smile"){
+    makeSmile();
+    return;
+  }
+
+  status.textContent="AI photo edit kar raha hai...";
+  editButton.disabled=true;
+
+  try{
+
+    const formData=new FormData();
+    formData.append("image",selectedFile);
+
+    let prompt="";
+
+    if(selectedOption==="enhance"){
+      prompt=
+      "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
     }
 
-
-    const W =
-    preview.naturalWidth;
-
-    const H =
-    preview.naturalHeight;
-
-
-    /*
-       Original photo.
-       Is canvas ko kabhi deform
-       nahi kiya jayega.
-    */
-
-    const finalCanvas =
-    document.createElement("canvas");
-
-    finalCanvas.width = W;
-    finalCanvas.height = H;
-
-    const finalCtx =
-    finalCanvas.getContext("2d");
-
-    finalCtx.drawImage(
-        preview,
-        0,
-        0,
-        W,
-        H
-    );
-
-
-    /*
-       Mouth landmarks
-    */
-
-    const left =
-    getPoint(61);
-
-    const right =
-    getPoint(291);
-
-    const upper =
-    getPoint(13);
-
-    const lower =
-    getPoint(14);
-
-
-    const mouthWidth =
-    Math.abs(right.x-left.x);
-
-
-    /*
-       Only a VERY small movement.
-    */
-
-    const lift =
-    Math.max(
-        2,
-        Math.min(
-            6,
-            mouthWidth * 0.025
-        )
-    );
-
-
-    /*
-       Crop only the mouth region.
-    */
-
-    const paddingX =
-    mouthWidth * 0.30;
-
-    const mouthHeight =
-    Math.max(
-        25,
-        Math.abs(lower.y-upper.y)
-    );
-
-
-    const paddingY =
-    mouthHeight * 2.2;
-
-
-    const sx =
-    Math.max(
-        0,
-        left.x-paddingX
-    );
-
-    const sy =
-    Math.max(
-        0,
-        upper.y-paddingY
-    );
-
-
-    const ex =
-    Math.min(
-        W,
-        right.x+paddingX
-    );
-
-    const ey =
-    Math.min(
-        H,
-        lower.y+paddingY
-    );
-
-
-    const sw =
-    ex-sx;
-
-    const sh =
-    ey-sy;
-
-
-    /*
-       Temporary mouth canvas.
-    */
-
-    const mouthCanvas =
-    document.createElement("canvas");
-
-    mouthCanvas.width = sw;
-    mouthCanvas.height = sh;
-
-
-    const mouthCtx =
-    mouthCanvas.getContext("2d");
-
-    mouthCtx.drawImage(
-        preview,
-        sx,
-        sy,
-        sw,
-        sh,
-        0,
-        0,
-        sw,
-        sh
-    );
-
-
-    /*
-       Destination canvas.
-    */
-
-    const warpedCanvas =
-    document.createElement("canvas");
-
-    warpedCanvas.width = sw;
-    warpedCanvas.height = sh;
-
-
-    const warpedCtx =
-    warpedCanvas.getContext("2d");
-
-
-    /*
-       Very subtle curved deformation.
-
-       Left and right sides rise.
-       Center stays almost unchanged.
-    */
-
-    const imageData =
-    mouthCtx.getImageData(
-        0,
-        0,
-        sw,
-        sh
-    );
-
-    const src =
-    imageData.data;
-
-
-    const output =
-    warpedCtx.createImageData(
-        sw,
-        sh
-    );
-
-    const dst =
-    output.data;
-
-
-    const centerX =
-    sw / 2;
-
-
-    const centerY =
-    upper.y-sy;
-
-
-    const radiusX =
-    sw * 0.48;
-
-
-    const radiusY =
-    sh * 0.42;
-
-
-    for(
-        let y=0;
-        y<sh;
-        y++
-    ){
-
-        for(
-            let x=0;
-            x<sw;
-            x++
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Photo Editor</title>
-
-<style>
-body{
-    font-family:Arial,sans-serif;
-    text-align:center;
-    margin:0;
-    padding:20px;
-    background:#f5f5f5;
-}
-
-h1{
-    margin-bottom:10px;
-}
-
-#photoInput{
-    margin:15px 0;
-}
-
-#preview{
-    max-width:100%;
-    max-height:500px;
-    display:none;
-    margin:15px auto;
-    border-radius:10px;
-}
-
-#workCanvas{
-    display:none;
-}
-
-.optionButton{
-    padding:10px 14px;
-    margin:5px;
-    border:none;
-    border-radius:8px;
-    background:#ddd;
-    font-size:15px;
-}
-
-.optionButton.selected{
-    background:#222;
-    color:white;
-}
-
-#editButton{
-    margin-top:15px;
-    padding:12px 25px;
-    border:none;
-    border-radius:8px;
-    background:#007bff;
-    color:white;
-    font-size:17px;
-}
-
-#status{
-    margin-top:15px;
-    font-size:15px;
-}
-</style>
-</head>
-
-<body>
-
-<h1>AI Photo Editor</h1>
-
-<p>Apni photo select karein:</p>
-
-<input type="file" id="photoInput" accept="image/*">
-
-<img id="preview" alt="Photo Preview">
-
-<canvas id="workCanvas"></canvas>
-
-<div id="options">
-
-<button class="optionButton selected" data-option="enhance">
-✨ Enhance
-</button>
-
-<button class="optionButton" data-option="smooth">
-🧴 Smooth Skin
-</button>
-
-<button class="optionButton" data-option="smile">
-😊 Smile
-</button>
-
-<button class="optionButton" data-option="hair">
-💇 Hair Color
-</button>
-
-</div>
-
-<button id="editButton">
-AI Edit
-</button>
-
-<p id="status"></p>
-
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-
-<script>
-
-const photoInput =
-document.getElementById("photoInput");
-
-const preview =
-document.getElementById("preview");
-
-const workCanvas =
-document.getElementById("workCanvas");
-
-const editButton =
-document.getElementById("editButton");
-
-const status =
-document.getElementById("status");
-
-
-let selectedFile = null;
-let selectedOption = "enhance";
-
-let faceLandmarks = null;
-let faceReady = false;
-
-
-/* =========================
-   OPTIONS
-========================= */
-
-document.querySelectorAll(".optionButton")
-.forEach(button => {
-
-    button.addEventListener("click",() => {
-
-        document.querySelectorAll(".optionButton")
-        .forEach(b =>
-            b.classList.remove("selected")
-        );
-
-        button.classList.add("selected");
-
-        selectedOption =
-        button.dataset.option;
-
-        status.innerText =
-        "Selected: " + selectedOption;
-
+    if(selectedOption==="smooth"){
+      prompt=
+      "Retouch the person's facial skin professionally. Clearly smooth the skin and reduce acne, pimples, blemishes, dark spots, uneven skin texture and fine lines. Make the skin clean, soft, fresh and naturally polished while preserving realistic skin texture. Keep the exact same person, face shape, eyes, nose, lips, hairstyle and identity unchanged. Do not change facial features. Do not make the skin plastic, blurry or overly airbrushed. Only improve the skin.";
+    }
+
+    if(selectedOption==="hair"){
+      prompt=
+      "Keep the person's identity and face unchanged. Naturally improve and enhance the hair appearance while keeping the original hairstyle.";
+    }
+
+    formData.append("prompt",prompt);
+
+    const response=await fetch("/api/edit",{
+      method:"POST",
+      body:formData
     });
 
-});
-
-
-/* =========================
-   PHOTO
-========================= */
-
-photoInput.addEventListener("change",() => {
-
-    if(
-        !photoInput.files ||
-        !photoInput.files[0]
-    ){
-        return;
+    if(!response.ok){
+      throw new Error("Server error");
     }
 
-    selectedFile =
-    photoInput.files[0];
+    const blob=await response.blob();
 
-    const url =
-    URL.createObjectURL(selectedFile);
+    preview.onload=null;
+    preview.src=URL.createObjectURL(blob);
+    preview.style.display="block";
 
-    preview.src = url;
+    status.textContent="AI Edit complete ✓";
 
-    preview.style.display = "block";
+  }catch(error){
 
-    faceReady = false;
-    faceLandmarks = null;
+    console.error(error);
+    status.textContent="AI Edit failed.";
 
-    status.innerText =
-    "Photo load ho rahi hai...";
+  }finally{
 
-});
-
-
-/* =========================
-   FACE MESH
-========================= */
-
-const faceMesh =
-new FaceMesh({
-
-    locateFile:(file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-    }
-
-});
-
-
-faceMesh.setOptions({
-
-    maxNumFaces:1,
-
-    refineLandmarks:true,
-
-    minDetectionConfidence:0.3,
-
-    minTrackingConfidence:0.3
-
-});
-
-
-faceMesh.onResults((results) => {
-
-    if(
-        results.multiFaceLandmarks &&
-        results.multiFaceLandmarks.length > 0
-    ){
-
-        faceLandmarks =
-        results.multiFaceLandmarks[0];
-
-        faceReady = true;
-
-        status.innerText =
-        "Face detected ✓";
-
-    }else{
-
-        faceLandmarks = null;
-
-        faceReady = false;
-
-        status.innerText =
-        "Face not detected";
-
-    }
-
-});
-
-
-preview.addEventListener("load",async() => {
-
-    if(!preview.src) return;
-
-    try{
-
-        await faceMesh.send({
-            image:preview
-        });
-
-    }catch(error){
-
-        console.log(error);
-
-        faceReady = false;
-
-        status.innerText =
-        "Face detection error";
-
-    }
-
-});
-
-
-/* =========================
-   POINT
-========================= */
-
-function getPoint(index){
-
-    const p =
-    faceLandmarks[index];
-
-    return {
-        x:p.x * preview.naturalWidth,
-        y:p.y * preview.naturalHeight
-    };
-
+    editButton.disabled=false;
+  }
 }
 
-
-/* =========================
-   LOCAL SMILE
-========================= */
-
-function makeSmile(){
-
-    if(
-        !faceReady ||
-        !faceLandmarks
-    ){
-
-        status.innerText =
-        "Face detect nahi hua.";
-
-        return null;
-    }
-
-
-    const W =
-    preview.naturalWidth;
-
-    const H =
-    preview.naturalHeight;
-
-
-    /*
-       Original photo.
-       Is canvas ko kabhi deform
-       nahi kiya jayega.
-    */
-
-    const finalCanvas =
-    document.createElement("canvas");
-
-    finalCanvas.width = W;
-    finalCanvas.height = H;
-
-    const finalCtx =
-    finalCanvas.getContext("2d");
-
-    finalCtx.drawImage(
-        preview,
-        0,
-        0,
-        W,
-        H
-    );
-
-
-    /*
-       Mouth landmarks
-    */
-
-    const left =
-    getPoint(61);
-
-    const right =
-    getPoint(291);
-
-    const upper =
-    getPoint(13);
-
-    const lower =
-    getPoint(14);
-
-
-    const mouthWidth =
-    Math.abs(right.x-left.x);
-
-
-    /*
-       Only a VERY small movement.
-    */
-
-    const lift =
-    Math.max(
-        2,
-        Math.min(
-            6,
-            mouthWidth * 0.025
-        )
-    );
-
-
-    /*
-       Crop only the mouth region.
-    */
-
-    const paddingX =
-    mouthWidth * 0.30;
-
-    const mouthHeight =
-    Math.max(
-        25,
-        Math.abs(lower.y-upper.y)
-    );
-
-
-    const paddingY =
-    mouthHeight * 2.2;
-
-
-    const sx =
-    Math.max(
-        0,
-        left.x-paddingX
-    );
-
-    const sy =
-    Math.max(
-        0,
-        upper.y-paddingY
-    );
-
-
-    const ex =
-    Math.min(
-        W,
-        right.x+paddingX
-    );
-
-    const ey =
-    Math.min(
-        H,
-        lower.y+paddingY
-    );
-
-
-    const sw =
-    ex-sx;
-
-    const sh =
-    ey-sy;
-
-
-    /*
-       Temporary mouth canvas.
-    */
-
-    const mouthCanvas =
-    document.createElement("canvas");
-
-    mouthCanvas.width = sw;
-    mouthCanvas.height = sh;
-
-
-    const mouthCtx =
-    mouthCanvas.getContext("2d");
-
-    mouthCtx.drawImage(
-        preview,
-        sx,
-        sy,
-        sw,
-        sh,
-        0,
-        0,
-        sw,
-        sh
-    );
-
-
-    /*
-       Destination canvas.
-    */
-
-    const warpedCanvas =
-    document.createElement("canvas");
-
-    warpedCanvas.width = sw;
-    warpedCanvas.height = sh;
-
-
-    const warpedCtx =
-    warpedCanvas.getContext("2d");
-
-
-    /*
-       Very subtle curved deformation.
-
-       Left and right sides rise.
-       Center stays almost unchanged.
-    */
-
-    const imageData =
-    mouthCtx.getImageData(
-        0,
-        0,
-        sw,
-        sh
-    );
-
-    const src =
-    imageData.data;
-
-
-    const output =
-    warpedCtx.createImageData(
-        sw,
-        sh
-    );
-
-    const dst =
-    output.data;
-
-
-    const centerX =
-    sw / 2;
-
-
-    const centerY =
-    upper.y-sy;
-
-
-    const radiusX =
-    sw * 0.48;
-
-
-    const radiusY =
-    sh * 0.42;
-
-
-    for(
-        let y=0;
-        y<sh;
-        y++
-    ){
-
-        for(
-            let x=0;
-            x<sw;
-            x++
-        ){
-
-            /*
-               Horizontal distance
-               from mouth center.
-            */
-
-            const nx =
-            (x-centerX)/radiusX;
-
-
-            /*
-               Vertical distance.
-            */
-
-            const ny =
-            (y-centerY)/radiusY;
-
-
-            const dist =
-            nx*nx + ny*ny;
-
-
-            let sourceY = y;
-
-
-            if(dist < 1){
-
-                /*
-                   Corners move upward,
-                   center stays stable.
-                */
-
-                const corner =
-                Math.abs(nx);
-
-
-                const influence =
-                (1-dist) *
-                corner *
-                corner;
-
-
-                sourceY =
-                y +
-                lift * influence;
-
-            }
-
-
-            sourceY =
-            Math.max(
-                0,
-                Math.min(
-                    sh-1,
-                    sourceY
-                )
-            );
-
-
-            const y0 =
-            Math.floor(sourceY);
-
-            const y1 =
-            Math.min(
-                sh-1,
-                y0+1
-            );
-
-
-            const frac =
-            sourceY-y0;
-
-
-            const i0 =
-            (y0*sw+x)*4;
-
-            const i1 =
-            (y1*sw+x)*4;
-
-            const di =
-            (y*sw+x)*4;
-
-
-            for(
-                let c=0;
-                c<4;
-                c++
-            ){
-
-                dst[di+c] =
-                src[i0+c]*(1-frac)
-                +
-                src[i1+c]*frac;
-
-            }
-
-        }
-
-    }
-
-
-    warpedCtx.putImageData(
-        output,
-        0,
-        0
-    );
-
-
-    /*
-       Soft mask.
-
-       Only the mouth crop gets
-       composited.
-    */
-
-    const maskCanvas =
-    document.createElement("canvas");
-
-    maskCanvas.width = sw;
-    maskCanvas.height = sh;
-
-
-    const maskCtx =
-    maskCanvas.getContext("2d");
-
-
-    const gradient =
-    maskCtx.createRadialGradient(
-        sw/2,
-        sh/2,
-        sw*0.15,
-        sw/2,
-        sh/2,
-        sw*0.55
-    );
-
-
-    gradient.addColorStop(
-        0,
-        "rgba(255,255,255,1)"
-    );
-
-    gradient.addColorStop(
-        0.65,
-        "rgba(255,255,255,0.8)"
-    );
-
-    gradient.addColorStop(
-        1,
-        "rgba(255,255,255,0)"
-    );
-
-
-    maskCtx.fillStyle =
-    gradient;
-
-    maskCtx.fillRect(
-        0,
-        0,
-        sw,
-        sh
-    );
-
-
-    /*
-       Apply mask.
-    */
-
-    warpedCtx.globalCompositeOperation =
-    "destination-in";
-
-    warpedCtx.drawImage(
-        maskCanvas,
-        0,
-        0
-    );
-
-
-    /*
-       Composite ONLY the mouth crop.
-    */
-
-    finalCtx.drawImage(
-        warpedCanvas,
-        sx,
-        sy
-    );
-
-
-    return finalCanvas;
-
-}
-
-
-/* =========================
-   AI EDIT BUTTON
-========================= */
-
-editButton.addEventListener(
-"click",
-async() => {
-
-    if(!selectedFile){
-
-        status.innerText =
-        "Pehle photo select karein.";
-
-        return;
-
-    }
-
-
-    /* =====================
-       LOCAL SMILE
-    ===================== */
-
-    if(selectedOption === "smile"){
-
-        status.innerText =
-        "Natural smile bana raha hoon...";
-
-
-        const result =
-        makeSmile();
-
-
-        if(!result){
-            return;
-        }
-
-
-        result.toBlob(
-        (blob)=>{
-
-            if(!blob){
-
-                status.innerText =
-                "Smile edit failed.";
-
-                return;
-            }
-
-
-            const url =
-            URL.createObjectURL(blob);
-
-
-            /*
-               MediaPipe result par
-               dobara run nahi hoga.
-            */
-
-            preview.onload = null;
-
-            preview.src = url;
-
-            preview.style.display =
-            "block";
-
-
-            status.innerText =
-            "Smile edit complete ✓";
-
-        },
-        "image/jpeg",
-        0.98
-        );
-
-
-        return;
-
-    }
-
-
-    /* =====================
-       OTHER AI FEATURES
-    ===================== */
-
-    status.innerText =
-    "AI photo edit kar raha hai...";
-
-
-    try{
-
-        const formData =
-        new FormData();
-
-        formData.append(
-            "image",
-            selectedFile
-        );
-
-
-        let prompt = "";
-
-
-        if(selectedOption === "enhance"){
-
-            prompt =
-            "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
-
-        }
-
-
-        if(selectedOption === "smooth"){
-
-            prompt =
-            "Retouch the person's facial skin professionally. Clearly smooth the skin and reduce acne, pimples, blemishes, dark spots, uneven skin texture and fine lines. Make the skin look clean, soft, fresh and naturally polished while preserving realistic skin texture. Keep the exact same person, face shape, eyes, nose, lips, hairstyle and identity unchanged. Do not change facial features. Do not make the skin plastic, blurry or overly airbrushed. Only improve the skin.";
-
-        }
-
-
-        if(selectedOption === "hair"){
-
-            prompt =
-            "Keep the person's identity and face unchanged. Naturally improve and enhance the hair appearance while keeping the original hairstyle.";
-
-        }
-
-
-        formData.append(
-            "prompt",
-            prompt
-        );
-
-
-        const response =
-        await fetch(
-            "/api/edit",
-            {
-                method:"POST",
-                body:formData
-            }
-        );
-
-
-        if(!response.ok){
-
-            throw new Error(
-                "AI edit failed"
-            );
-
-        }
-
-
-        const blob =
-        await response.blob();
-
-
-        const url =
-        URL.createObjectURL(blob);
-
-
-        preview.onload = null;
-
-        preview.src = url;
-
-        preview.style.display =
-        "block";
-
-
-        status.innerText =
-        "AI Edit complete ✓";
-
-
-    }catch(error){
-
-        console.log(error);
-
-        status.innerText =
-        "AI Edit failed.";
-
-    }
-
-});
-
+editButton.onclick=aiEdit;
 </script>
 
 </body>
-</html>￼Enter  ){
-
-            /*
-               Horizontal distance
-               from mouth center.
-            */
-
-            const nx =
-            (x-centerX)/radiusX;
-
-
-            /*
-               Vertical distance.
-            */
-
-            const ny =
-            (y-centerY)/radiusY;
-
-
-            const dist =
-            nx*nx + ny*ny;
-
-
-            let sourceY = y;
-
-
-            if(dist < 1){
-
-                /*
-                   Corners move upward,
-                   center stays stable.
-                */
-
-                const corner =
-                Math.abs(nx);
-
-
-                const influence =
-                (1-dist) *
-                corner *
-                corner;
-
-
-                sourceY =
-                y +
-                lift * influence;
-
-            }
-
-
-            sourceY =
-            Math.max(
-                0,
-                Math.min(
-                    sh-1,
-                    sourceY
-                )
-            );
-
-
-            const y0 =
-            Math.floor(sourceY);
-
-            const y1 =
-            Math.min(
-                sh-1,
-                y0+1
-            );
-
-
-            const frac =
-            sourceY-y0;
-
-
-            const i0 =
-            (y0*sw+x)*4;
-
-            const i1 =
-            (y1*sw+x)*4;
-
-            const di =
-            (y*sw+x)*4;
-
-
-            for(
-                let c=0;
-                c<4;
-                c++
-            ){
-
-                dst[di+c] =
-                src[i0+c]*(1-frac)
-                +
-                src[i1+c]*frac;
-
-            }
-
-        }
-
-    }
-
-
-    warpedCtx.putImageData(
-        output,
-        0,
-        0
-    );
-
-
-    /*
-       Soft mask.
-
-       Only the mouth crop gets
-       composited.
-    */
-
-    const maskCanvas =
-    document.createElement("canvas");
-
-    maskCanvas.width = sw;
-    maskCanvas.height = sh;
-
-
-    const maskCtx =
-    maskCanvas.getContext("2d");
-
-
-    const gradient =
-    maskCtx.createRadialGradient(
-        sw/2,
-        sh/2,
-        sw*0.15,
-        sw/2,
-        sh/2,
-        sw*0.55
-    );
-
-
-    gradient.addColorStop(
-        0,
-        "rgba(255,255,255,1)"
-    );
-
-    gradient.addColorStop(
-        0.65,
-        "rgba(255,255,255,0.8)"
-    );
-
-    gradient.addColorStop(
-        1,
-        "rgba(255,255,255,0)"
-    );
-
-
-    maskCtx.fillStyle =
-    gradient;
-
-    maskCtx.fillRect(
-        0,
-        0,
-        sw,
-        sh
-    );
-
-
-    /*
-       Apply mask.
-    */
-
-    warpedCtx.globalCompositeOperation =
-    "destination-in";
-
-    warpedCtx.drawImage(
-        maskCanvas,
-        0,
-        0
-    );
-
-
-    /*
-       Composite ONLY the mouth crop.
-    */
-
-    finalCtx.drawImage(
-        warpedCanvas,
-        sx,
-        sy
-    );
-
-
+</html>
