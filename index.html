@@ -5,475 +5,640 @@
 <title>AI Photo Editor</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
+
 body{
   margin:0;
-  padding:20px;
+  min-height:100vh;
   font-family:Arial,sans-serif;
-  text-align:center;
-  background:#f5f5f5;
+  background:#f4f5f8;
+  color:#17181c;
 }
-h1{margin:10px 0}
+
+.app{
+  width:100%;
+  max-width:520px;
+  margin:auto;
+  padding:18px 16px 30px;
+}
+
+/* HEADER */
+
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:22px;
+}
+
+.logo{
+  font-size:22px;
+  font-weight:700;
+}
+
+.logo span{
+  font-size:25px;
+}
+
+.badge{
+  background:#e9eaff;
+  color:#4b4fd8;
+  padding:7px 11px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+}
+
+/* TITLE */
+
+.title{
+  margin-bottom:18px;
+}
+
+.title h1{
+  margin:0 0 7px;
+  font-size:29px;
+  line-height:1.15;
+}
+
+.title p{
+  margin:0;
+  color:#70727a;
+  font-size:14px;
+}
+
+/* PHOTO AREA */
+
+.photoBox{
+  width:100%;
+  min-height:300px;
+  background:#fff;
+  border-radius:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-shadow:0 5px 20px rgba(0,0,0,.07);
+  margin-bottom:18px;
+  position:relative;
+}
+
 #preview{
   display:none;
-  max-width:100%;
-  max-height:60vh;
-  margin:15px auto;
-  border-radius:10px;
+  width:100%;
+  max-height:55vh;
+  object-fit:contain;
 }
-#options{
+
+.emptyPhoto{
+  text-align:center;
+  padding:35px 20px;
+  color:#777;
+}
+
+.uploadIcon{
+  width:70px;
+  height:70px;
+  margin:auto;
+  border-radius:20px;
+  background:#eeeeff;
   display:flex;
-  flex-wrap:wrap;
-  gap:8px;
+  align-items:center;
   justify-content:center;
-  margin:15px 0;
+  font-size:32px;
+  margin-bottom:15px;
 }
-.optionButton,#editButton{
-  border:0;
-  border-radius:10px;
-  padding:12px 15px;
-  font-size:15px;
-  cursor:pointer;
+
+.emptyPhoto h3{
+  margin:0 0 7px;
+  color:#222;
 }
-.optionButton{background:#ddd}
-.optionButton.active{background:#222;color:white}
-#editButton{
-  background:#007bff;
+
+.emptyPhoto p{
+  margin:0;
+  font-size:13px;
+}
+
+/* UPLOAD */
+
+.uploadButton{
+  display:block;
+  width:100%;
+  background:#17181c;
   color:white;
-  width:90%;
-  max-width:350px;
+  text-align:center;
+  padding:15px;
+  border-radius:14px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  margin-bottom:22px;
 }
+
+#photoInput{
+  display:none;
+}
+
+/* TOOLS */
+
+.sectionTitle{
+  font-size:16px;
+  font-weight:700;
+  margin:0 0 11px;
+}
+
+.tools{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:22px;
+}
+
+.tool{
+  border:0;
+  background:#fff;
+  border-radius:17px;
+  padding:16px 7px;
+  cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+  color:#25262b;
+  transition:.15s;
+}
+
+.tool:active{
+  transform:scale(.97);
+}
+
+.tool.active{
+  background:#202126;
+  color:white;
+  box-shadow:0 5px 15px rgba(0,0,0,.15);
+}
+
+.toolIcon{
+  font-size:25px;
+  display:block;
+  margin-bottom:7px;
+}
+
+.toolName{
+  font-size:12px;
+  font-weight:600;
+}
+
+/* EDIT BUTTON */
+
+#editButton{
+  width:100%;
+  border:0;
+  border-radius:16px;
+  padding:17px;
+  background:#5b5ee8;
+  color:white;
+  font-size:17px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 7px 18px rgba(91,94,232,.25);
+}
+
+#editButton:active{
+  transform:scale(.98);
+}
+
+#editButton:disabled{
+  opacity:.6;
+}
+
+/* STATUS */
+
+.statusBox{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  margin-top:14px;
+}
+
 #status{
-  min-height:24px;
-  font-size:14px;
-  margin-top:15px;
+  margin:0;
+  color:#666871;
+  font-size:13px;
 }
-canvas{display:none}
+
+/* LOADING */
+
+.loader{
+  display:none;
+  width:18px;
+  height:18px;
+  border:3px solid rgba(255,255,255,.4);
+  border-top-color:white;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  margin:auto;
+}
+
+@keyframes spin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+/* MOBILE */
+
+@media(max-width:380px){
+
+  .title h1{
+    font-size:25px;
+  }
+
+  .tools{
+    gap:7px;
+  }
+
+  .tool{
+    padding:14px 5px;
+  }
+
+}
 </style>
 </head>
 
 <body>
 
-<h1>AI Photo Editor</h1>
-<p>Apni photo select karein:</p>
+<div class="app">
 
-<input type="file" id="photoInput" accept="image/*">
+  <div class="header">
+    <div class="logo">
+      <span>✨</span> AI Photo Editor
+    </div>
 
-<img id="preview" alt="Photo Preview">
+    <div class="badge">
+      AI Powered
+    </div>
+  </div>
 
-<canvas id="workCanvas"></canvas>
-<canvas id="maskCanvas"></canvas>
 
-<div id="options">
-  <button class="optionButton active" data-option="enhance">✨ Enhance</button>
-  <button class="optionButton" data-option="smooth">🧴 Smooth Skin</button>
-  <button class="optionButton" data-option="smile">😊 Smile</button>
-  <button class="optionButton" data-option="hair">💇 Hair Color</button>
+  <div class="title">
+    <h1>Make your photos better.</h1>
+    <p>Choose a photo and select an AI editing tool.</p>
+  </div>
+
+
+  <!-- PHOTO PREVIEW -->
+
+  <div class="photoBox">
+
+    <div class="emptyPhoto" id="emptyPhoto">
+
+      <div class="uploadIcon">
+        📸
+      </div>
+
+      <h3>Add your photo</h3>
+
+      <p>
+        Select a photo to start editing
+      </p>
+
+    </div>
+
+    <img
+      id="preview"
+      alt="Photo Preview"
+    >
+
+  </div>
+
+
+  <!-- UPLOAD -->
+
+  <label
+    class="uploadButton"
+    for="photoInput"
+  >
+    ＋ Add Photo
+  </label>
+
+  <input
+    type="file"
+    id="photoInput"
+    accept="image/*"
+  >
+
+
+  <!-- TOOLS -->
+
+  <div class="sectionTitle">
+    Choose an edit
+  </div>
+
+  <div class="tools">
+
+    <button
+      class="tool active"
+      data-option="enhance"
+    >
+      <span class="toolIcon">✨</span>
+      <span class="toolName">Enhance</span>
+    </button>
+
+    <button
+      class="tool"
+      data-option="smooth"
+    >
+      <span class="toolIcon">🧴</span>
+      <span class="toolName">Smooth Skin</span>
+    </button>
+
+    <button
+      class="tool"
+      data-option="hair"
+    >
+      <span class="toolIcon">💇</span>
+      <span class="toolName">Hair</span>
+    </button>
+
+  </div>
+
+
+  <!-- EDIT -->
+
+  <button id="editButton">
+
+    <span id="buttonText">
+      ✨ Apply AI Edit
+    </span>
+
+    <span
+      class="loader"
+      id="loader"
+    ></span>
+
+  </button>
+
+
+  <div class="statusBox">
+    <p id="status"></p>
+  </div>
+
 </div>
 
-<button id="editButton">AI Edit</button>
-
-<p id="status"></p>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 
 <script>
-const photoInput=document.getElementById("photoInput");
-const preview=document.getElementById("preview");
-const workCanvas=document.getElementById("workCanvas");
-const maskCanvas=document.getElementById("maskCanvas");
-const editButton=document.getElementById("editButton");
-const status=document.getElementById("status");
-const buttons=document.querySelectorAll(".optionButton");
-
-let selectedFile=null;
-let selectedOption="enhance";
-let landmarks=null;
-
-buttons.forEach(button=>{
-  button.onclick=()=>{
-    buttons.forEach(b=>b.classList.remove("active"));
-    button.classList.add("active");
-    selectedOption=button.dataset.option;
-    status.textContent="Selected: "+button.textContent;
-  };
-});
-
-photoInput.onchange=()=>{
-  const file=photoInput.files[0];
-  if(!file)return;
-
-  selectedFile=file;
-  preview.src=URL.createObjectURL(file);
-  preview.style.display="block";
-  status.textContent="Photo ready hai.";
-
-  if(selectedOption==="smile"){
-    setTimeout(detectFace,500);
-  }
-};
-
-const faceMesh=new FaceMesh({
-  locateFile:file=>
-    `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
-});
-
-faceMesh.setOptions({
-  maxNumFaces:1,
-  refineLandmarks:true,
-  minDetectionConfidence:.3,
-  minTrackingConfidence:.3
-});
-
-faceMesh.onResults(results=>{
-  if(results.multiFaceLandmarks &&
-     results.multiFaceLandmarks.length){
-
-    landmarks=results.multiFaceLandmarks[0];
-    status.textContent="Face detected ✓";
-  }else{
-    landmarks=null;
-    status.textContent="Face not detected";
-  }
-});
-
-async function detectFace(){
-  if(!preview.complete)return;
-
-  try{
-    await faceMesh.send({image:preview});
-  }catch(e){
-    console.log(e);
-    landmarks=null;
-    status.textContent="Face detection error";
-  }
-}
-
-preview.onload=()=>{
-  if(selectedOption==="smile")detectFace();
-};
-
-function point(index,w,h){
-  return {
-    x:landmarks[index].x*w,
-    y:landmarks[index].y*h
-  };
-}
-
-function clamp(v,min,max){
-  return Math.max(min,Math.min(max,v));
-}
-
-function sample(ctx,x,y,w,h){
-  x=clamp(x,0,w-1);
-  y=clamp(y,0,h-1);
-
-  const x0=Math.floor(x);
-  const y0=Math.floor(y);
-  const x1=Math.min(x0+1,w-1);
-  const y1=Math.min(y0+1,h-1);
-
-  const fx=x-x0;
-  const fy=y-y0;
-
-  const a=ctx.getImageData(x0,y0,1,1).data;
-  const b=ctx.getImageData(x1,y0,1,1).data;
-  const c=ctx.getImageData(x0,y1,1,1).data;
-  const d=ctx.getImageData(x1,y1,1,1).data;
 
-  return [
-    a[0]*(1-fx)*(1-fy)+b[0]*fx*(1-fy)+
-    c[0]*(1-fx)*fy+d[0]*fx*fy,
+const photoInput =
+  document.getElementById("photoInput");
 
-    a[1]*(1-fx)*(1-fy)+b[1]*fx*(1-fy)+
-    c[1]*(1-fx)*fy+d[1]*fx*fy,
-
-    a[2]*(1-fx)*(1-fy)+b[2]*fx*(1-fy)+
-    c[2]*(1-fx)*fy+d[2]*fx*fy
-  ];
-}
-  function makeSmile(){
-
-  if(!landmarks){
-    status.textContent="Pehle face detect hona zaroori hai.";
-    return false;
-  }
+const preview =
+  document.getElementById("preview");
 
-  const w=preview.naturalWidth;
-  const h=preview.naturalHeight;
+const emptyPhoto =
+  document.getElementById("emptyPhoto");
 
-  workCanvas.width=w;
-  workCanvas.height=h;
+const editButton =
+  document.getElementById("editButton");
 
-  maskCanvas.width=w;
-  maskCanvas.height=h;
+const buttonText =
+  document.getElementById("buttonText");
 
-  const src=workCanvas.getContext("2d");
-  const out=workCanvas.getContext("2d");
-  const mask=maskCanvas.getContext("2d");
+const loader =
+  document.getElementById("loader");
 
-  src.clearRect(0,0,w,h);
-  src.drawImage(preview,0,0,w,h);
+const status =
+  document.getElementById("status");
 
-  const left=point(61,w,h);
-  const right=point(291,w,h);
-  const upper=point(13,w,h);
-  const lower=point(14,w,h);
+const tools =
+  document.querySelectorAll(".tool");
 
-  const mouthWidth=Math.abs(right.x-left.x);
-  const mouthHeight=Math.max(
-    Math.abs(lower.y-upper.y),
-    mouthWidth*.12
-  );
 
-  const padX=mouthWidth*.75;
-  const padY=Math.max(mouthHeight*4,35);
+let selectedFile = null;
 
-  const x0=Math.max(0,Math.floor(left.x-padX));
-  const y0=Math.max(0,Math.floor(upper.y-padY));
-  const x1=Math.min(w,Math.ceil(right.x+padX));
-  const y1=Math.min(h,Math.ceil(lower.y+padY));
+let selectedOption = "enhance";
 
-  const cw=x1-x0;
-  const ch=y1-y0;
 
-  const temp=document.createElement("canvas");
-  temp.width=cw;
-  temp.height=ch;
+/* TOOL SELECTION */
 
-  const tc=temp.getContext("2d");
-  tc.drawImage(preview,x0,y0,cw,ch);
+tools.forEach(tool => {
 
-  const original=tc.getImageData(0,0,cw,ch);
-  const result=tc.createImageData(cw,ch);
+  tool.onclick = () => {
 
-  const centerX=(left.x+right.x)/2-x0;
-  const centerY=(upper.y+lower.y)/2-y0;
-
-  const lift=Math.max(
-    10,
-    Math.min(28,mouthWidth*.13)
-  );
-
-  const outward=Math.max(
-    2,
-    Math.min(8,mouthWidth*.035)
-  );
-
-  function getPixel(x,y){
-
-    x=clamp(x,0,cw-1);
-    y=clamp(y,0,ch-1);
-
-    const x0=Math.floor(x);
-    const y0=Math.floor(y);
-    const x1=Math.min(x0+1,cw-1);
-    const y1=Math.min(y0+1,ch-1);
-
-    const fx=x-x0;
-    const fy=y-y0;
-
-    const p00=(y0*cw+x0)*4;
-    const p10=(y0*cw+x1)*4;
-    const p01=(y1*cw+x0)*4;
-    const p11=(y1*cw+x1)*4;
-
-    return [
-      original.data[p00]*(1-fx)*(1-fy)+
-      original.data[p10]*fx*(1-fy)+
-      original.data[p01]*(1-fx)*fy+
-      original.data[p11]*fx*fy,
-
-      original.data[p00+1]*(1-fx)*(1-fy)+
-      original.data[p10+1]*fx*(1-fy)+
-      original.data[p01+1]*(1-fx)*fy+
-      original.data[p11+1]*fx*fy,
-
-      original.data[p00+2]*(1-fx)*(1-fy)+
-      original.data[p10+2]*fx*(1-fy)+
-      original.data[p01+2]*(1-fx)*fy+
-      original.data[p11+2]*fx*fy,
-
-      255
-    ];
-  }
-
-  for(let y=0;y<ch;y++){
-
-    for(let x=0;x<cw;x++){
-
-      const nx=(x-centerX)/(mouthWidth*.75);
-      const ny=(y-centerY)/(mouthHeight*3.2);
-
-      const horizontal=Math.abs(nx);
-
-      let cornerInfluence=0;
-
-      if(horizontal<1.15 && Math.abs(ny)<1){
-
-        const cornerDistance=Math.abs(
-          horizontal-.72
-        );
-
-        cornerInfluence=Math.exp(
-          -(cornerDistance*cornerDistance)/.10
-        );
-
-        cornerInfluence*=Math.exp(
-          -(ny*ny)/1.5
-        );
-
-        cornerInfluence=clamp(
-          cornerInfluence,
-          0,
-          1
-        );
-      }
-
-      const direction=nx>=0 ? 1 : -1;
-
-      const sourceX=
-        x-direction*outward*cornerInfluence;
-
-      const sourceY=
-        y+lift*cornerInfluence;
-
-      const pixel=getPixel(
-        sourceX,
-        sourceY
-      );
-
-      const di=(y*cw+x)*4;
-
-      result.data[di]=pixel[0];
-      result.data[di+1]=pixel[1];
-      result.data[di+2]=pixel[2];
-      result.data[di+3]=pixel[3];
-    }
-  }
-
-  tc.putImageData(result,0,0);
-
-  out.clearRect(0,0,w,h);
-  out.drawImage(preview,0,0,w,h);
-  out.drawImage(temp,x0,y0);
-
-  mask.clearRect(0,0,w,h);
-
-  const gradient=mask.createRadialGradient(
-    centerX+x0,
-    centerY+y0,
-    mouthWidth*.25,
-    centerX+x0,
-    centerY+y0,
-    mouthWidth*.9
-  );
-
-  gradient.addColorStop(
-    0,
-    "rgba(255,255,255,1)"
-  );
-
-  gradient.addColorStop(
-    .55,
-    "rgba(255,255,255,.9)"
-  );
-
-  gradient.addColorStop(
-    .8,
-    "rgba(255,255,255,.45)"
-  );
-
-  gradient.addColorStop(
-    1,
-    "rgba(255,255,255,0)"
-  );
-
-  mask.fillStyle=gradient;
-  mask.fillRect(x0,y0,cw,ch);
-
-  preview.onload=null;
-
-  preview.src=
-    workCanvas.toDataURL(
-      "image/jpeg",
-      .95
+    tools.forEach(t =>
+      t.classList.remove("active")
     );
 
-  status.textContent=
-    "Smile effect applied ✓";
+    tool.classList.add("active");
 
-  return true;
-    }
+    selectedOption =
+      tool.dataset.option;
+
+    status.textContent =
+      tool.querySelector(
+        ".toolName"
+      ).textContent +
+      " selected";
+  };
+
+});
+
+
+/* PHOTO SELECTION */
+
+photoInput.onchange = () => {
+
+  const file =
+    photoInput.files[0];
+
+  if(!file){
+    return;
+  }
+
+  selectedFile = file;
+
+  const imageURL =
+    URL.createObjectURL(file);
+
+  preview.src = imageURL;
+
+  preview.onload = () => {
+
+    preview.style.display =
+      "block";
+
+    emptyPhoto.style.display =
+      "none";
+
+    status.textContent =
+      "Photo ready ✓";
+  };
+
+};
+
+
+/* AI EDIT */
 
 async function aiEdit(){
 
   if(!selectedFile){
-    status.textContent="Pehle photo select karein.";
+
+    status.textContent =
+      "Pehle photo add karein.";
+
     return;
   }
 
-  if(selectedOption==="smile"){
-    makeSmile();
-    return;
-  }
 
-  status.textContent="AI photo edit kar raha hai...";
-  editButton.disabled=true;
+  editButton.disabled = true;
+
+  buttonText.style.display =
+    "none";
+
+  loader.style.display =
+    "block";
+
+  status.textContent =
+    "AI photo edit kar raha hai...";
+
 
   try{
 
-    const formData=new FormData();
-    formData.append("image",selectedFile);
+    const formData =
+      new FormData();
 
-    let prompt="";
+    formData.append(
+      "image",
+      selectedFile
+    );
 
-    if(selectedOption==="enhance"){
-      prompt=
-      "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
+
+    let prompt = "";
+
+
+    /* ENHANCE */
+
+    if(selectedOption === "enhance"){
+
+      prompt =
+        "Enhance this photo naturally. " +
+        "Improve image quality, lighting, " +
+        "sharpness and facial details. " +
+        "Keep the person's exact identity, " +
+        "face shape, eyes, nose, lips and " +
+        "hair unchanged. Do not change " +
+        "the person's appearance.";
     }
 
-    if(selectedOption==="smooth"){
-      prompt=
-      "Retouch the person's facial skin professionally. Clearly smooth the skin and reduce acne, pimples, blemishes, dark spots, uneven skin texture and fine lines. Make the skin clean, soft, fresh and naturally polished while preserving realistic skin texture. Keep the exact same person, face shape, eyes, nose, lips, hairstyle and identity unchanged. Do not change facial features. Do not make the skin plastic, blurry or overly airbrushed. Only improve the skin.";
+
+    /* SMOOTH SKIN */
+
+    if(selectedOption === "smooth"){
+
+      prompt =
+        "Retouch only the facial skin " +
+        "professionally. Clearly smooth " +
+        "the skin and reduce acne, pimples, " +
+        "blemishes, dark spots, uneven " +
+        "skin texture and fine lines. " +
+        "Make the skin look clean, soft, " +
+        "fresh and naturally polished. " +
+        "Preserve realistic skin texture. " +
+        "Keep the exact same person, " +
+        "identity, face shape, eyes, nose, " +
+        "lips, mouth, cheeks and hairstyle. " +
+        "Do not change facial features. " +
+        "Do not change the face shape. " +
+        "Do not make the skin plastic, " +
+        "blurry or overly airbrushed. " +
+        "Only improve the facial skin.";
     }
 
-    if(selectedOption==="hair"){
-      prompt=
-      "Keep the person's identity and face unchanged. Naturally improve and enhance the hair appearance while keeping the original hairstyle.";
+
+    /* HAIR */
+
+    if(selectedOption === "hair"){
+
+      prompt =
+        "Keep the person's exact identity " +
+        "and face unchanged. Naturally " +
+        "improve the hair appearance while " +
+        "keeping the original hairstyle. " +
+        "Do not change the eyes, nose, lips, " +
+        "face shape or skin. Make the hair " +
+        "look natural and realistic.";
     }
 
-    formData.append("prompt",prompt);
 
-    const response=await fetch("/api/edit",{
-      method:"POST",
-      body:formData
-    });
+    formData.append(
+      "prompt",
+      prompt
+    );
+
+
+    const response =
+      await fetch(
+        "/api/edit",
+        {
+          method:"POST",
+          body:formData
+        }
+      );
+
 
     if(!response.ok){
-      throw new Error("Server error");
+
+      throw new Error(
+        "Server error"
+      );
     }
 
-    const blob=await response.blob();
 
-    preview.onload=null;
-    preview.src=URL.createObjectURL(blob);
-    preview.style.display="block";
+    const blob =
+      await response.blob();
 
-    status.textContent="AI Edit complete ✓";
+
+    preview.onload = null;
+
+    preview.src =
+      URL.createObjectURL(blob);
+
+    preview.style.display =
+      "block";
+
+    emptyPhoto.style.display =
+      "none";
+
+
+    status.textContent =
+      "AI Edit complete ✓";
+
 
   }catch(error){
 
     console.error(error);
-    status.textContent="AI Edit failed.";
+
+    status.textContent =
+      "AI Edit failed. Please try again.";
 
   }finally{
 
-    editButton.disabled=false;
+    editButton.disabled = false;
+
+    buttonText.style.display =
+      "inline";
+
+    loader.style.display =
+      "none";
   }
+
 }
 
-editButton.onclick=aiEdit;
+
+editButton.onclick =
+  aiEdit;
+
 </script>
 
 </body>
