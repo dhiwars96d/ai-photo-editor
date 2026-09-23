@@ -5,9 +5,7 @@
 <title>AI Photo Editor</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -25,7 +23,6 @@ body{
 }
 
 /* HEADER */
-
 .header{
   display:flex;
   align-items:center;
@@ -36,10 +33,14 @@ body{
 .logo{
   font-size:22px;
   font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
 
-.logo span{
-  font-size:25px;
+.logoIcon{
+  width:27px;
+  height:27px;
 }
 
 .badge{
@@ -52,7 +53,6 @@ body{
 }
 
 /* TITLE */
-
 .title{
   margin-bottom:18px;
 }
@@ -69,8 +69,7 @@ body{
   font-size:14px;
 }
 
-/* PHOTO AREA */
-
+/* PHOTO */
 .photoBox{
   width:100%;
   min-height:300px;
@@ -107,8 +106,12 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:32px;
   margin-bottom:15px;
+}
+
+.uploadIcon svg{
+  width:38px;
+  height:38px;
 }
 
 .emptyPhoto h3{
@@ -122,7 +125,6 @@ body{
 }
 
 /* UPLOAD */
-
 .uploadButton{
   display:block;
   width:100%;
@@ -142,7 +144,6 @@ body{
 }
 
 /* TOOLS */
-
 .sectionTitle{
   font-size:16px;
   font-weight:700;
@@ -178,9 +179,20 @@ body{
 }
 
 .toolIcon{
-  font-size:25px;
+  width:30px;
+  height:30px;
   display:block;
-  margin-bottom:7px;
+  margin:0 auto 8px;
+}
+
+.toolIcon svg{
+  width:30px;
+  height:30px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 
 .toolName{
@@ -189,7 +201,6 @@ body{
 }
 
 /* EDIT BUTTON */
-
 #editButton{
   width:100%;
   border:0;
@@ -212,7 +223,6 @@ body{
 }
 
 /* STATUS */
-
 .statusBox{
   min-height:42px;
   display:flex;
@@ -228,8 +238,7 @@ body{
   font-size:13px;
 }
 
-/* LOADING */
-
+/* LOADER */
 .loader{
   display:none;
   width:18px;
@@ -242,27 +251,13 @@ body{
 }
 
 @keyframes spin{
-  to{
-    transform:rotate(360deg);
-  }
+  to{transform:rotate(360deg)}
 }
 
-/* MOBILE */
-
 @media(max-width:380px){
-
-  .title h1{
-    font-size:25px;
-  }
-
-  .tools{
-    gap:7px;
-  }
-
-  .tool{
-    padding:14px 5px;
-  }
-
+  .title h1{font-size:25px}
+  .tools{gap:7px}
+  .tool{padding:14px 5px}
 }
 </style>
 </head>
@@ -272,33 +267,74 @@ body{
 <div class="app">
 
   <div class="header">
+
     <div class="logo">
-      <span>✨</span> AI Photo Editor
+
+      <svg
+        class="logoIcon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5L12 2z"/>
+        <path d="M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16z"/>
+      </svg>
+
+      AI Photo Editor
+
     </div>
 
     <div class="badge">
       AI Powered
     </div>
+
   </div>
 
 
   <div class="title">
-    <h1>Make your photos better.</h1>
-    <p>Choose a photo and select an AI editing tool.</p>
+
+    <h1>
+      Make your photos better.
+    </h1>
+
+    <p>
+      Choose a photo and select an AI editing tool.
+    </p>
+
   </div>
 
 
-  <!-- PHOTO PREVIEW -->
+  <!-- PHOTO -->
 
   <div class="photoBox">
 
-    <div class="emptyPhoto" id="emptyPhoto">
+    <div
+      class="emptyPhoto"
+      id="emptyPhoto"
+    >
 
       <div class="uploadIcon">
-        📸
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 7h3l1.5-2h7L17 7h3v12H4V7z"/>
+          <circle cx="12" cy="13" r="3.5"/>
+        </svg>
+
       </div>
 
-      <h3>Add your photo</h3>
+      <h3>
+        Add your photo
+      </h3>
 
       <p>
         Select a photo to start editing
@@ -338,28 +374,90 @@ body{
 
   <div class="tools">
 
+
+    <!-- ENHANCE -->
+
     <button
       class="tool active"
       data-option="enhance"
     >
-      <span class="toolIcon">✨</span>
-      <span class="toolName">Enhance</span>
+
+      <span class="toolIcon">
+
+        <svg viewBox="0 0 24 24">
+
+          <path d="M12 2l1.4 6.6L20 10l-6.6 1.4L12 18l-1.4-6.6L4 10l6.6-1.4L12 2z"/>
+
+          <path d="M19 16l.6 2.4L22 19l-2.4.6L19 22l-.6-2.4L16 19l2.4-.6L19 16z"/>
+
+        </svg>
+
+      </span>
+
+      <span class="toolName">
+        Enhance
+      </span>
+
     </button>
+
+
+    <!-- SMOOTH SKIN -->
 
     <button
       class="tool"
       data-option="smooth"
     >
-      <span class="toolIcon">🧴</span>
-      <span class="toolName">Smooth Skin</span>
+
+      <span class="toolIcon">
+
+        <svg viewBox="0 0 24 24">
+
+          <path d="M12 3c-4.5 0-7.5 3.4-7.5 7.5S7 18 12 21c5-3 7.5-6.2 7.5-10.5S16.5 3 12 3z"/>
+
+          <path d="M9 11c.7.6 1.7.9 3 .9s2.3-.3 3-.9"/>
+
+          <path d="M9.5 8.5h.01"/>
+
+          <path d="M14.5 8.5h.01"/>
+
+        </svg>
+
+      </span>
+
+      <span class="toolName">
+        Smooth Skin
+      </span>
+
     </button>
+
+
+    <!-- HAIR -->
 
     <button
       class="tool"
       data-option="hair"
     >
-      <span class="toolIcon">💇</span>
-      <span class="toolName">Hair</span>
+
+      <span class="toolIcon">
+
+        <svg viewBox="0 0 24 24">
+
+          <path d="M5 20c0-5.5 2-10.5 7-15 3.5 2 6 5.5 6 10v5"/>
+
+          <path d="M8 21c1-4 1-7 4-10"/>
+
+          <path d="M14 5c1.5-1 3-1.5 4-1"/>
+
+          <path d="M18 14c1.2.5 2 .5 3 0"/>
+
+        </svg>
+
+      </span>
+
+      <span class="toolName">
+        Hair
+      </span>
+
     </button>
 
   </div>
@@ -382,7 +480,9 @@ body{
 
 
   <div class="statusBox">
+
     <p id="status"></p>
+
   </div>
 
 </div>
@@ -414,7 +514,6 @@ const status =
 const tools =
   document.querySelectorAll(".tool");
 
-
 let selectedFile = null;
 
 let selectedOption = "enhance";
@@ -440,6 +539,7 @@ tools.forEach(tool => {
         ".toolName"
       ).textContent +
       " selected";
+
   };
 
 });
@@ -473,6 +573,7 @@ photoInput.onchange = () => {
 
     status.textContent =
       "Photo ready ✓";
+
   };
 
 };
@@ -489,7 +590,6 @@ async function aiEdit(){
 
     return;
   }
-
 
   editButton.disabled = true;
 
@@ -512,7 +612,6 @@ async function aiEdit(){
       "image",
       selectedFile
     );
-
 
     let prompt = "";
 
@@ -592,6 +691,7 @@ async function aiEdit(){
       throw new Error(
         "Server error"
       );
+
     }
 
 
@@ -624,13 +724,15 @@ async function aiEdit(){
 
   }finally{
 
-    editButton.disabled = false;
+    editButton.disabled =
+      false;
 
     buttonText.style.display =
       "inline";
 
     loader.style.display =
       "none";
+
   }
 
 }
