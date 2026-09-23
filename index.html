@@ -5,7 +5,9 @@
 <title>AI Photo Editor</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -23,6 +25,7 @@ body{
 }
 
 /* HEADER */
+
 .header{
   display:flex;
   align-items:center;
@@ -39,8 +42,7 @@ body{
 }
 
 .logoIcon{
-  width:27px;
-  height:27px;
+  font-size:25px;
 }
 
 .badge{
@@ -53,6 +55,7 @@ body{
 }
 
 /* TITLE */
+
 .title{
   margin-bottom:18px;
 }
@@ -70,6 +73,7 @@ body{
 }
 
 /* PHOTO */
+
 .photoBox{
   width:100%;
   min-height:300px;
@@ -81,7 +85,6 @@ body{
   overflow:hidden;
   box-shadow:0 5px 20px rgba(0,0,0,.07);
   margin-bottom:18px;
-  position:relative;
 }
 
 #preview{
@@ -106,12 +109,8 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
+  font-size:34px;
   margin-bottom:15px;
-}
-
-.uploadIcon svg{
-  width:38px;
-  height:38px;
 }
 
 .emptyPhoto h3{
@@ -125,6 +124,7 @@ body{
 }
 
 /* UPLOAD */
+
 .uploadButton{
   display:block;
   width:100%;
@@ -144,6 +144,7 @@ body{
 }
 
 /* TOOLS */
+
 .sectionTitle{
   font-size:16px;
   font-weight:700;
@@ -161,7 +162,7 @@ body{
   border:0;
   background:#fff;
   border-radius:17px;
-  padding:16px 7px;
+  padding:14px 7px;
   cursor:pointer;
   box-shadow:0 3px 12px rgba(0,0,0,.06);
   color:#25262b;
@@ -179,20 +180,20 @@ body{
 }
 
 .toolIcon{
-  width:30px;
-  height:30px;
+  width:48px;
+  height:48px;
   display:block;
-  margin:0 auto 8px;
+  margin:0 auto 7px;
+  object-fit:contain;
 }
 
-.toolIcon svg{
-  width:30px;
-  height:30px;
-  fill:none;
-  stroke:currentColor;
-  stroke-width:1.8;
-  stroke-linecap:round;
-  stroke-linejoin:round;
+/*
+  Active button ke icons white karne ke liye
+  PNG ko brightness/invert filter diya gaya hai.
+*/
+
+.tool.active .toolIcon{
+  filter:brightness(0) invert(1);
 }
 
 .toolName{
@@ -201,6 +202,7 @@ body{
 }
 
 /* EDIT BUTTON */
+
 #editButton{
   width:100%;
   border:0;
@@ -223,6 +225,7 @@ body{
 }
 
 /* STATUS */
+
 .statusBox{
   min-height:42px;
   display:flex;
@@ -239,6 +242,7 @@ body{
 }
 
 /* LOADER */
+
 .loader{
   display:none;
   width:18px;
@@ -251,13 +255,29 @@ body{
 }
 
 @keyframes spin{
-  to{transform:rotate(360deg)}
+  to{
+    transform:rotate(360deg);
+  }
 }
 
 @media(max-width:380px){
-  .title h1{font-size:25px}
-  .tools{gap:7px}
-  .tool{padding:14px 5px}
+
+  .title h1{
+    font-size:25px;
+  }
+
+  .tools{
+    gap:7px;
+  }
+
+  .tool{
+    padding:13px 5px;
+  }
+
+  .toolIcon{
+    width:44px;
+    height:44px;
+  }
 }
 </style>
 </head>
@@ -266,25 +286,13 @@ body{
 
 <div class="app">
 
+  <!-- HEADER -->
+
   <div class="header">
 
     <div class="logo">
-
-      <svg
-        class="logoIcon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5L12 2z"/>
-        <path d="M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16z"/>
-      </svg>
-
+      <span class="logoIcon">✨</span>
       AI Photo Editor
-
     </div>
 
     <div class="badge">
@@ -293,6 +301,8 @@ body{
 
   </div>
 
+
+  <!-- TITLE -->
 
   <div class="title">
 
@@ -317,19 +327,345 @@ body{
     >
 
       <div class="uploadIcon">
+        📷
+      </div>
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M4 7h3l1.5-2h7L17 7h3v12H4V7z"/>
-          <circle cx="12" cy="13" r="3.5"/>
-        </svg>
+      <h3>
+        Add your photo
+      </h3>
 
+      <p>
+        Select a photo to start editing
+      </p><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Photo Editor</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Arial,sans-serif;
+  background:#f4f5f8;
+  color:#17181c;
+}
+
+.app{
+  width:100%;
+  max-width:520px;
+  margin:auto;
+  padding:18px 16px 30px;
+}
+
+/* HEADER */
+
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:22px;
+}
+
+.logo{
+  font-size:22px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.logoIcon{
+  font-size:25px;
+}
+
+.badge{
+  background:#e9eaff;
+  color:#4b4fd8;
+  padding:7px 11px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+}
+
+/* TITLE */
+
+.title{
+  margin-bottom:18px;
+}
+
+.title h1{
+  margin:0 0 7px;
+  font-size:29px;
+  line-height:1.15;
+}
+
+.title p{
+  margin:0;
+  color:#70727a;
+  font-size:14px;
+}
+
+/* PHOTO */
+
+.photoBox{
+  width:100%;
+  min-height:300px;
+  background:#fff;
+  border-radius:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-shadow:0 5px 20px rgba(0,0,0,.07);
+  margin-bottom:18px;
+}
+
+#preview{
+  display:none;
+  width:100%;
+  max-height:55vh;
+  object-fit:contain;
+}
+
+.emptyPhoto{
+  text-align:center;
+  padding:35px 20px;
+  color:#777;
+}
+
+.uploadIcon{
+  width:70px;
+  height:70px;
+  margin:auto;
+  border-radius:20px;
+  background:#eeeeff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:34px;
+  margin-bottom:15px;
+}
+
+.emptyPhoto h3{
+  margin:0 0 7px;
+  color:#222;
+}
+
+.emptyPhoto p{
+  margin:0;
+  font-size:13px;
+}
+
+/* UPLOAD */
+
+.uploadButton{
+  display:block;
+  width:100%;
+  background:#17181c;
+  color:white;
+  text-align:center;
+  padding:15px;
+  border-radius:14px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  margin-bottom:22px;
+}
+
+#photoInput{
+  display:none;
+}
+
+/* TOOLS */
+
+.sectionTitle{
+  font-size:16px;
+  font-weight:700;
+  margin:0 0 11px;
+}
+
+.tools{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:22px;
+}
+
+.tool{
+  border:0;
+  background:#fff;
+  border-radius:17px;
+  padding:14px 7px;
+  cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+  color:#25262b;
+  transition:.15s;
+}
+
+.tool:active{
+  transform:scale(.97);
+}
+
+.tool.active{
+  background:#202126;
+  color:white;
+  box-shadow:0 5px 15px rgba(0,0,0,.15);
+}
+
+.toolIcon{
+  width:48px;
+  height:48px;
+  display:block;
+  margin:0 auto 7px;
+  object-fit:contain;
+}
+
+/*
+  Active button ke icons white karne ke liye
+  PNG ko brightness/invert filter diya gaya hai.
+*/
+
+.tool.active .toolIcon{
+  filter:brightness(0) invert(1);
+}
+
+.toolName{
+  font-size:12px;
+  font-weight:600;
+}
+
+/* EDIT BUTTON */
+
+#editButton{
+  width:100%;
+  border:0;
+  border-radius:16px;
+  padding:17px;
+  background:#5b5ee8;
+  color:white;
+  font-size:17px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 7px 18px rgba(91,94,232,.25);
+}
+
+#editButton:active{
+  transform:scale(.98);
+}
+
+#editButton:disabled{
+  opacity:.6;
+}
+
+/* STATUS */
+
+.statusBox{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  margin-top:14px;
+}
+
+#status{
+  margin:0;
+  color:#666871;
+  font-size:13px;
+}
+
+/* LOADER */
+
+.loader{
+  display:none;
+  width:18px;
+  height:18px;
+  border:3px solid rgba(255,255,255,.4);
+  border-top-color:white;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  margin:auto;
+}
+
+@keyframes spin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+@media(max-width:380px){
+
+  .title h1{
+    font-size:25px;
+  }
+
+  .tools{
+    gap:7px;
+  }
+
+  .tool{
+    padding:13px 5px;
+  }
+
+  .toolIcon{
+    width:44px;
+    height:44px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+
+  <div class="header">
+
+    <div class="logo">
+      <span class="logoIcon">✨</span>
+      AI Photo Editor
+    </div>
+
+    <div class="badge">
+      AI Powered
+    </div>
+
+  </div>
+
+
+  <!-- TITLE -->
+
+  <div class="title">
+
+    <h1>
+      Make your photos better.
+    </h1>
+
+    <p>
+      Choose a photo and select an AI editing tool.
+    </p>
+
+  </div>
+
+
+  <!-- PHOTO -->
+
+  <div class="photoBox">
+
+    <div
+      class="emptyPhoto"
+      id="emptyPhoto"
+    >
+
+      <div class="uploadIcon">
+        📷
       </div>
 
       <h3>
@@ -350,7 +686,7 @@ body{
   </div>
 
 
-  <!-- UPLOAD -->
+  <!-- PHOTO INPUT -->
 
   <label
     class="uploadButton"
@@ -382,17 +718,11 @@ body{
       data-option="enhance"
     >
 
-      <span class="toolIcon">
-
-        <svg viewBox="0 0 24 24">
-
-          <path d="M12 2l1.4 6.6L20 10l-6.6 1.4L12 18l-1.4-6.6L4 10l6.6-1.4L12 2z"/>
-
-          <path d="M19 16l.6 2.4L22 19l-2.4.6L19 22l-.6-2.4L16 19l2.4-.6L19 16z"/>
-
-        </svg>
-
-      </span>
+      <img
+        class="toolIcon"
+        src="enhance-icon.png"
+        alt="Enhance"
+      >
 
       <span class="toolName">
         Enhance
@@ -408,21 +738,11 @@ body{
       data-option="smooth"
     >
 
-      <span class="toolIcon">
-
-        <svg viewBox="0 0 24 24">
-
-          <path d="M12 3c-4.5 0-7.5 3.4-7.5 7.5S7 18 12 21c5-3 7.5-6.2 7.5-10.5S16.5 3 12 3z"/>
-
-          <path d="M9 11c.7.6 1.7.9 3 .9s2.3-.3 3-.9"/>
-
-          <path d="M9.5 8.5h.01"/>
-
-          <path d="M14.5 8.5h.01"/>
-
-        </svg>
-
-      </span>
+      <img
+        class="toolIcon"
+        src="smooth-icon.png"
+        alt="Smooth Skin"
+      >
 
       <span class="toolName">
         Smooth Skin
@@ -438,21 +758,11 @@ body{
       data-option="hair"
     >
 
-      <span class="toolIcon">
-
-        <svg viewBox="0 0 24 24">
-
-          <path d="M5 20c0-5.5 2-10.5 7-15 3.5 2 6 5.5 6 10v5"/>
-
-          <path d="M8 21c1-4 1-7 4-10"/>
-
-          <path d="M14 5c1.5-1 3-1.5 4-1"/>
-
-          <path d="M18 14c1.2.5 2 .5 3 0"/>
-
-        </svg>
-
-      </span>
+      <img
+        class="toolIcon"
+        src="hair-icon.png"
+        alt="Hair"
+      >
 
       <span class="toolName">
         Hair
@@ -463,7 +773,7 @@ body{
   </div>
 
 
-  <!-- EDIT -->
+  <!-- AI EDIT -->
 
   <button id="editButton">
 
@@ -591,6 +901,7 @@ async function aiEdit(){
     return;
   }
 
+
   editButton.disabled = true;
 
   buttonText.style.display =
@@ -612,6 +923,7 @@ async function aiEdit(){
       "image",
       selectedFile
     );
+
 
     let prompt = "";
 
@@ -744,4 +1056,195 @@ editButton.onclick =
 </script>
 
 </body>
-</html>
+</html>￼Enter
+
+div>
+
+    <img
+      id="preview"
+      alt="Photo Preview"
+    >
+
+  </div>
+
+
+  <!-- PHOTO INPUT -->
+
+  <label
+    class="uploadButton"
+    for="photoInput"
+  >
+    ＋ Add Photo
+  </label>
+
+  <input
+    type="file"
+    id="photoInput"
+    accept="image/*"
+  >
+
+
+  <!-- TOOLS -->
+
+  <div class="sectionTitle">
+    Choose an edit
+  </div>
+
+  <div class="tools">
+
+
+    <!-- ENHANCE -->
+
+    <button
+      class="tool active"
+      data-option="enhance"
+    >
+
+      <img
+        class="toolIcon"
+        src="enhance-icon.png"
+        alt="Enhance"
+      >
+
+      <span class="toolName">
+        Enhance
+      </span>
+
+    </button>
+
+
+    <!-- SMOOTH SKIN -->
+
+    <button
+      class="tool"
+      data-option="smooth"
+    >
+
+      <img
+        class="toolIcon"
+        src="smooth-icon.png"
+        alt="Smooth Skin"
+      >
+
+      <span class="toolName">
+        Smooth Skin
+      </span>
+
+    </button>
+
+
+    <!-- HAIR -->
+
+    <button
+      class="tool"
+      data-option="hair"
+    >
+
+      <img
+        class="toolIcon"
+        src="hair-icon.png"
+        alt="Hair"
+      >
+
+      <span class="toolName">
+        Hair
+      </span>
+
+    </button>
+
+  </div>
+
+
+  <!-- AI EDIT -->
+
+  <button id="editButton">
+
+    <span id="buttonText">
+      ✨ Apply AI Edit
+    </span>
+
+    <span
+      class="loader"
+      id="loader"
+    ></span>
+
+  </button>
+
+
+  <div class="statusBox">
+
+    <p id="status"></p>
+
+  </div>
+
+</div>
+
+
+<script>
+
+const photoInput =
+  document.getElementById("photoInput");
+
+const preview =
+  document.getElementById("preview");
+
+const emptyPhoto =
+  document.getElementById("emptyPhoto");
+
+const editButton =
+  document.getElementById("editButton");
+
+const buttonText =
+  document.getElementById("buttonText");
+
+const loader =
+  document.getElementById("loader");
+
+const status =
+  document.getElementById("status");
+
+const tools =
+  document.querySelectorAll(".tool");
+
+let selectedFile = null;
+
+let selectedOption = "enhance";
+
+
+/* TOOL SELECTION */
+
+tools.forEach(tool => {
+
+  tool.onclick = () => {
+
+    tools.forEach(t =>
+      t.classList.remove("active")
+    );
+
+    tool.classList.add("active");
+
+    selectedOption =
+      tool.dataset.option;
+
+    status.textContent =
+      tool.querySelector(
+        ".toolName"
+      ).textContent +
+      " selected";
+
+  };
+
+});
+
+
+/* PHOTO SELECTION */
+
+photoInput.onchange = () => {
+
+  const file =
+    photoInput.files[0];
+
+  if(!file){
+    return;
+  }
+
