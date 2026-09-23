@@ -245,7 +245,7 @@ function makeSmile(){
   const original=tc.getImageData(0,0,cw,ch);
   const result=tc.createImageData(cw,ch);
 
-  const lift=clamp(mouthWidth*.055,5,14);
+  const lift=clamp(mouthWidth*.12,10,28);
 
   const centerX=(left.x+right.x)/2-x0;
   const centerY=(upper.y+lower.y)/2-y0;
@@ -255,7 +255,7 @@ function makeSmile(){
     for(let x=0;x<cw;x++){
 
       const nx=(x-centerX)/(mouthWidth*.9);
-      const ny=(y-centerY)/(mouthHeight*3.5);
+      const ny=(y-centerY)/(mouthHeight*4.5);
 
       const dist=Math.sqrt(nx*nx+ny*ny);
 
@@ -263,7 +263,7 @@ function makeSmile(){
 
       if(dist<1){
         const corner=Math.abs(nx);
-        influence=(1-dist)*Math.pow(corner,1.5);
+        influence=(1-dist)*Math.pow(corner,1.2);
       }
 
       const sourceX=x;
