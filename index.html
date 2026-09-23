@@ -192,8 +192,7 @@ function sample(ctx,x,y,w,h){
     c[2]*(1-fx)*fy+d[2]*fx*fy
   ];
 }
-
-function makeSmile(){
+  function makeSmile(){
 
   if(!landmarks){
     status.textContent="Pehle face detect hona zaroori hai.";
@@ -222,10 +221,13 @@ function makeSmile(){
   const lower=point(14,w,h);
 
   const mouthWidth=Math.abs(right.x-left.x);
-  const mouthHeight=Math.abs(lower.y-upper.y);
+  const mouthHeight=Math.max(
+    Math.abs(lower.y-upper.y),
+    mouthWidth*.12
+  );
 
-  const padX=mouthWidth*.9;
-  const padY=Math.max(mouthHeight*4,40);
+  const padX=mouthWidth*.75;
+  const padY=Math.max(mouthHeight*4,35);
 
   const x0=Math.max(0,Math.floor(left.x-padX));
   const y0=Math.max(0,Math.floor(upper.y-padY));
@@ -245,40 +247,108 @@ function makeSmile(){
   const original=tc.getImageData(0,0,cw,ch);
   const result=tc.createImageData(cw,ch);
 
-  const lift=clamp(mouthWidth*.12,10,28);
-
   const centerX=(left.x+right.x)/2-x0;
   const centerY=(upper.y+lower.y)/2-y0;
+
+  const lift=Math.max(
+    10,
+    Math.min(28,mouthWidth*.13)
+  );
+
+  const outward=Math.max(
+    2,
+    Math.min(8,mouthWidth*.035)
+  );
+
+  function getPixel(x,y){
+
+    x=clamp(x,0,cw-1);
+    y=clamp(y,0,ch-1);
+
+    const x0=Math.floor(x);
+    const y0=Math.floor(y);
+    const x1=Math.min(x0+1,cw-1);
+    const y1=Math.min(y0+1,ch-1);
+
+    const fx=x-x0;
+    const fy=y-y0;
+
+    const p00=(y0*cw+x0)*4;
+    const p10=(y0*cw+x1)*4;
+    const p01=(y1*cw+x0)*4;
+    const p11=(y1*cw+x1)*4;
+
+    return [
+      original.data[p00]*(1-fx)*(1-fy)+
+      original.data[p10]*fx*(1-fy)+
+      original.data[p01]*(1-fx)*fy+
+      original.data[p11]*fx*fy,
+
+      original.data[p00+1]*(1-fx)*(1-fy)+
+      original.data[p10+1]*fx*(1-fy)+
+      original.data[p01+1]*(1-fx)*fy+
+      original.data[p11+1]*fx*fy,
+
+      original.data[p00+2]*(1-fx)*(1-fy)+
+      original.data[p10+2]*fx*(1-fy)+
+      original.data[p01+2]*(1-fx)*fy+
+      original.data[p11+2]*fx*fy,
+
+      255
+    ];
+  }
 
   for(let y=0;y<ch;y++){
 
     for(let x=0;x<cw;x++){
 
-      const nx=(x-centerX)/(mouthWidth*.9);
-      const ny=(y-centerY)/(mouthHeight*4.5);
+      const nx=(x-centerX)/(mouthWidth*.75);
+      const ny=(y-centerY)/(mouthHeight*3.2);
 
-      const dist=Math.sqrt(nx*nx+ny*ny);
+      const horizontal=Math.abs(nx);
 
-      let influence=0;
+      let cornerInfluence=0;
 
-      if(dist<1){
-        const corner=Math.abs(nx);
-        influence=(1-dist)*Math.pow(corner,1.2);
+      if(horizontal<1.15 && Math.abs(ny)<1){
+
+        const cornerDistance=Math.abs(
+          horizontal-.72
+        );
+
+        cornerInfluence=Math.exp(
+          -(cornerDistance*cornerDistance)/.10
+        );
+
+        cornerInfluence*=Math.exp(
+          -(ny*ny)/1.5
+        );
+
+        cornerInfluence=clamp(
+          cornerInfluence,
+          0,
+          1
+        );
       }
 
-      const sourceX=x;
-      const sourceY=y+lift*influence*3;
+      const direction=nx>=0 ? 1 : -1;
 
-      const sx=clamp(Math.floor(sourceX),0,cw-1);
-      const sy=clamp(Math.floor(sourceY),0,ch-1);
+      const sourceX=
+        x-direction*outward*cornerInfluence;
 
-      const si=(sy*cw+sx)*4;
+      const sourceY=
+        y+lift*cornerInfluence;
+
+      const pixel=getPixel(
+        sourceX,
+        sourceY
+      );
+
       const di=(y*cw+x)*4;
 
-      result.data[di]=original.data[si];
-      result.data[di+1]=original.data[si+1];
-      result.data[di+2]=original.data[si+2];
-      result.data[di+3]=original.data[si+3];
+      result.data[di]=pixel[0];
+      result.data[di+1]=pixel[1];
+      result.data[di+2]=pixel[2];
+      result.data[di+3]=pixel[3];
     }
   }
 
@@ -293,25 +363,48 @@ function makeSmile(){
   const gradient=mask.createRadialGradient(
     centerX+x0,
     centerY+y0,
-    mouthWidth*.2,
+    mouthWidth*.25,
     centerX+x0,
     centerY+y0,
     mouthWidth*.9
   );
 
-  gradient.addColorStop(0,"white");
-  gradient.addColorStop(.65,"rgba(255,255,255,.7)");
-  gradient.addColorStop(1,"transparent");
+  gradient.addColorStop(
+    0,
+    "rgba(255,255,255,1)"
+  );
+
+  gradient.addColorStop(
+    .55,
+    "rgba(255,255,255,.9)"
+  );
+
+  gradient.addColorStop(
+    .8,
+    "rgba(255,255,255,.45)"
+  );
+
+  gradient.addColorStop(
+    1,
+    "rgba(255,255,255,0)"
+  );
 
   mask.fillStyle=gradient;
   mask.fillRect(x0,y0,cw,ch);
 
-  preview.src=workCanvas.toDataURL("image/jpeg",.95);
+  preview.onload=null;
 
-  status.textContent="Smile effect applied ✓";
+  preview.src=
+    workCanvas.toDataURL(
+      "image/jpeg",
+      .95
+    );
+
+  status.textContent=
+    "Smile effect applied ✓";
 
   return true;
-}
+    }
 
 async function aiEdit(){
 
