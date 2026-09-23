@@ -1,1250 +1,533 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Photo Editor</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Photo Editor</title>
 
-<style>
-*{
-  box-sizing:border-box;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-body{
-  margin:0;
-  min-height:100vh;
-  font-family:Arial,sans-serif;
-  background:#f4f5f8;
-  color:#17181c;
-}
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+    }
 
-.app{
-  width:100%;
-  max-width:520px;
-  margin:auto;
-  padding:18px 16px 30px;
-}
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f6fa;
+      color: #17171c;
+      overflow-x: hidden;
+    }
 
-/* HEADER */
+    .app {
+      width: 100%;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 18px 16px 40px;
+    }
 
-.header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:22px;
-}
+    /* HEADER */
 
-.logo{
-  font-size:22px;
-  font-weight:700;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 26px;
+    }
 
-.logoIcon{
-  font-size:25px;
-}
+    .brand {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
 
-.badge{
-  background:#e9eaff;
-  color:#4b4fd8;
-  padding:7px 11px;
-  border-radius:20px;
-  font-size:12px;
-  font-weight:600;
-}
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      background: #eeeaff;
+      color: #6547d9;
+      padding: 7px 11px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
 
-/* TITLE */
+    /* TITLE */
 
-.title{
-  margin-bottom:18px;
-}
+    .title {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.12;
+      letter-spacing: -1px;
+    }
 
-.title h1{
-  margin:0 0 7px;
-  font-size:29px;
-  line-height:1.15;
-}
+    .subtitle {
+      margin: 9px 0 22px;
+      color: #777780;
+      font-size: 14px;
+      line-height: 1.5;
+    }
 
-.title p{
-  margin:0;
-  color:#70727a;
-  font-size:14px;
-}
+    /* PHOTO AREA */
 
-/* PHOTO */
+    .photo-card {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #e7e7ec;
+      border-radius: 22px;
+      padding: 12px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.05);
+    }
 
-.photoBox{
-  width:100%;
-  min-height:300px;
-  background:#fff;
-  border-radius:22px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  box-shadow:0 5px 20px rgba(0,0,0,.07);
-  margin-bottom:18px;
-}
+    .photo-box {
+      width: 100%;
+      height: 300px;
+      border-radius: 17px;
+      background: #f0f1f5;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-#preview{
-  display:none;
-  width:100%;
-  max-height:55vh;
-  object-fit:contain;
-}
+    .photo-box img {
+      display: none;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #f0f1f5;
+    }
 
-.emptyPhoto{
-  text-align:center;
-  padding:35px 20px;
-  color:#777;
-}
+    .empty-photo {
+      text-align: center;
+      color: #9999a2;
+      font-size: 14px;
+    }
 
-.uploadIcon{
-  width:70px;
-  height:70px;
-  margin:auto;
-  border-radius:20px;
-  background:#eeeeff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:34px;
-  margin-bottom:15px;
-}
+    .empty-photo-title {
+      color: #55555e;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
 
-.emptyPhoto h3{
-  margin:0 0 7px;
-  color:#222;
-}
+    /* ADD PHOTO */
 
-.emptyPhoto p{
-  margin:0;
-  font-size:13px;
-}
+    .add-photo {
+      width: 100%;
+      margin-top: 11px;
+      height: 48px;
+      border: 0;
+      border-radius: 14px;
+      background: #17171c;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
 
-/* UPLOAD */
+    .add-photo:active {
+      transform: scale(0.99);
+    }
 
-.uploadButton{
-  display:block;
-  width:100%;
-  background:#17181c;
-  color:white;
-  text-align:center;
-  padding:15px;
-  border-radius:14px;
-  font-size:15px;
-  font-weight:600;
-  cursor:pointer;
-  margin-bottom:22px;
-}
+    #fileInput {
+      display: none;
+    }
 
-#photoInput{
-  display:none;
-}
+    /* TOOLS */
 
-/* TOOLS */
+    .section-title {
+      margin: 25px 0 11px;
+      font-size: 16px;
+      font-weight: 700;
+    }
 
-.sectionTitle{
-  font-size:16px;
-  font-weight:700;
-  margin:0 0 11px;
-}
+    .tools {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
 
-.tools{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-bottom:22px;
-}
+    .tool {
+      min-width: 0;
+      height: 122px;
+      padding: 12px 7px;
+      border: 1px solid #e2e2e8;
+      border-radius: 18px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
 
-.tool{
-  border:0;
-  background:#fff;
-  border-radius:17px;
-  padding:14px 7px;
-  cursor:pointer;
-  box-shadow:0 3px 12px rgba(0,0,0,.06);
-  color:#25262b;
-  transition:.15s;
-}
+    .tool:hover {
+      border-color: #8d73e8;
+    }
 
-.tool:active{
-  transform:scale(.97);
-}
+    .tool.active {
+      background: #6846d9;
+      border-color: #6846d9;
+      color: white;
+    }
 
-.tool.active{
-  background:#202126;
-  color:white;
-  box-shadow:0 5px 15px rgba(0,0,0,.15);
-}
+    .toolIcon {
+      width: 46px;
+      height: 46px;
+      object-fit: contain;
+      display: block;
+      margin-bottom: 7px;
+    }
 
-.toolIcon{
-  width:48px;
-  height:48px;
-  display:block;
-  margin:0 auto 7px;
-  object-fit:contain;
-}
+    .tool.active .toolIcon {
+      filter: brightness(0) invert(1);
+    }
 
-/*
-  Active button ke icons white karne ke liye
-  PNG ko brightness/invert filter diya gaya hai.
-*/
+    .tool-name {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
 
-.tool.active .toolIcon{
-  filter:brightness(0) invert(1);
-}
+    /* APPLY BUTTON */
 
-.toolName{
-  font-size:12px;
-  font-weight:600;
-}
+    .apply-btn {
+      width: 100%;
+      height: 52px;
+      margin-top: 22px;
+      border: 0;
+      border-radius: 16px;
+      background: #6846d9;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(104,70,217,0.22);
+    }
 
-/* EDIT BUTTON */
+    .apply-btn:disabled {
+      background: #c9c6d4;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
 
-#editButton{
-  width:100%;
-  border:0;
-  border-radius:16px;
-  padding:17px;
-  background:#5b5ee8;
-  color:white;
-  font-size:17px;
-  font-weight:700;
-  cursor:pointer;
-  box-shadow:0 7px 18px rgba(91,94,232,.25);
-}
+    .apply-btn:active:not(:disabled) {
+      transform: scale(0.99);
+    }
 
-#editButton:active{
-  transform:scale(.98);
-}
+    /* STATUS */
 
-#editButton:disabled{
-  opacity:.6;
-}
+    .status {
+      width: 100%;
+      min-height: 20px;
+      margin-top: 13px;
+      text-align: center;
+      color: #777780;
+      font-size: 13px;
+      line-height: 1.4;
+    }
 
-/* STATUS */
+    /* SMALL MOBILE */
 
-.statusBox{
-  min-height:42px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  margin-top:14px;
-}
+    @media (max-width: 380px) {
+      .app {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
 
-#status{
-  margin:0;
-  color:#666871;
-  font-size:13px;
-}
+      .title {
+        font-size: 27px;
+      }
 
-/* LOADER */
+      .photo-box {
+        height: 270px;
+      }
 
-.loader{
-  display:none;
-  width:18px;
-  height:18px;
-  border:3px solid rgba(255,255,255,.4);
-  border-top-color:white;
-  border-radius:50%;
-  animation:spin .8s linear infinite;
-  margin:auto;
-}
+      .tool {
+        height: 118px;
+      }
 
-@keyframes spin{
-  to{
-    transform:rotate(360deg);
-  }
-}
-
-@media(max-width:380px){
-
-  .title h1{
-    font-size:25px;
-  }
-
-  .tools{
-    gap:7px;
-  }
-
-  .tool{
-    padding:13px 5px;
-  }
-
-  .toolIcon{
-    width:44px;
-    height:44px;
-  }
-}
-</style>
+      .toolIcon {
+        width: 42px;
+        height: 42px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="app">
+  <div class="app">
 
-  <!-- HEADER -->
+    <header class="header">
+      <div class="brand">AI Photo Editor</div>
+      <div class="badge">AI Powered</div>
+    </header>
 
-  <div class="header">
+    <h1 class="title">Make your photos better.</h1>
 
-    <div class="logo">
-      <span class="logoIcon">✨</span>
-      AI Photo Editor
-    </div>
-
-    <div class="badge">
-      AI Powered
-    </div>
-
-  </div>
-
-
-  <!-- TITLE -->
-
-  <div class="title">
-
-    <h1>
-      Make your photos better.
-    </h1>
-
-    <p>
+    <p class="subtitle">
       Choose a photo and select an AI editing tool.
     </p>
 
-  </div>
+    <section class="photo-card">
 
+      <div class="photo-box">
 
-  <!-- PHOTO -->
+        <div class="empty-photo" id="emptyPhoto">
+          <div class="empty-photo-title">No photo selected</div>
+          <div>Choose a photo to get started</div>
+        </div>
 
-  <div class="photoBox">
+        <img id="preview" alt="Photo Preview">
 
-    <div
-      class="emptyPhoto"
-      id="emptyPhoto"
-    >
-
-      <div class="uploadIcon">
-        📷
       </div>
 
-      <h3>
-        Add your photo
-      </h3>
+      <button class="add-photo" id="addPhotoBtn">
+        + Add Photo
+      </button>
 
-      <p>
-        Select a photo to start editing
-      </p><!DOCTYPE html>
-<html lang="en">
-<head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Photo Editor</title>
+      <input
+        type="file"
+        id="fileInput"
+        accept="image/*"
+      >
 
-<style>
-*{
-  box-sizing:border-box;
-}
+    </section>
 
-body{
-  margin:0;
-  min-height:100vh;
-  font-family:Arial,sans-serif;
-  background:#f4f5f8;
-  color:#17181c;
-}
-
-.app{
-  width:100%;
-  max-width:520px;
-  margin:auto;
-  padding:18px 16px 30px;
-}
-
-/* HEADER */
-
-.header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:22px;
-}
-
-.logo{
-  font-size:22px;
-  font-weight:700;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.logoIcon{
-  font-size:25px;
-}
-
-.badge{
-  background:#e9eaff;
-  color:#4b4fd8;
-  padding:7px 11px;
-  border-radius:20px;
-  font-size:12px;
-  font-weight:600;
-}
-
-/* TITLE */
-
-.title{
-  margin-bottom:18px;
-}
-
-.title h1{
-  margin:0 0 7px;
-  font-size:29px;
-  line-height:1.15;
-}
-
-.title p{
-  margin:0;
-  color:#70727a;
-  font-size:14px;
-}
-
-/* PHOTO */
-
-.photoBox{
-  width:100%;
-  min-height:300px;
-  background:#fff;
-  border-radius:22px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  box-shadow:0 5px 20px rgba(0,0,0,.07);
-  margin-bottom:18px;
-}
-
-#preview{
-  display:none;
-  width:100%;
-  max-height:55vh;
-  object-fit:contain;
-}
-
-.emptyPhoto{
-  text-align:center;
-  padding:35px 20px;
-  color:#777;
-}
-
-.uploadIcon{
-  width:70px;
-  height:70px;
-  margin:auto;
-  border-radius:20px;
-  background:#eeeeff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:34px;
-  margin-bottom:15px;
-}
-
-.emptyPhoto h3{
-  margin:0 0 7px;
-  color:#222;
-}
-
-.emptyPhoto p{
-  margin:0;
-  font-size:13px;
-}
-
-/* UPLOAD */
-
-.uploadButton{
-  display:block;
-  width:100%;
-  background:#17181c;
-  color:white;
-  text-align:center;
-  padding:15px;
-  border-radius:14px;
-  font-size:15px;
-  font-weight:600;
-  cursor:pointer;
-  margin-bottom:22px;
-}
-
-#photoInput{
-  display:none;
-}
-
-/* TOOLS */
-
-.sectionTitle{
-  font-size:16px;
-  font-weight:700;
-  margin:0 0 11px;
-}
-
-.tools{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-bottom:22px;
-}
-
-.tool{
-  border:0;
-  background:#fff;
-  border-radius:17px;
-  padding:14px 7px;
-  cursor:pointer;
-  box-shadow:0 3px 12px rgba(0,0,0,.06);
-  color:#25262b;
-  transition:.15s;
-}
-
-.tool:active{
-  transform:scale(.97);
-}
-
-.tool.active{
-  background:#202126;
-  color:white;
-  box-shadow:0 5px 15px rgba(0,0,0,.15);
-}
-
-.toolIcon{
-  width:48px;
-  height:48px;
-  display:block;
-  margin:0 auto 7px;
-  object-fit:contain;
-}
-
-/*
-  Active button ke icons white karne ke liye
-  PNG ko brightness/invert filter diya gaya hai.
-*/
-
-.tool.active .toolIcon{
-  filter:brightness(0) invert(1);
-}
-
-.toolName{
-  font-size:12px;
-  font-weight:600;
-}
-
-/* EDIT BUTTON */
-
-#editButton{
-  width:100%;
-  border:0;
-  border-radius:16px;
-  padding:17px;
-  background:#5b5ee8;
-  color:white;
-  font-size:17px;
-  font-weight:700;
-  cursor:pointer;
-  box-shadow:0 7px 18px rgba(91,94,232,.25);
-}
-
-#editButton:active{
-  transform:scale(.98);
-}
-
-#editButton:disabled{
-  opacity:.6;
-}
-
-/* STATUS */
-
-.statusBox{
-  min-height:42px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  margin-top:14px;
-}
-
-#status{
-  margin:0;
-  color:#666871;
-  font-size:13px;
-}
-
-/* LOADER */
-
-.loader{
-  display:none;
-  width:18px;
-  height:18px;
-  border:3px solid rgba(255,255,255,.4);
-  border-top-color:white;
-  border-radius:50%;
-  animation:spin .8s linear infinite;
-  margin:auto;
-}
-
-@keyframes spin{
-  to{
-    transform:rotate(360deg);
-  }
-}
-
-@media(max-width:380px){
-
-  .title h1{
-    font-size:25px;
-  }
-
-  .tools{
-    gap:7px;
-  }
-
-  .tool{
-    padding:13px 5px;
-  }
-
-  .toolIcon{
-    width:44px;
-    height:44px;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-
-  <!-- HEADER -->
-
-  <div class="header">
-
-    <div class="logo">
-      <span class="logoIcon">✨</span>
-      AI Photo Editor
+    <div class="section-title">
+      Choose an edit
     </div>
 
-    <div class="badge">
-      AI Powered
-    </div>
+    <div class="tools">
 
-  </div>
+      <div class="tool active" data-tool="enhance">
 
+        <img
+          class="toolIcon"
+          src="./enhance-icon.png"
+          alt="Enhance"
+        >
 
-  <!-- TITLE -->
+        <div class="tool-name">
+          Enhance
+        </div>
 
-  <div class="title">
-
-    <h1>
-      Make your photos better.
-    </h1>
-
-    <p>
-      Choose a photo and select an AI editing tool.
-    </p>
-
-  </div>
-
-
-  <!-- PHOTO -->
-
-  <div class="photoBox">
-
-    <div
-      class="emptyPhoto"
-      id="emptyPhoto"
-    >
-
-      <div class="uploadIcon">
-        📷
       </div>
 
-      <h3>
-        Add your photo
-      </h3>
+      <div class="tool" data-tool="smooth">
 
-      <p>
-        Select a photo to start editing
-      </p>
+        <img
+          class="toolIcon"
+          src="./smooth-icon.png"
+          alt="Smooth Skin"
+        >
+
+        <div class="tool-name">
+          Smooth Skin
+        </div>
+
+      </div>
+
+      <div class="tool" data-tool="hair">
+
+        <img
+          class="toolIcon"
+          src="./hair-icon.png"
+          alt="Hair"
+        >
+
+        <div class="tool-name">
+          Hair
+        </div>
+
+      </div>
 
     </div>
 
-    <img
-      id="preview"
-      alt="Photo Preview"
-    >
-
-  </div>
-
-
-  <!-- PHOTO INPUT -->
-
-  <label
-    class="uploadButton"
-    for="photoInput"
-  >
-    ＋ Add Photo
-  </label>
-
-  <input
-    type="file"
-    id="photoInput"
-    accept="image/*"
-  >
-
-
-  <!-- TOOLS -->
-
-  <div class="sectionTitle">
-    Choose an edit
-  </div>
-
-  <div class="tools">
-
-
-    <!-- ENHANCE -->
-
     <button
-      class="tool active"
-      data-option="enhance"
+      class="apply-btn"
+      id="applyBtn"
+      disabled
     >
-
-      <img
-        class="toolIcon"
-        src="enhance-icon.png"
-        alt="Enhance"
-      >
-
-      <span class="toolName">
-        Enhance
-      </span>
-
-    </button>
-
-
-    <!-- SMOOTH SKIN -->
-
-    <button
-      class="tool"
-      data-option="smooth"
-    >
-
-      <img
-        class="toolIcon"
-        src="smooth-icon.png"
-        alt="Smooth Skin"
-      >
-
-      <span class="toolName">
-        Smooth Skin
-      </span>
-
-    </button>
-
-
-    <!-- HAIR -->
-
-    <button
-      class="tool"
-      data-option="hair"
-    >
-
-      <img
-        class="toolIcon"
-        src="hair-icon.png"
-        alt="Hair"
-      >
-
-      <span class="toolName">
-        Hair
-      </span>
-
-    </button>
-
-  </div>
-
-
-  <!-- AI EDIT -->
-
-  <button id="editButton">
-
-    <span id="buttonText">
       ✨ Apply AI Edit
-    </span>
+    </button>
 
-    <span
-      class="loader"
-      id="loader"
-    ></span>
-
-  </button>
-
-
-  <div class="statusBox">
-
-    <p id="status"></p>
+    <div class="status" id="status"></div>
 
   </div>
 
-</div>
 
+  <script>
 
-<script>
+    const fileInput = document.getElementById("fileInput");
+    const addPhotoBtn = document.getElementById("addPhotoBtn");
+    const preview = document.getElementById("preview");
+    const emptyPhoto = document.getElementById("emptyPhoto");
+    const applyBtn = document.getElementById("applyBtn");
+    const status = document.getElementById("status");
 
-const photoInput =
-  document.getElementById("photoInput");
+    const tools = document.querySelectorAll(".tool");
 
-const preview =
-  document.getElementById("preview");
+    let selectedTool = "enhance";
+    let selectedFile = null;
 
-const emptyPhoto =
-  document.getElementById("emptyPhoto");
 
-const editButton =
-  document.getElementById("editButton");
+    /* ADD PHOTO */
 
-const buttonText =
-  document.getElementById("buttonText");
+    addPhotoBtn.addEventListener("click", function () {
+      fileInput.click();
+    });
 
-const loader =
-  document.getElementById("loader");
 
-const status =
-  document.getElementById("status");
+    /* PHOTO SELECT */
 
-const tools =
-  document.querySelectorAll(".tool");
+    fileInput.addEventListener("change", function () {
 
-let selectedFile = null;
+      const file = fileInput.files[0];
 
-let selectedOption = "enhance";
+      if (!file) {
+        return;
+      }
 
+      selectedFile = file;
 
-/* TOOL SELECTION */
+      const imageURL = URL.createObjectURL(file);
 
-tools.forEach(tool => {
+      preview.src = imageURL;
+      preview.style.display = "block";
+      emptyPhoto.style.display = "none";
 
-  tool.onclick = () => {
+      applyBtn.disabled = false;
 
-    tools.forEach(t =>
-      t.classList.remove("active")
-    );
+      status.textContent = "Photo ready";
+    });
 
-    tool.classList.add("active");
 
-    selectedOption =
-      tool.dataset.option;
+    /* TOOL SELECT */
 
-    status.textContent =
-      tool.querySelector(
-        ".toolName"
-      ).textContent +
-      " selected";
+    tools.forEach(function (tool) {
 
-  };
+      tool.addEventListener("click", function () {
 
-});
+        tools.forEach(function (item) {
+          item.classList.remove("active");
+        });
 
+        tool.classList.add("active");
 
-/* PHOTO SELECTION */
+        selectedTool = tool.dataset.tool;
 
-photoInput.onchange = () => {
+        status.textContent = "";
 
-  const file =
-    photoInput.files[0];
+      });
 
-  if(!file){
-    return;
-  }
+    });
 
-  selectedFile = file;
 
-  const imageURL =
-    URL.createObjectURL(file);
+    /* AI EDIT */
 
-  preview.src = imageURL;
+    applyBtn.addEventListener("click", async function () {
 
-  preview.onload = () => {
+      if (!selectedFile) {
+        status.textContent = "Please select a photo first.";
+        return;
+      }
 
-    preview.style.display =
-      "block";
+      let prompt = "";
 
-    emptyPhoto.style.display =
-      "none";
+      if (selectedTool === "enhance") {
 
-    status.textContent =
-      "Photo ready ✓";
+        prompt =
+          "Enhance this photo naturally. Improve overall image quality, sharpness, lighting and details. Preserve the exact same person, face identity, facial features, skin texture and hairstyle. Do not change the person's identity.";
 
-  };
+      }
 
-};
+      if (selectedTool === "smooth") {
 
+        prompt =
+          "Smooth the skin naturally. Reduce minor blemishes and uneven skin texture while keeping realistic skin pores and facial details. Preserve the exact same person, identity, eyes, nose, mouth, face shape, jawline and hairstyle. Do not change the face.";
 
-/* AI EDIT */
+      }
 
-async function aiEdit(){
+      if (selectedTool === "hair") {
 
-  if(!selectedFile){
+        prompt =
+          "Improve and enhance the person's hair naturally. Keep the exact same person and face identity. Preserve the face, eyes, nose, mouth, skin, face shape and hairstyle structure. Make only a subtle natural improvement to the hair.";
 
-    status.textContent =
-      "Pehle photo add karein.";
+      }
 
-    return;
-  }
 
+      applyBtn.disabled = true;
+      status.textContent = "AI photo edit kar raha hai...";
 
-  editButton.disabled = true;
 
-  buttonText.style.display =
-    "none";
+      try {
 
-  loader.style.display =
-    "block";
+        const formData = new FormData();
 
-  status.textContent =
-    "AI photo edit kar raha hai...";
+        formData.append("image", selectedFile);
+        formData.append("prompt", prompt);
 
 
-  try{
+        const response = await fetch("/api/edit", {
+          method: "POST",
+          body: formData
+        });
 
-    const formData =
-      new FormData();
 
-    formData.append(
-      "image",
-      selectedFile
-    );
+        if (!response.ok) {
 
+          let errorText = "AI edit failed.";
 
-    let prompt = "";
+          try {
+            const errorData = await response.json();
 
+            if (errorData.error) {
+              errorText = errorData.error;
+            }
 
-    /* ENHANCE */
+          } catch (e) {}
 
-    if(selectedOption === "enhance"){
-
-      prompt =
-        "Enhance this photo naturally. " +
-        "Improve image quality, lighting, " +
-        "sharpness and facial details. " +
-        "Keep the person's exact identity, " +
-        "face shape, eyes, nose, lips and " +
-        "hair unchanged. Do not change " +
-        "the person's appearance.";
-    }
-
-
-    /* SMOOTH SKIN */
-
-    if(selectedOption === "smooth"){
-
-      prompt =
-        "Retouch only the facial skin " +
-        "professionally. Clearly smooth " +
-        "the skin and reduce acne, pimples, " +
-        "blemishes, dark spots, uneven " +
-        "skin texture and fine lines. " +
-        "Make the skin look clean, soft, " +
-        "fresh and naturally polished. " +
-        "Preserve realistic skin texture. " +
-        "Keep the exact same person, " +
-        "identity, face shape, eyes, nose, " +
-        "lips, mouth, cheeks and hairstyle. " +
-        "Do not change facial features. " +
-        "Do not change the face shape. " +
-        "Do not make the skin plastic, " +
-        "blurry or overly airbrushed. " +
-        "Only improve the facial skin.";
-    }
-
-
-    /* HAIR */
-
-    if(selectedOption === "hair"){
-
-      prompt =
-        "Keep the person's exact identity " +
-        "and face unchanged. Naturally " +
-        "improve the hair appearance while " +
-        "keeping the original hairstyle. " +
-        "Do not change the eyes, nose, lips, " +
-        "face shape or skin. Make the hair " +
-        "look natural and realistic.";
-    }
-
-
-    formData.append(
-      "prompt",
-      prompt
-    );
-
-
-    const response =
-      await fetch(
-        "/api/edit",
-        {
-          method:"POST",
-          body:formData
+          throw new Error(errorText);
         }
-      );
 
 
-    if(!response.ok){
+        const resultBlob = await response.blob();
 
-      throw new Error(
-        "Server error"
-      );
+        const resultURL = URL.createObjectURL(resultBlob);
 
-    }
+        preview.src = resultURL;
+        preview.style.display = "block";
+        emptyPhoto.style.display = "none";
 
-
-    const blob =
-      await response.blob();
+        status.textContent = "AI Edit complete!";
 
 
-    preview.onload = null;
+      } catch (error) {
 
-    preview.src =
-      URL.createObjectURL(blob);
+        console.error(error);
 
-    preview.style.display =
-      "block";
+        status.textContent =
+          error.message || "AI edit failed.";
 
-    emptyPhoto.style.display =
-      "none";
+      }
 
 
-    status.textContent =
-      "AI Edit complete ✓";
+      applyBtn.disabled = false;
 
+    });
 
-  }catch(error){
-
-    console.error(error);
-
-    status.textContent =
-      "AI Edit failed. Please try again.";
-
-  }finally{
-
-    editButton.disabled =
-      false;
-
-    buttonText.style.display =
-      "inline";
-
-    loader.style.display =
-      "none";
-
-  }
-
-}
-
-
-editButton.onclick =
-  aiEdit;
-
-</script>
+  </script>
 
 </body>
-</html>￼Enter
-
-div>
-
-    <img
-      id="preview"
-      alt="Photo Preview"
-    >
-
-  </div>
-
-
-  <!-- PHOTO INPUT -->
-
-  <label
-    class="uploadButton"
-    for="photoInput"
-  >
-    ＋ Add Photo
-  </label>
-
-  <input
-    type="file"
-    id="photoInput"
-    accept="image/*"
-  >
-
-
-  <!-- TOOLS -->
-
-  <div class="sectionTitle">
-    Choose an edit
-  </div>
-
-  <div class="tools">
-
-
-    <!-- ENHANCE -->
-
-    <button
-      class="tool active"
-      data-option="enhance"
-    >
-
-      <img
-        class="toolIcon"
-        src="enhance-icon.png"
-        alt="Enhance"
-      >
-
-      <span class="toolName">
-        Enhance
-      </span>
-
-    </button>
-
-
-    <!-- SMOOTH SKIN -->
-
-    <button
-      class="tool"
-      data-option="smooth"
-    >
-
-      <img
-        class="toolIcon"
-        src="smooth-icon.png"
-        alt="Smooth Skin"
-      >
-
-      <span class="toolName">
-        Smooth Skin
-      </span>
-
-    </button>
-
-
-    <!-- HAIR -->
-
-    <button
-      class="tool"
-      data-option="hair"
-    >
-
-      <img
-        class="toolIcon"
-        src="hair-icon.png"
-        alt="Hair"
-      >
-
-      <span class="toolName">
-        Hair
-      </span>
-
-    </button>
-
-  </div>
-
-
-  <!-- AI EDIT -->
-
-  <button id="editButton">
-
-    <span id="buttonText">
-      ✨ Apply AI Edit
-    </span>
-
-    <span
-      class="loader"
-      id="loader"
-    ></span>
-
-  </button>
-
-
-  <div class="statusBox">
-
-    <p id="status"></p>
-
-  </div>
-
-</div>
-
-
-<script>
-
-const photoInput =
-  document.getElementById("photoInput");
-
-const preview =
-  document.getElementById("preview");
-
-const emptyPhoto =
-  document.getElementById("emptyPhoto");
-
-const editButton =
-  document.getElementById("editButton");
-
-const buttonText =
-  document.getElementById("buttonText");
-
-const loader =
-  document.getElementById("loader");
-
-const status =
-  document.getElementById("status");
-
-const tools =
-  document.querySelectorAll(".tool");
-
-let selectedFile = null;
-
-let selectedOption = "enhance";
-
-
-/* TOOL SELECTION */
-
-tools.forEach(tool => {
-
-  tool.onclick = () => {
-
-    tools.forEach(t =>
-      t.classList.remove("active")
-    );
-
-    tool.classList.add("active");
-
-    selectedOption =
-      tool.dataset.option;
-
-    status.textContent =
-      tool.querySelector(
-        ".toolName"
-      ).textContent +
-      " selected";
-
-  };
-
-});
-
-
-/* PHOTO SELECTION */
-
-photoInput.onchange = () => {
-
-  const file =
-    photoInput.files[0];
-
-  if(!file){
-    return;
-  }
-
+</html>
