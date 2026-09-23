@@ -1,49 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Photo Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            font-family: Arial;
-            text-align: center;
-            padding: 20px;
-        }
+<title>AI Photo Editor</title>
 
-        #preview {
-            max-width: 100%;
-            max-height: 400px;
-            margin-top: 20px;
-            border-radius: 10px;
-            display: none;
-        }
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+    background: #f5f5f5;
+}
 
-        #options {
-            margin-top: 15px;
-        }
+h1 {
+    margin-bottom: 10px;
+}
 
-        .optionButton {
-            margin: 4px;
-            padding: 8px 14px;
-            font-size: 16px;
-        }
+#photoInput {
+    margin: 15px 0;
+}
 
-        #editButton {
-            margin-top: 20px;
-            padding: 12px 25px;
-            font-size: 16px;
-        }
+#preview {
+    max-width: 100%;
+    max-height: 500px;
+    display: none;
+    margin: 15px auto;
+    border-radius: 10px;
+}
 
-        #status {
-            margin-top: 15px;
-            font-weight: bold;
-        }
+#workCanvas {
+    display: none;
+}
 
-        canvas {
-            display: none;
-        }
-    </style>
+#maskCanvas {
+    display: none;
+}
+
+#options {
+    margin-top: 15px;
+}
+
+.optionButton {
+    padding: 10px 14px;
+    margin: 5px;
+    border: none;
+    border-radius: 8px;
+    background: #ddd;
+    font-size: 15px;
+}
+
+.optionButton.selected {
+    background: #222;
+    color: white;
+}
+
+#editButton {
+    margin-top: 15px;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    background: #007bff;
+    color: white;
+    font-size: 17px;
+}
+
+#status {
+    margin-top: 15px;
+    font-size: 15px;
+}
+</style>
 </head>
 
 <body>
@@ -54,17 +81,14 @@
 
 <input type="file" id="photoInput" accept="image/*">
 
-<br>
-
 <img id="preview" alt="Photo Preview">
 
 <canvas id="workCanvas"></canvas>
-
-<br>
+<canvas id="maskCanvas"></canvas>
 
 <div id="options">
 
-    <button class="optionButton" data-option="enhance">
+    <button class="optionButton selected" data-option="enhance">
         ✨ Enhance
     </button>
 
@@ -82,54 +106,50 @@
 
 </div>
 
-<br>
-
-<button id="editButton">AI Edit</button>
+<button id="editButton">
+    AI Edit
+</button>
 
 <p id="status"></p>
 
 
+<!-- MediaPipe FaceMesh -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+
 
 <script>
 
-const photoInput =
-    document.getElementById("photoInput");
-
-const preview =
-    document.getElementById("preview");
-
-const editButton =
-    document.getElementById("editButton");
-
-const status =
-    document.getElementById("status");
-
-const workCanvas =
-    document.getElementById("workCanvas");
+const photoInput = document.getElementById("photoInput");
+const preview = document.getElementById("preview");
+const workCanvas = document.getElementById("workCanvas");
+const maskCanvas = document.getElementById("maskCanvas");
+const editButton = document.getElementById("editButton");
+const status = document.getElementById("status");
 
 let selectedFile = null;
-
 let selectedOption = "enhance";
 
 let faceLandmarks = null;
+let faceReady = false;
 
 
 /* =========================
    OPTION BUTTONS
 ========================= */
 
-document.querySelectorAll(".optionButton")
-.forEach(function(button) {
+document.querySelectorAll(".optionButton").forEach(button => {
 
-    button.addEventListener("click", function() {
+    button.addEventListener("click", () => {
 
-        selectedOption =
-            button.dataset.option;
+        document.querySelectorAll(".optionButton")
+            .forEach(b => b.classList.remove("selected"));
 
-        status.textContent =
-            "Selected: " +
-            button.textContent.trim();
+        button.classList.add("selected");
+
+        selectedOption = button.dataset.option;
+
+        status.innerText =
+            "Selected: " + selectedOption;
 
     });
 
@@ -137,18 +157,40 @@ document.querySelectorAll(".optionButton")
 
 
 /* =========================
-   FACE MESH
+   PHOTO SELECT
+========================= */
+
+photoInput.addEventListener("change", () => {
+
+    if (!photoInput.files || !photoInput.files[0]) {
+        return;
+    }
+
+    selectedFile = photoInput.files[0];
+
+    const url = URL.createObjectURL(selectedFile);
+
+    preview.src = url;
+
+    preview.style.display = "block";
+
+    faceLandmarks = null;
+    faceReady = false;
+
+    status.innerText = "Photo load ho rahi hai...";
+
+});
+
+
+/* =========================
+   MEDIAPIPE
 ========================= */
 
 const faceMesh = new FaceMesh({
 
-    locateFile: function(file) {
+    locateFile: (file) => {
 
-        return (
-            "https://cdn.jsdelivr.net/npm/" +
-            "@mediapipe/face_mesh/" +
-            file
-        );
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
 
     }
 
@@ -168,7 +210,7 @@ faceMesh.setOptions({
 });
 
 
-faceMesh.onResults(function(results) {
+faceMesh.onResults((results) => {
 
     if (
         results.multiFaceLandmarks &&
@@ -178,19 +220,41 @@ faceMesh.onResults(function(results) {
         faceLandmarks =
             results.multiFaceLandmarks[0];
 
-        status.textContent =
-            "Face detected ✅";
+        faceReady = true;
 
-        console.log("Face detected");
+        status.innerText = "Face detected ✓";
 
-    }
-
-    else {
+    } else {
 
         faceLandmarks = null;
 
-        status.textContent =
-            "Face not detected ❌";
+        faceReady = false;
+
+        status.innerText = "Face not detected";
+
+    }
+
+});
+
+
+preview.addEventListener("load", async () => {
+
+    if (!preview.src) return;
+
+    try {
+
+        await faceMesh.send({
+            image: preview
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        faceReady = false;
+
+        status.innerText =
+            "Face detection error";
 
     }
 
@@ -198,204 +262,174 @@ faceMesh.onResults(function(results) {
 
 
 /* =========================
-   PHOTO SELECT
+   HELPER
 ========================= */
 
-photoInput.addEventListener(
-    "change",
-    function() {
+function point(index) {
 
-        selectedFile =
-            photoInput.files[0];
+    const p = faceLandmarks[index];
 
-        faceLandmarks = null;
+    return {
 
-        if (!selectedFile) {
-            return;
-        }
+        x: p.x * workCanvas.width,
 
-        const url =
-            URL.createObjectURL(
-                selectedFile
-            );
+        y: p.y * workCanvas.height
 
-        preview.src = url;
+    };
 
-        preview.style.display =
-            "block";
-
-        status.textContent =
-            "Photo load ho rahi hai...";
-
-    }
-);
+}
 
 
 /* =========================
-   PHOTO LOAD
+   TRIANGLE WARP
 ========================= */
 
-preview.addEventListener(
-    "load",
-    async function() {
+function warpTriangle(
+    ctx,
+    source,
+    s0,
+    s1,
+    s2,
+    d0,
+    d1,
+    d2
+) {
 
-        try {
+    const sx0 = s0.x;
+    const sy0 = s0.y;
 
-            await faceMesh.send({
-                image: preview
-            });
+    const sx1 = s1.x;
+    const sy1 = s1.y;
 
-        }
+    const sx2 = s2.x;
+    const sy2 = s2.y;
 
-        catch(error) {
+    const dx0 = d0.x;
+    const dy0 = d0.y;
 
-            console.error(
-                "FaceMesh error:",
-                error
-            );
+    const dx1 = d1.x;
+    const dy1 = d1.y;
 
-            status.textContent =
-                "Face detection error";
-
-        }
-
-    }
-);
+    const dx2 = d2.x;
+    const dy2 = d2.y;
 
 
-/* =================================================
-   LOCAL SMILE
-================================================= */
+    const denom =
+        sx0 * (sy1 - sy2) +
+        sx1 * (sy2 - sy0) +
+        sx2 * (sy0 - sy1);
 
-async function makeLocalSmile() {
 
-    if (!faceLandmarks) {
-
-        await faceMesh.send({
-            image: preview
-        });
-
+    if (Math.abs(denom) < 0.0001) {
+        return;
     }
 
 
-    if (!faceLandmarks) {
+    const a =
+        (
+            dx0 * (sy1 - sy2) +
+            dx1 * (sy2 - sy0) +
+            dx2 * (sy0 - sy1)
+        ) / denom;
 
-        throw new Error(
-            "Face detect nahi hua."
-        );
+
+    const b =
+        (
+            dy0 * (sy1 - sy2) +
+            dy1 * (sy2 - sy0) +
+            dy2 * (sy0 - sy1)
+        ) / denom;
+
+
+    const c =
+        (
+            dx0 * (sx2 * sy1 - sx1 * sy2) +
+            dx1 * (sx0 * sy2 - sx2 * sy0) +
+            dx2 * (sx1 * sy0 - sx0 * sy1)
+        ) / denom;
+
+
+    const d =
+        (
+            dx0 * (sx1 - sx2) +
+            dx1 * (sx2 - sx0) +
+            dx2 * (sx0 - sx1)
+        ) / denom;
+
+
+    const e =
+        (
+            dy0 * (sx1 - sx2) +
+            dy1 * (sx2 - sx0) +
+            dy2 * (sx0 - sx1)
+        ) / denom;
+
+
+    const f =
+        (
+            dy0 * (sx2 * sy1 - sx1 * sy2) +
+            dy1 * (sx0 * sy2 - sx2 * sy0) +
+            dy2 * (sx1 * sy0 - sx0 * sy1)
+        ) / denom;
+
+
+    ctx.save();
+
+    ctx.beginPath();
+
+    ctx.moveTo(dx0, dy0);
+
+    ctx.lineTo(dx1, dy1);
+
+    ctx.lineTo(dx2, dy2);
+
+    ctx.closePath();
+
+    ctx.clip();
+
+
+    ctx.setTransform(
+        a,
+        b,
+        d,
+        e,
+        c,
+        f
+    );
+
+
+    ctx.drawImage(source, 0, 0);
+
+    ctx.restore();
+
+}
+
+
+/* =========================
+   LOCAL SMILE MESH
+========================= */
+
+function createSmile() {
+
+    if (!faceReady || !faceLandmarks) {
+
+        status.innerText =
+            "Face detect nahi hua.";
+
+        return null;
 
     }
 
 
-    const img =
-        preview;
-
-    const width =
-        img.naturalWidth;
-
-    const height =
-        img.naturalHeight;
+    const width = preview.naturalWidth;
+    const height = preview.naturalHeight;
 
 
-    if (!width || !height) {
-
-        throw new Error(
-            "Photo properly load nahi hui."
-        );
-
-    }
+    workCanvas.width = width;
+    workCanvas.height = height;
 
 
-    /*
-     * MediaPipe mouth landmarks
-     *
-     * 61  = left corner
-     * 291 = right corner
-     * 13  = upper inner lip
-     * 14  = lower inner lip
-     */
-
-    const left =
-        faceLandmarks[61];
-
-    const right =
-        faceLandmarks[291];
-
-    const top =
-        faceLandmarks[13];
-
-    const bottom =
-        faceLandmarks[14];
-
-
-    const lx =
-        left.x * width;
-
-    const rx =
-        right.x * width;
-
-    const ly =
-        left.y * height;
-
-    const ry =
-        right.y * height;
-
-    const ty =
-        top.y * height;
-
-    const by =
-        bottom.y * height;
-
-
-    const leftX =
-        Math.min(lx, rx);
-
-    const rightX =
-        Math.max(lx, rx);
-
-    const mouthTop =
-        Math.min(ty, by);
-
-    const mouthBottom =
-        Math.max(ty, by);
-
-
-    const mouthWidth =
-        rightX - leftX;
-
-    const mouthHeight =
-        Math.max(
-            2,
-            mouthBottom - mouthTop
-        );
-
-
-    const centerX =
-        (leftX + rightX) / 2;
-
-    const centerY =
-        (mouthTop + mouthBottom) / 2;
-
-
-    /*
-     * Work on ORIGINAL resolution.
-     */
-
-    workCanvas.width =
-        width;
-
-    workCanvas.height =
-        height;
-
-
-    const ctx =
-        workCanvas.getContext(
-            "2d",
-            {
-                willReadFrequently: true
-            }
-        );
-
+    const ctx = workCanvas.getContext("2d");
 
     ctx.clearRect(
         0,
@@ -405,8 +439,10 @@ async function makeLocalSmile() {
     );
 
 
+    /* Original image */
+
     ctx.drawImage(
-        img,
+        preview,
         0,
         0,
         width,
@@ -414,625 +450,502 @@ async function makeLocalSmile() {
     );
 
 
-    const original =
-        ctx.getImageData(
-            0,
-            0,
-            width,
-            height
-        );
+    /*
+       Important mouth landmarks
+    */
 
+    const L = point(61);
+    const R = point(291);
 
-    const src =
-        original.data;
-
-
-    const output =
-        new Uint8ClampedArray(src);
+    const U = point(13);
+    const D = point(14);
 
 
     /*
-     * Smile amount.
-     *
-     * This is deliberately moderate.
-     */
+       Support points around mouth
+       These keep nearby skin stable.
+    */
+
+    const UL = point(78);
+    const UR = point(308);
+
+    const LL = point(95);
+    const LR = point(324);
+
+    const CL = point(57);
+    const CR = point(287);
+
+
+    /*
+       Original points
+    */
+
+    const source = {
+
+        L: {...L},
+        R: {...R},
+
+        U: {...U},
+        D: {...D},
+
+        UL: {...UL},
+        UR: {...UR},
+
+        LL: {...LL},
+        LR: {...LR},
+
+        CL: {...CL},
+        CR: {...CR}
+
+    };
+
+
+    /*
+       Smile amount
+
+       Small movement is intentional.
+       Large movement causes distortion.
+    */
+
+    const mouthWidth =
+        Math.abs(R.x - L.x);
+
 
     const smileAmount =
         Math.max(
-            5,
+            3,
             Math.min(
-                14,
-                mouthWidth * 0.075
+                9,
+                mouthWidth * 0.045
             )
         );
 
 
     /*
-     * Only process a compact area
-     * around the mouth.
-     */
+       Destination points
+
+       Mouth corners go slightly upward.
+    */
+
+    const dest = {
+
+        L: {
+            x: L.x,
+            y: L.y - smileAmount
+        },
+
+        R: {
+            x: R.x,
+            y: R.y - smileAmount
+        },
+
+        U: {
+            x: U.x,
+            y: U.y
+        },
+
+        D: {
+            x: D.x,
+            y: D.y + smileAmount * 0.25
+        },
+
+        UL: {...UL},
+        UR: {...UR},
+
+        LL: {...LL},
+        LR: {...LR},
+
+        CL: {...CL},
+        CR: {...CR}
+
+    };
+
+
+    /*
+       Slightly raise the outer
+       mouth support points.
+    */
+
+    dest.UL.y -= smileAmount * 0.35;
+    dest.UR.y -= smileAmount * 0.35;
+
+    dest.LL.y -= smileAmount * 0.25;
+    dest.LR.y -= smileAmount * 0.25;
+
+
+    /*
+       Create triangles.
+
+       Each triangle is independently
+       transformed so there is no
+       large pixel displacement.
+    */
+
+    warpTriangle(
+        ctx,
+        preview,
+        source.UL,
+        source.L,
+        source.U,
+        dest.UL,
+        dest.L,
+        dest.U
+    );
+
+
+    warpTriangle(
+        ctx,
+        preview,
+        source.L,
+        source.CL,
+        source.D,
+        dest.L,
+        dest.CL,
+        dest.D
+    );
+
+
+    warpTriangle(
+        ctx,
+        preview,
+        source.CL,
+        source.LL,
+        source.D,
+        dest.CL,
+        dest.LL,
+        dest.D
+    );
+
+
+    warpTriangle(
+        ctx,
+        preview,
+        source.L,
+        source.U,
+        source.R,
+        dest.L,
+        dest.U,
+        dest.R
+    );
+
+
+    warpTriangle(
+        ctx,
+        preview,
+        source.R,
+        source.U,
+        source.UR,
+        dest.R,
+        dest.U,
+        dest.UR
+    );
+
+
+    warpTriangle(
+        ctx,
+        preview,
+        source.R,
+        source.D,
+        source.CR,
+        dest.R,
+        dest.D,
+        dest.CR
+    );
+
+
+    warpTriangle(
+        ctx,
+        preview,
+        source.CR,
+        source.D,
+        source.LR,
+        dest.CR,
+        dest.D,
+        dest.LR
+    );
+
+
+    /*
+       Restore outside mouth area
+       from original image.
+
+       This helps keep the
+       face identity stable.
+    */
+
+
+    const finalCanvas =
+        document.createElement("canvas");
+
+    finalCanvas.width = width;
+    finalCanvas.height = height;
+
+    const finalCtx =
+        finalCanvas.getContext("2d");
+
+    finalCtx.drawImage(
+        preview,
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    /*
+       Soft mouth region.
+    */
+
+    const centerX =
+        (L.x + R.x) / 2;
+
+    const centerY =
+        (U.y + D.y) / 2;
+
 
     const radiusX =
         mouthWidth * 0.72;
 
     const radiusY =
-        mouthHeight * 3.2;
-
-
-    const startX =
         Math.max(
-            0,
-            Math.floor(
-                centerX - radiusX
-            )
-        );
-
-    const endX =
-        Math.min(
-            width,
-            Math.ceil(
-                centerX + radiusX
-            )
-        );
-
-    const startY =
-        Math.max(
-            0,
-            Math.floor(
-                centerY - radiusY
-            )
-        );
-
-    const endY =
-        Math.min(
-            height,
-            Math.ceil(
-                centerY + radiusY
-            )
+            35,
+            Math.abs(D.y - U.y) * 5
         );
 
 
     /*
-     * Bilinear pixel sampler.
-     */
-
-    function getPixel(
-        x,
-        y,
-        channel
-    ) {
-
-        x = Math.max(
-            0,
-            Math.min(
-                width - 1,
-                x
-            )
-        );
-
-        y = Math.max(
-            0,
-            Math.min(
-                height - 1,
-                y
-            )
-        );
-
-
-        const x0 =
-            Math.floor(x);
-
-        const y0 =
-            Math.floor(y);
-
-        const x1 =
-            Math.min(
-                width - 1,
-                x0 + 1
-            );
-
-        const y1 =
-            Math.min(
-                height - 1,
-                y0 + 1
-            );
-
-
-        const fx =
-            x - x0;
-
-        const fy =
-            y - y0;
-
-
-        const p00 =
-            (y0 * width + x0) * 4 +
-            channel;
-
-        const p10 =
-            (y0 * width + x1) * 4 +
-            channel;
-
-        const p01 =
-            (y1 * width + x0) * 4 +
-            channel;
-
-        const p11 =
-            (y1 * width + x1) * 4 +
-            channel;
-
-
-        const a =
-            src[p00] * (1 - fx) +
-            src[p10] * fx;
-
-        const b =
-            src[p01] * (1 - fx) +
-            src[p11] * fx;
-
-
-        return (
-            a * (1 - fy) +
-            b * fy
-        );
-
-    }
-
-
-    /*
-     * Main local warp.
-     */
-
-    for (
-        let y = startY;
-        y < endY;
-        y++
-    ) {
-
-        for (
-            let x = startX;
-            x < endX;
-            x++
-        ) {
-
-            const dx =
-                (x - centerX) /
-                radiusX;
-
-            const dy =
-                (y - centerY) /
-                radiusY;
-
-
-            const distance =
-                dx * dx +
-                dy * dy;
-
-
-            if (distance >= 1) {
-                continue;
-            }
-
-
-            /*
-             * Soft falloff.
-             */
-
-            const falloff =
-                Math.pow(
-                    1 - distance,
-                    2
-                );
-
-
-            /*
-             * Horizontal position:
-             *
-             * -1 = left side
-             *  0 = center
-             * +1 = right side
-             */
-
-            const horizontal =
-                (x - centerX) /
-                (mouthWidth / 2);
-
-
-            /*
-             * Corner influence.
-             *
-             * Center almost unchanged.
-             * Sides move upward.
-             */
-
-            let cornerInfluence =
-                Math.pow(
-                    Math.min(
-                        1,
-                        Math.abs(horizontal)
-                    ),
-                    2.0
-                );
-
-
-            /*
-             * Don't warp too far
-             * outside the mouth.
-             */
-
-            if (
-                Math.abs(horizontal) < 0.15
-            ) {
-
-                cornerInfluence *= 0.15;
-
-            }
-
-
-            /*
-             * Upward movement.
-             */
-
-            let moveUp =
-                smileAmount *
-                cornerInfluence *
-                falloff;
-
-
-            /*
-             * Upper lip gets less movement.
-             */
-
-            if (
-                y < centerY
-            ) {
-
-                moveUp *= 0.45;
-
-            }
-
-
-            /*
-             * Small movement toward
-             * mouth center.
-             *
-             * This avoids a sharp line.
-             */
-
-            const pull =
-                horizontal *
-                moveUp *
-                0.035;
-
-
-            const sampleX =
-                x - pull;
-
-            const sampleY =
-                y + moveUp;
-
-
-            const index =
-                (y * width + x) * 4;
-
-
-            /*
-             * Smooth blend.
-             */
-
-            const blend =
-                Math.min(
-                    0.75,
-                    falloff
-                );
-
-
-            for (
-                let c = 0;
-                c < 3;
-                c++
-            ) {
-
-                const warped =
-                    getPixel(
-                        sampleX,
-                        sampleY,
-                        c
-                    );
-
-
-                output[index + c] =
-                    src[index + c] *
-                    (1 - blend) +
-                    warped *
-                    blend;
-
-            }
-
-
-            output[index + 3] =
-                src[index + 3];
-
-        }
-
-    }
-
-
-    const result =
-        new ImageData(
-            output,
-            width,
-            height
-        );
-
-
-    ctx.putImageData(
-        result,
+       Use destination warped canvas
+       only inside mouth area.
+    */
+
+    finalCtx.save();
+
+    finalCtx.beginPath();
+
+    finalCtx.ellipse(
+        centerX,
+        centerY,
+        radiusX,
+        radiusY,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    finalCtx.clip();
+
+    finalCtx.drawImage(
+        workCanvas,
         0,
         0
     );
 
+    finalCtx.restore();
+
 
     /*
-     * High quality JPEG.
-     */
+       Return final canvas
+    */
 
-    const blob =
-        await new Promise(
-            function(resolve) {
-
-                workCanvas.toBlob(
-                    resolve,
-                    "image/jpeg",
-                    0.98
-                );
-
-            }
-        );
-
-
-    if (!blob) {
-
-        throw new Error(
-            "Smile result create nahi hua."
-        );
-
-    }
-
-
-    return blob;
+    return finalCanvas;
 
 }
 
 
-/* =================================================
-   EDIT BUTTON
-================================================= */
+/* =========================
+   AI EDIT BUTTON
+========================= */
 
-editButton.addEventListener(
-    "click",
-    async function() {
+editButton.addEventListener("click", async () => {
 
-        if (!selectedFile) {
+    if (!selectedFile) {
 
-            status.textContent =
-                "Pehle photo select karein.";
+        status.innerText =
+            "Pehle photo select karein.";
 
+        return;
+
+    }
+
+
+    /* =====================
+       LOCAL SMILE
+    ===================== */
+
+    if (selectedOption === "smile") {
+
+        status.innerText =
+            "Natural smile bana raha hoon...";
+
+
+        const resultCanvas =
+            createSmile();
+
+
+        if (!resultCanvas) {
             return;
-
         }
 
 
-        editButton.disabled =
-            true;
+        resultCanvas.toBlob(
+            (blob) => {
+
+                if (!blob) {
+
+                    status.innerText =
+                        "Smile edit failed.";
+
+                    return;
+
+                }
 
 
-        try {
-
-
-            /* =========================
-               LOCAL SMILE
-            ========================= */
-
-            if (
-                selectedOption === "smile"
-            ) {
-
-                status.textContent =
-                    "😊 Natural smile bana raha hai...";
-
-
-                const smileBlob =
-                    await makeLocalSmile();
-
-
-                const smileURL =
-                    URL.createObjectURL(
-                        smileBlob
-                    );
+                const resultURL =
+                    URL.createObjectURL(blob);
 
 
                 /*
-                 * Important:
-                 * Don't trigger FaceMesh again
-                 * on the generated image.
-                 */
+                   Important:
+                   MediaPipe ko result image
+                   par dobara run nahi karna.
+                */
 
-                preview.onload =
-                    null;
+                preview.onload = null;
 
-
-                preview.src =
-                    smileURL;
+                preview.src = resultURL;
 
                 preview.style.display =
                     "block";
 
 
-                status.textContent =
-                    "😊 Smile Edit complete!";
+                status.innerText =
+                    "Smile edit complete ✓";
+
+            },
+            "image/jpeg",
+            0.95
+        );
 
 
-                editButton.disabled =
-                    false;
-
-                return;
-
-            }
-
-
-            /* =========================
-               OTHER AI FEATURES
-            ========================= */
-
-            status.textContent =
-                "AI photo edit kar raha hai...";
-
-
-            const formData =
-                new FormData();
-
-
-            formData.append(
-                "image",
-                selectedFile
-            );
-
-
-            let editPrompt =
-                "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
-
-
-            /* ENHANCE */
-
-            if (
-                selectedOption === "enhance"
-            ) {
-
-                editPrompt =
-                    "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
-
-            }
-
-
-            /* SMOOTH */
-
-            else if (
-                selectedOption === "smooth"
-            ) {
-
-                editPrompt =
-                    "Retouch the person's facial skin professionally. Clearly smooth the skin and reduce acne, pimples, blemishes, dark spots, uneven skin texture and fine lines. Make the skin look clean, soft, fresh and naturally polished while preserving realistic skin texture. Keep the exact same person, face shape, eyes, nose, lips, hairstyle and identity unchanged. Do not change facial features. Do not make the skin plastic, blurry or overly airbrushed. Only improve the skin.";
-
-            }
-
-
-            /* HAIR */
-
-            else if (
-                selectedOption === "hair"
-            ) {
-
-                editPrompt =
-                    "Keep the person's identity and face unchanged. Naturally improve and enhance the hair appearance while keeping the original hairstyle.";
-
-            }
-
-
-            formData.append(
-                "prompt",
-                editPrompt
-            );
-
-
-            const response =
-                await fetch(
-                    "/api/edit",
-                    {
-                        method: "POST",
-                        body: formData
-                    }
-                );
-
-
-            const contentType =
-                response.headers.get(
-                    "content-type"
-                ) || "";
-
-
-            if (!response.ok) {
-
-                let message =
-                    "AI editing failed";
-
-
-                if (
-                    contentType.includes(
-                        "application/json"
-                    )
-                ) {
-
-                    const error =
-                        await response.json();
-
-
-                    message =
-                        error.details ||
-                        error.error ||
-                        message;
-
-                }
-
-                else {
-
-                    message =
-                        await response.text();
-
-                }
-
-
-                throw new Error(
-                    message
-                );
-
-            }
-
-
-            const blob =
-                await response.blob();
-
-
-            preview.src =
-                URL.createObjectURL(
-                    blob
-                );
-
-            preview.style.display =
-                "block";
-
-
-            status.textContent =
-                "AI Edit complete!";
-
-        }
-
-        catch(error) {
-
-            console.error(error);
-
-            status.textContent =
-                "Error: " +
-                error.message;
-
-        }
-
-
-        editButton.disabled =
-            false;
+        return;
 
     }
-);
+
+
+    /* =====================
+       AI FEATURES
+    ===================== */
+
+    status.innerText =
+        "AI photo edit kar raha hai...";
+
+
+    try {
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "image",
+            selectedFile
+        );
+
+
+        let prompt = "";
+
+
+        if (selectedOption === "enhance") {
+
+            prompt =
+                "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
+
+        }
+
+
+        if (selectedOption === "smooth") {
+
+            prompt =
+                "Retouch the person's facial skin professionally. Clearly smooth the skin and reduce acne, pimples, blemishes, dark spots, uneven skin texture and fine lines. Make the skin look clean, soft, fresh and naturally polished while preserving realistic skin texture. Keep the exact same person, face shape, eyes, nose, lips, hairstyle and identity unchanged. Do not change facial features. Do not make the skin plastic, blurry or overly airbrushed. Only improve the skin.";
+
+        }
+
+
+        if (selectedOption === "hair") {
+
+            prompt =
+                "Keep the person's identity and face unchanged. Naturally improve and enhance the hair appearance while keeping the original hairstyle.";
+
+        }
+
+
+        formData.append(
+            "prompt",
+            prompt
+        );
+
+
+        const response =
+            await fetch(
+                "/api/edit",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+
+        if (!response.ok) {
+
+            const errorText =
+                await response.text();
+
+            console.log(errorText);
+
+            throw new Error(
+                "AI edit failed"
+            );
+
+        }
+
+
+        const blob =
+            await response.blob();
+
+
+        const resultURL =
+            URL.createObjectURL(blob);
+
+
+        /*
+           Prevent FaceMesh from
+           processing AI result.
+        */
+
+        preview.onload = null;
+
+        preview.src =
+            resultURL;
+
+
+        preview.style.display =
+            "block";
+
+
+        status.innerText =
+            "AI Edit complete ✓";
+
+
+    } catch (error) {
+
+        console.log(error);
+
+        status.innerText =
+            "AI Edit failed.";
+
+    }
+
+});
 
 </script>
 
