@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>AI Photo Editor</title>
 
 <style>
@@ -30,16 +29,9 @@ h1 {
     border-radius: 10px;
 }
 
-#workCanvas {
-    display: none;
-}
-
+#workCanvas,
 #maskCanvas {
     display: none;
-}
-
-#options {
-    margin-top: 15px;
 }
 
 .optionButton {
@@ -88,48 +80,57 @@ h1 {
 
 <div id="options">
 
-    <button class="optionButton selected" data-option="enhance">
-        ✨ Enhance
-    </button>
+<button class="optionButton selected" data-option="enhance">
+✨ Enhance
+</button>
 
-    <button class="optionButton" data-option="smooth">
-        🧴 Smooth Skin
-    </button>
+<button class="optionButton" data-option="smooth">
+🧴 Smooth Skin
+</button>
 
-    <button class="optionButton" data-option="smile">
-        😊 Smile
-    </button>
+<button class="optionButton" data-option="smile">
+😊 Smile
+</button>
 
-    <button class="optionButton" data-option="hair">
-        💇 Hair Color
-    </button>
+<button class="optionButton" data-option="hair">
+💇 Hair Color
+</button>
 
 </div>
 
 <button id="editButton">
-    AI Edit
+AI Edit
 </button>
 
 <p id="status"></p>
 
 
-<!-- MediaPipe FaceMesh -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-
 
 <script>
 
-const photoInput = document.getElementById("photoInput");
-const preview = document.getElementById("preview");
-const workCanvas = document.getElementById("workCanvas");
-const maskCanvas = document.getElementById("maskCanvas");
-const editButton = document.getElementById("editButton");
-const status = document.getElementById("status");
+const photoInput =
+    document.getElementById("photoInput");
+
+const preview =
+    document.getElementById("preview");
+
+const workCanvas =
+    document.getElementById("workCanvas");
+
+const editButton =
+    document.getElementById("editButton");
+
+const status =
+    document.getElementById("status");
+
 
 let selectedFile = null;
+
 let selectedOption = "enhance";
 
 let faceLandmarks = null;
+
 let faceReady = false;
 
 
@@ -137,16 +138,20 @@ let faceReady = false;
    OPTION BUTTONS
 ========================= */
 
-document.querySelectorAll(".optionButton").forEach(button => {
+document.querySelectorAll(".optionButton")
+.forEach(button => {
 
     button.addEventListener("click", () => {
 
         document.querySelectorAll(".optionButton")
-            .forEach(b => b.classList.remove("selected"));
+        .forEach(b => {
+            b.classList.remove("selected");
+        });
 
         button.classList.add("selected");
 
-        selectedOption = button.dataset.option;
+        selectedOption =
+            button.dataset.option;
 
         status.innerText =
             "Selected: " + selectedOption;
@@ -162,22 +167,27 @@ document.querySelectorAll(".optionButton").forEach(button => {
 
 photoInput.addEventListener("change", () => {
 
-    if (!photoInput.files || !photoInput.files[0]) {
+    if (!photoInput.files ||
+        !photoInput.files[0]) {
         return;
     }
 
-    selectedFile = photoInput.files[0];
+    selectedFile =
+        photoInput.files[0];
 
-    const url = URL.createObjectURL(selectedFile);
+    const url =
+        URL.createObjectURL(selectedFile);
 
     preview.src = url;
 
     preview.style.display = "block";
 
-    faceLandmarks = null;
     faceReady = false;
 
-    status.innerText = "Photo load ho rahi hai...";
+    faceLandmarks = null;
+
+    status.innerText =
+        "Photo load ho rahi hai...";
 
 });
 
@@ -186,15 +196,17 @@ photoInput.addEventListener("change", () => {
    MEDIAPIPE
 ========================= */
 
-const faceMesh = new FaceMesh({
+const faceMesh =
+    new FaceMesh({
 
-    locateFile: (file) => {
+        locateFile: (file) => {
 
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+            return
+            `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
 
-    }
+        }
 
-});
+    });
 
 
 faceMesh.setOptions({
@@ -222,7 +234,8 @@ faceMesh.onResults((results) => {
 
         faceReady = true;
 
-        status.innerText = "Face detected ✓";
+        status.innerText =
+            "Face detected ✓";
 
     } else {
 
@@ -230,7 +243,8 @@ faceMesh.onResults((results) => {
 
         faceReady = false;
 
-        status.innerText = "Face not detected";
+        status.innerText =
+            "Face not detected";
 
     }
 
@@ -262,12 +276,13 @@ preview.addEventListener("load", async () => {
 
 
 /* =========================
-   HELPER
+   LANDMARK POINT
 ========================= */
 
-function point(index) {
+function getPoint(index) {
 
-    const p = faceLandmarks[index];
+    const p =
+        faceLandmarks[index];
 
     return {
 
@@ -281,12 +296,12 @@ function point(index) {
 
 
 /* =========================
-   TRIANGLE WARP
+   AFFINE TRIANGLE
 ========================= */
 
-function warpTriangle(
+function drawTriangle(
     ctx,
-    source,
+    image,
     s0,
     s1,
     s2,
@@ -295,93 +310,68 @@ function warpTriangle(
     d2
 ) {
 
-    const sx0 = s0.x;
-    const sy0 = s0.y;
+    const x0 = s0.x;
+    const y0 = s0.y;
 
-    const sx1 = s1.x;
-    const sy1 = s1.y;
+    const x1 = s1.x;
+    const y1 = s1.y;
 
-    const sx2 = s2.x;
-    const sy2 = s2.y;
+    const x2 = s2.x;
+    const y2 = s2.y;
 
-    const dx0 = d0.x;
-    const dy0 = d0.y;
+    const X0 = d0.x;
+    const Y0 = d0.y;
 
-    const dx1 = d1.x;
-    const dy1 = d1.y;
+    const X1 = d1.x;
+    const Y1 = d1.y;
 
-    const dx2 = d2.x;
-    const dy2 = d2.y;
-
-
-    const denom =
-        sx0 * (sy1 - sy2) +
-        sx1 * (sy2 - sy0) +
-        sx2 * (sy0 - sy1);
+    const X2 = d2.x;
+    const Y2 = d2.y;
 
 
-    if (Math.abs(denom) < 0.0001) {
+    const det =
+        (x1 - x0) * (y2 - y0) -
+        (x2 - x0) * (y1 - y0);
+
+
+    if (Math.abs(det) < 0.001) {
         return;
     }
 
 
     const a =
-        (
-            dx0 * (sy1 - sy2) +
-            dx1 * (sy2 - sy0) +
-            dx2 * (sy0 - sy1)
-        ) / denom;
-
-
-    const b =
-        (
-            dy0 * (sy1 - sy2) +
-            dy1 * (sy2 - sy0) +
-            dy2 * (sy0 - sy1)
-        ) / denom;
-
+        ((X1 - X0) * (y2 - y0) -
+        (X2 - X0) * (y1 - y0)) / det;
 
     const c =
-        (
-            dx0 * (sx2 * sy1 - sx1 * sy2) +
-            dx1 * (sx0 * sy2 - sx2 * sy0) +
-            dx2 * (sx1 * sy0 - sx0 * sy1)
-        ) / denom;
+        ((X2 - X0) * (x1 - x0) -
+        (X1 - X0) * (x2 - x0)) / det;
 
+    const b =
+        ((Y1 - Y0) * (y2 - y0) -
+        (Y2 - Y0) * (y1 - y0)) / det;
 
     const d =
-        (
-            dx0 * (sx1 - sx2) +
-            dx1 * (sx2 - sx0) +
-            dx2 * (sx0 - sx1)
-        ) / denom;
+        ((Y2 - Y0) * (x1 - x0) -
+        (Y1 - Y0) * (x2 - x0)) / det;
 
 
     const e =
-        (
-            dy0 * (sx1 - sx2) +
-            dy1 * (sx2 - sx0) +
-            dy2 * (sx0 - sx1)
-        ) / denom;
-
+        X0 - a * x0 - c * y0;
 
     const f =
-        (
-            dy0 * (sx2 * sy1 - sx1 * sy2) +
-            dy1 * (sx0 * sy2 - sx2 * sy0) +
-            dy2 * (sx1 * sy0 - sx0 * sy1)
-        ) / denom;
+        Y0 - b * x0 - d * y0;
 
 
     ctx.save();
 
     ctx.beginPath();
 
-    ctx.moveTo(dx0, dy0);
+    ctx.moveTo(X0, Y0);
 
-    ctx.lineTo(dx1, dy1);
+    ctx.lineTo(X1, Y1);
 
-    ctx.lineTo(dx2, dy2);
+    ctx.lineTo(X2, Y2);
 
     ctx.closePath();
 
@@ -391,14 +381,19 @@ function warpTriangle(
     ctx.setTransform(
         a,
         b,
+        c,
         d,
         e,
-        c,
         f
     );
 
 
-    ctx.drawImage(source, 0, 0);
+    ctx.drawImage(
+        image,
+        0,
+        0
+    );
+
 
     ctx.restore();
 
@@ -406,30 +401,42 @@ function warpTriangle(
 
 
 /* =========================
-   LOCAL SMILE MESH
+   SMOOTH SMILE MESH
 ========================= */
 
 function createSmile() {
 
-    if (!faceReady || !faceLandmarks) {
+    if (!faceReady ||
+        !faceLandmarks) {
 
         status.innerText =
             "Face detect nahi hua.";
 
         return null;
-
     }
 
 
-    const width = preview.naturalWidth;
-    const height = preview.naturalHeight;
+    const width =
+        preview.naturalWidth;
+
+    const height =
+        preview.naturalHeight;
 
 
-    workCanvas.width = width;
-    workCanvas.height = height;
+    workCanvas.width =
+        width;
+
+    workCanvas.height =
+        height;
 
 
-    const ctx = workCanvas.getContext("2d");
+    const ctx =
+        workCanvas.getContext("2d");
+
+
+    /*
+       Original photo
+    */
 
     ctx.clearRect(
         0,
@@ -437,9 +444,6 @@ function createSmile() {
         width,
         height
     );
-
-
-    /* Original image */
 
     ctx.drawImage(
         preview,
@@ -451,237 +455,219 @@ function createSmile() {
 
 
     /*
-       Important mouth landmarks
+       Mouth contour.
+
+       Ye points mouth ke
+       outer boundary ko follow
+       karte hain.
     */
 
-    const L = point(61);
-    const R = point(291);
+    const ids = [
+        61,
+        185,
+        40,
+        39,
+        37,
+        0,
+        267,
+        269,
+        270,
+        409,
+        291,
+        375,
+        321,
+        405,
+        314,
+        17,
+        84,
+        181,
+        91,
+        146
+    ];
 
-    const U = point(13);
-    const D = point(14);
+
+    const source = [];
+
+
+    ids.forEach(id => {
+
+        source.push(
+            getPoint(id)
+        );
+
+    });
 
 
     /*
-       Support points around mouth
-       These keep nearby skin stable.
+       Mouth center.
     */
 
-    const UL = point(78);
-    const UR = point(308);
-
-    const LL = point(95);
-    const LR = point(324);
-
-    const CL = point(57);
-    const CR = point(287);
+    const centerSource =
+        getPoint(13);
 
 
     /*
-       Original points
+       Copy destination points.
     */
 
-    const source = {
-
-        L: {...L},
-        R: {...R},
-
-        U: {...U},
-        D: {...D},
-
-        UL: {...UL},
-        UR: {...UR},
-
-        LL: {...LL},
-        LR: {...LR},
-
-        CL: {...CL},
-        CR: {...CR}
-
-    };
+    const dest =
+        source.map(p => ({
+            x: p.x,
+            y: p.y
+        }));
 
 
     /*
-       Smile amount
-
-       Small movement is intentional.
-       Large movement causes distortion.
+       Mouth width.
     */
+
+    const left =
+        source[0];
+
+    const right =
+        source[10];
+
 
     const mouthWidth =
-        Math.abs(R.x - L.x);
+        Math.abs(
+            right.x - left.x
+        );
 
 
-    const smileAmount =
+    /*
+       Very small movement.
+
+       Purpose:
+       Natural smile,
+       not artificial grin.
+    */
+
+    const smile =
         Math.max(
-            3,
+            2,
             Math.min(
-                9,
-                mouthWidth * 0.045
+                7,
+                mouthWidth * 0.035
             )
         );
 
 
     /*
-       Destination points
-
-       Mouth corners go slightly upward.
+       Move LEFT corner upward.
     */
 
-    const dest = {
+    dest[0].y -= smile;
 
-        L: {
-            x: L.x,
-            y: L.y - smileAmount
-        },
 
-        R: {
-            x: R.x,
-            y: R.y - smileAmount
-        },
+    /*
+       Nearby left points
+       move progressively.
+    */
 
-        U: {
-            x: U.x,
-            y: U.y
-        },
+    dest[1].y -= smile * 0.75;
 
-        D: {
-            x: D.x,
-            y: D.y + smileAmount * 0.25
-        },
+    dest[2].y -= smile * 0.50;
 
-        UL: {...UL},
-        UR: {...UR},
+    dest[3].y -= smile * 0.30;
 
-        LL: {...LL},
-        LR: {...LR},
 
-        CL: {...CL},
-        CR: {...CR}
+    /*
+       Move RIGHT corner upward.
+    */
+
+    dest[10].y -= smile;
+
+
+    dest[9].y -= smile * 0.75;
+
+    dest[8].y -= smile * 0.50;
+
+    dest[7].y -= smile * 0.30;
+
+
+    /*
+       Lower lip middle moves
+       only very slightly upward.
+    */
+
+    dest[15].y -= smile * 0.15;
+
+    dest[16].y -= smile * 0.10;
+
+
+    /*
+       Center destination.
+       Keep center almost fixed.
+    */
+
+    const centerDest = {
+
+        x: centerSource.x,
+
+        y: centerSource.y
 
     };
 
 
     /*
-       Slightly raise the outer
-       mouth support points.
+       Triangle fan.
+
+       Every triangle shares
+       only the center point.
+
+       No overlapping triangles.
     */
 
-    dest.UL.y -= smileAmount * 0.35;
-    dest.UR.y -= smileAmount * 0.35;
+    for (
+        let i = 0;
+        i < source.length;
+        i++
+    ) {
 
-    dest.LL.y -= smileAmount * 0.25;
-    dest.LR.y -= smileAmount * 0.25;
+        const next =
+            (i + 1) %
+            source.length;
+
+
+        drawTriangle(
+            ctx,
+            preview,
+
+            source[i],
+            source[next],
+            centerSource,
+
+            dest[i],
+            dest[next],
+            centerDest
+        );
+
+    }
 
 
     /*
-       Create triangles.
+       Final image.
 
-       Each triangle is independently
-       transformed so there is no
-       large pixel displacement.
+       Keep the mouth edit subtle.
     */
-
-    warpTriangle(
-        ctx,
-        preview,
-        source.UL,
-        source.L,
-        source.U,
-        dest.UL,
-        dest.L,
-        dest.U
-    );
-
-
-    warpTriangle(
-        ctx,
-        preview,
-        source.L,
-        source.CL,
-        source.D,
-        dest.L,
-        dest.CL,
-        dest.D
-    );
-
-
-    warpTriangle(
-        ctx,
-        preview,
-        source.CL,
-        source.LL,
-        source.D,
-        dest.CL,
-        dest.LL,
-        dest.D
-    );
-
-
-    warpTriangle(
-        ctx,
-        preview,
-        source.L,
-        source.U,
-        source.R,
-        dest.L,
-        dest.U,
-        dest.R
-    );
-
-
-    warpTriangle(
-        ctx,
-        preview,
-        source.R,
-        source.U,
-        source.UR,
-        dest.R,
-        dest.U,
-        dest.UR
-    );
-
-
-    warpTriangle(
-        ctx,
-        preview,
-        source.R,
-        source.D,
-        source.CR,
-        dest.R,
-        dest.D,
-        dest.CR
-    );
-
-
-    warpTriangle(
-        ctx,
-        preview,
-        source.CR,
-        source.D,
-        source.LR,
-        dest.CR,
-        dest.D,
-        dest.LR
-    );
-
-
-    /*
-       Restore outside mouth area
-       from original image.
-
-       This helps keep the
-       face identity stable.
-    */
-
 
     const finalCanvas =
         document.createElement("canvas");
 
-    finalCanvas.width = width;
-    finalCanvas.height = height;
+    finalCanvas.width =
+        width;
+
+    finalCanvas.height =
+        height;
+
 
     const finalCtx =
         finalCanvas.getContext("2d");
+
+
+    /*
+       Original image first.
+    */
 
     finalCtx.drawImage(
         preview,
@@ -693,38 +679,37 @@ function createSmile() {
 
 
     /*
-       Soft mouth region.
+       Soft mouth ellipse.
     */
 
-    const centerX =
-        (L.x + R.x) / 2;
+    const mouthCenterX =
+        (left.x + right.x) / 2;
 
-    const centerY =
-        (U.y + D.y) / 2;
+    const mouthCenterY =
+        (source[5].y +
+         source[15].y) / 2;
 
 
     const radiusX =
-        mouthWidth * 0.72;
+        mouthWidth * 0.58;
+
 
     const radiusY =
         Math.max(
-            35,
-            Math.abs(D.y - U.y) * 5
+            25,
+            mouthWidth * 0.20
         );
 
 
-    /*
-       Use destination warped canvas
-       only inside mouth area.
-    */
-
     finalCtx.save();
+
 
     finalCtx.beginPath();
 
+
     finalCtx.ellipse(
-        centerX,
-        centerY,
+        mouthCenterX,
+        mouthCenterY,
         radiusX,
         radiusY,
         0,
@@ -732,7 +717,9 @@ function createSmile() {
         Math.PI * 2
     );
 
+
     finalCtx.clip();
+
 
     finalCtx.drawImage(
         workCanvas,
@@ -740,12 +727,9 @@ function createSmile() {
         0
     );
 
+
     finalCtx.restore();
 
-
-    /*
-       Return final canvas
-    */
 
     return finalCanvas;
 
@@ -753,10 +737,13 @@ function createSmile() {
 
 
 /* =========================
-   AI EDIT BUTTON
+   AI EDIT
 ========================= */
 
-editButton.addEventListener("click", async () => {
+editButton.addEventListener(
+"click",
+async () => {
+
 
     if (!selectedFile) {
 
@@ -768,11 +755,14 @@ editButton.addEventListener("click", async () => {
     }
 
 
-    /* =====================
-       LOCAL SMILE
-    ===================== */
+    /*
+       SMILE
+       Completely local.
+    */
 
-    if (selectedOption === "smile") {
+    if (
+        selectedOption === "smile"
+    ) {
 
         status.innerText =
             "Natural smile bana raha hoon...";
@@ -788,42 +778,44 @@ editButton.addEventListener("click", async () => {
 
 
         resultCanvas.toBlob(
-            (blob) => {
+        (blob) => {
 
-                if (!blob) {
-
-                    status.innerText =
-                        "Smile edit failed.";
-
-                    return;
-
-                }
-
-
-                const resultURL =
-                    URL.createObjectURL(blob);
-
-
-                /*
-                   Important:
-                   MediaPipe ko result image
-                   par dobara run nahi karna.
-                */
-
-                preview.onload = null;
-
-                preview.src = resultURL;
-
-                preview.style.display =
-                    "block";
-
+            if (!blob) {
 
                 status.innerText =
-                    "Smile edit complete ✓";
+                    "Smile edit failed.";
 
-            },
-            "image/jpeg",
-            0.95
+                return;
+
+            }
+
+
+            const resultURL =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            /*
+               MediaPipe ko result
+               par dobara mat chalana.
+            */
+
+            preview.onload = null;
+
+            preview.src =
+                resultURL;
+
+            preview.style.display =
+                "block";
+
+
+            status.innerText =
+                "Smile edit complete ✓";
+
+        },
+        "image/jpeg",
+        0.98
         );
 
 
@@ -832,9 +824,9 @@ editButton.addEventListener("click", async () => {
     }
 
 
-    /* =====================
-       AI FEATURES
-    ===================== */
+    /*
+       OTHER AI FEATURES
+    */
 
     status.innerText =
         "AI photo edit kar raha hai...";
@@ -855,26 +847,35 @@ editButton.addEventListener("click", async () => {
         let prompt = "";
 
 
-        if (selectedOption === "enhance") {
+        if (
+            selectedOption ===
+            "enhance"
+        ) {
 
             prompt =
-                "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
+            "Enhance this photo naturally. Improve image quality, lighting, sharpness and facial details. Keep the person's identity and face unchanged.";
 
         }
 
 
-        if (selectedOption === "smooth") {
+        if (
+            selectedOption ===
+            "smooth"
+        ) {
 
             prompt =
-                "Retouch the person's facial skin professionally. Clearly smooth the skin and reduce acne, pimples, blemishes, dark spots, uneven skin texture and fine lines. Make the skin look clean, soft, fresh and naturally polished while preserving realistic skin texture. Keep the exact same person, face shape, eyes, nose, lips, hairstyle and identity unchanged. Do not change facial features. Do not make the skin plastic, blurry or overly airbrushed. Only improve the skin.";
+            "Retouch the person's facial skin professionally. Clearly smooth the skin and reduce acne, pimples, blemishes, dark spots, uneven skin texture and fine lines. Make the skin look clean, soft, fresh and naturally polished while preserving realistic skin texture. Keep the exact same person, face shape, eyes, nose, lips, hairstyle and identity unchanged. Do not change facial features. Do not make the skin plastic, blurry or overly airbrushed. Only improve the skin.";
 
         }
 
 
-        if (selectedOption === "hair") {
+        if (
+            selectedOption ===
+            "hair"
+        ) {
 
             prompt =
-                "Keep the person's identity and face unchanged. Naturally improve and enhance the hair appearance while keeping the original hairstyle.";
+            "Keep the person's identity and face unchanged. Naturally improve and enhance the hair appearance while keeping the original hairstyle.";
 
         }
 
@@ -897,11 +898,6 @@ editButton.addEventListener("click", async () => {
 
         if (!response.ok) {
 
-            const errorText =
-                await response.text();
-
-            console.log(errorText);
-
             throw new Error(
                 "AI edit failed"
             );
@@ -914,13 +910,10 @@ editButton.addEventListener("click", async () => {
 
 
         const resultURL =
-            URL.createObjectURL(blob);
+            URL.createObjectURL(
+                blob
+            );
 
-
-        /*
-           Prevent FaceMesh from
-           processing AI result.
-        */
 
         preview.onload = null;
 
