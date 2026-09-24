@@ -283,19 +283,47 @@ export default function handler(req, res) {
       }
 
       const outputBuffer =
-        Buffer.from(
-          data.result.image,
-          "base64"
-        );
+  Buffer.from(
+    data.result.image,
+    "base64"
+  );
 
-      res.setHeader(
-        "Content-Type",
-        "image/png"
-      );
+const originalMeta =
+  await sharp(imageBuffer).metadata();
 
-      return res
-        .status(200)
-        .send(outputBuffer);
+const aiImage =
+  await sharp(outputBuffer)
+    .resize(
+      originalMeta.width,
+      originalMeta.height,
+      {
+        fit: "fill",
+      }
+    )
+    .png()
+    .toBuffer();
+
+const finalBuffer =
+  await sharp(imageBuffer)
+    .png()
+    .composite([
+      {
+        input: aiImage,
+        blend: "over",
+        opacity: 0.30,
+      },
+    ])
+    .png()
+    .toBuffer();
+
+res.setHeader(
+  "Content-Type",
+  "image/png"
+);
+
+return res
+  .status(200)
+  .send(finalBuffer);
 
     } catch (error) {
       console.error(
