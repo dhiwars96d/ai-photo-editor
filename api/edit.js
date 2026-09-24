@@ -219,17 +219,19 @@ export default function handler(req, res) {
          */
 
         const enhancedBuffer =
-          await sharp(imageBuffer)
-            .normalize()
-            .modulate({
-              brightness: 1.03,
-              saturation: 1.03,
-            })
-            .sharpen({
-              sigma: 0.8,
-            })
-            .png()
-            .toBuffer();
+  await sharp(imageBuffer)
+    .normalize()
+    .modulate({
+      brightness: 1.06,
+      saturation: 1.06,
+    })
+    .sharpen({
+      sigma: 1.2,
+      m1: 1.0,
+      m2: 2.0,
+    })
+    .png()
+    .toBuffer();
 
         res.setHeader(
           "Content-Type",
