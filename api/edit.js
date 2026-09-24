@@ -200,121 +200,287 @@ export default function handler(req, res) {
       }
 
       /* =========================
-         ENHANCE / SMOOTH
-         ========================= */
+   ENHANCE / SMOOTH
+   ========================= */
 
-      const imageBlob = new Blob(
-        [imageBuffer],
-        {
-          type:
-            imageFile.mimetype ||
-            "image/jpeg",
-        }
-      );
+const isSmooth =
+  prompt.toLowerCase().includes("smooth the skin");
 
-      const cloudflareForm =
-        new FormData();
+if (!isSmooth) {
+  /* =========================
+     ENHANCE - P-IMAGE UPSCALE
+     ========================= */
 
-      cloudflareForm.append(
-        "prompt",
-        prompt
-      );
+  const originalMeta =
+    await sharp(imageBuffer).metadata();
 
-      cloudflareForm.append(
-        "input_image_0",
-        imageBlob,
-        "photo.jpg"
-      );
+  const imageBase64 =
+    imageBuffer.toString("base64");
 
-      cloudflareForm.append(
-        "width",
-        "1024"
-      );
+  const mimeType =
+    imageFile.mimetype || "image/jpeg";
 
-      cloudflareForm.append(
-        "height",
-        "1024"
-      );
+  const imageDataUri =
+    `data:${mimeType};base64,${imageBase64}`;
 
-      const response = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/black-forest-labs/flux-2-klein-4b`,
-        {
-          method: "POST",
+  const originalWidth =
+    originalMeta.width;
 
-          headers: {
-            Authorization:
-              `Bearer ${process.env.CF_API_TOKEN}`,
-          },
+  const originalHeight =
+    originalMeta.height;
 
-          body: cloudflareForm,
-        }
-      );
+  const originalMegapixels =
+    (originalWidth * originalHeight) / 1000000;
 
-      const data =
-        await response.json();
+  const targetMegapixels =
+    Math.max(
+      1,
+      Math.min(
+        128,
+        Math.ceil(originalMegapixels)
+      )
+    );
 
-      if (!response.ok || !data.success) {
-        console.error(
-          "CLOUDFLARE ERROR:",
-          data
-        );
+  const cloudflareBody = {
+    model: "pruna/p-image-upscale",
 
-        return res.status(500).json({
-          error:
-            "Cloudflare AI error",
+    input: {
+      image: imageDataUri,
 
-          details:
-            data.errors?.[0]?.message ||
-            "AI editing failed",
-        });
+      target: targetMegapixels,
+
+      enhance_details: true,
+
+      enhance_realism: false,
+
+      output_format: "png",
+    },
+  };
+
+  const enhanceResponse =
+    await fetch(
+      "https://api.cloudflare.com/client/v4/accounts/" +
+        process.env.CF_ACCOUNT_ID +
+        "/ai/run",
+
+      {
+        method: "POST",
+
+        headers: {
+          Authorization:
+            `Bearer ${process.env.CF_API_TOKEN}`,
+
+          "Content-Type":
+            "application/json",
+        },
+
+        body:
+          JSON.stringify(cloudflareBody),
       }
+    );
 
-      if (
-        !data.result ||
-        !data.result.image
-      ) {
-        return res.status(500).json({
-          error:
-            "Invalid image response",
+  const enhanceData =
+    await enhanceResponse.json();
 
-          details:
-            "Cloudflare did not return an image.",
-        });
-      }
+  if (
+    !enhanceResponse.ok ||
+    !enhanceData.success
+  ) {
+    console.error(
+      "CLOUDFLARE ENHANCE ERROR:",
+      enhanceData
+    );
 
-      const outputBuffer =
+    return res.status(500).json({
+      error:
+        "Cloudflare Enhance AI error",
+
+      details:
+        enhanceData.errors?.[0]?.message ||
+        "Enhancement failed.",
+    });
+  }
+
+  const resultImage =
+    enhanceData.result?.image;
+
+  if (!resultImage) {
+    console.error(
+      "INVALID ENHANCE RESPONSE:",
+      enhanceData
+    );
+
+    return res.status(500).json({
+      error:
+        "Invalid enhancement response",
+
+      details:
+        "Cloudflare did not return an image.",
+    });
+  }
+
+  let enhancedBuffer;
+
+  if (
+    typeof resultImage === "string" &&
+    resultImage.startsWith("data:image/")
+  ) {
+    const base64Part =
+      resultImage.split(",")[1];
+
+    enhancedBuffer =
+      Buffer.from(
+        base64Part,
+        "base64"
+      );
+  } else if (
+    typeof resultImage === "string"
+  ) {
+    const imageResponse =
+      await fetch(resultImage);
+
+    if (!imageResponse.ok) {
+      return res.status(500).json({
+        error:
+          "Enhanced image download failed",
+      });
+    }
+
+    enhancedBuffer =
+      Buffer.from(
+        await imageResponse.arrayBuffer()
+      );
+  } else {
+    return res.status(500).json({
+      error:
+        "Unknown enhanced image format",
+    });
+  }
+
+  /* =========================
+     RESTORE ORIGINAL SIZE
+     ========================= */
+
+  const finalBuffer =
+    await sharp(enhancedBuffer)
+      .resize(
+        originalWidth,
+        originalHeight,
+        {
+          fit: "fill",
+        }
+      )
+      .png()
+      .toBuffer();
+
+  res.setHeader(
+    "Content-Type",
+    "image/png"
+  );
+
+  return res
+    .status(200)
+    .send(finalBuffer);
+}
+
+/* =========================
+   SMOOTH
+   ========================= */
+
+const imageBlob =
+  new Blob(
+    [imageBuffer],
+    {
+      type:
+        imageFile.mimetype ||
+        "image/jpeg",
+    }
+  );
+
+const cloudflareForm =
+  new FormData();
+
+cloudflareForm.append(
+  "prompt",
+  prompt
+);
+
+cloudflareForm.append(
+  "input_image_0",
+  imageBlob,
+  "photo.jpg"
+);
+
+cloudflareForm.append(
+  "scale",
+  "2"
+);
+
+cloudflareForm.append(
+  "enhance_faces",
+  "true"
+);
+
+cloudflareForm.append(
+  "preserve_details",
+  "true"
+);
+
+const response = await fetch(
+  `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/pruna-ai/p-image-upscale`,
+    {
+      method: "POST",
+
+      headers: {
+        Authorization:
+          `Bearer ${process.env.CF_API_TOKEN}`,
+      },
+
+      body:
+        cloudflareForm,
+    }
+  );
+
+const data =
+  await response.json();
+
+if (
+  !response.ok ||
+  !data.success
+) {
+  console.error(
+    "CLOUDFLARE ERROR:",
+    data
+  );
+
+  return res.status(500).json({
+    error:
+      "Cloudflare AI error",
+
+    details:
+      data.errors?.[0]?.message ||
+      "AI editing failed.",
+  });
+}
+
+if (
+  !data.result ||
+  !data.result.image
+) {
+  return res.status(500).json({
+    error:
+      "Invalid image response",
+
+    details:
+      "Cloudflare did not return an image.",
+  });
+}
+
+const outputBuffer =
   Buffer.from(
     data.result.image,
     "base64"
   );
-
-const originalMeta =
-  await sharp(imageBuffer).metadata();
-
-const aiImage =
-  await sharp(outputBuffer)
-    .resize(
-      originalMeta.width,
-      originalMeta.height,
-      {
-        fit: "fill",
-      }
-    )
-    .png()
-    .toBuffer();
-
-const finalBuffer =
-  await sharp(imageBuffer)
-    .png()
-    .composite([
-      {
-        input: aiImage,
-        blend: "over",
-        opacity: 0.30,
-      },
-    ])
-    .png()
-    .toBuffer();
 
 res.setHeader(
   "Content-Type",
@@ -323,7 +489,7 @@ res.setHeader(
 
 return res
   .status(200)
-  .send(finalBuffer);
+  .send(outputBuffer);
 
     } catch (error) {
       console.error(
