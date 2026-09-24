@@ -1,3 +1,4 @@
+import { Client } from "@gradio/client";
 import formidable from "formidable";
 import fs from "fs";
 import sharp from "sharp";
@@ -7,6 +8,34 @@ export const config = {
     bodyParser: false,
   },
 };
+
+async function getImageBuffer(output) {
+  let url = null;
+
+  if (typeof output === "string") {
+    url = output;
+  } else if (output && typeof output === "object") {
+    if (output.url) {
+      url = output.url;
+    } else if (output.path) {
+      url = output.path;
+    }
+  }
+
+  if (!url) {
+    throw new Error("Real-ESRGAN image URL nahi mila.");
+  }
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(
+      `Real-ESRGAN output download failed: ${response.status}`
+    );
+  }
+
+  return Buffer.from(await response.arrayBuffer());
+}
 
 export default function handler(req, res) {
   if (req.method !== "POST") {
@@ -196,7 +225,7 @@ export default function handler(req, res) {
       }
 
       /* =========================
-         ENHANCE
+         ENHANCE - REAL ESRGAN 4X
          ========================= */
 
       const isSmooth =
@@ -205,33 +234,43 @@ export default function handler(req, res) {
           .includes("smooth the skin");
 
       if (!isSmooth) {
-        /*
-         * IMPORTANT:
-         * Enhance is now done directly with Sharp.
-         * No AI image generation.
-         *
-         * This preserves the original:
-         * - width
-         * - height
-         * - face
-         * - identity
-         * - proportions
-         */
+        console.log(
+          "REAL-ESRGAN: starting 4x enhancement"
+        );
 
-        const enhancedBuffer =
-  await sharp(imageBuffer)
-    .normalize()
-    .modulate({
-      brightness: 1.06,
-      saturation: 1.06,
-    })
-    .sharpen({
-      sigma: 1.2,
-      m1: 1.0,
-      m2: 2.0,
-    })
-    .png()
-    .toBuffer();
+        const app =
+          await Client.connect(
+            "Nick088/Real-ESRGAN_Pytorch"
+          );
+
+        const result =
+          await app.predict(
+            "/predict",
+            [
+              imageBuffer,
+              "4",
+            ]
+          );
+
+        console.log(
+          "REAL-ESRGAN RESULT:",
+          result.data
+        );
+
+        if (
+          !result ||
+          !result.data ||
+          !result.data[0]
+        ) {
+          throw new Error(
+            "Real-ESRGAN ne image return nahi ki."
+          );
+        }
+
+        const resultBuffer =
+          await getImageBuffer(
+            result.data[0]
+          );
 
         res.setHeader(
           "Content-Type",
@@ -240,11 +279,11 @@ export default function handler(req, res) {
 
         return res
           .status(200)
-          .send(enhancedBuffer);
+          .send(resultBuffer);
       }
 
       /* =========================
-         SMOOTH
+         SMOOTH SKIN
          ========================= */
 
       const imageBlob =
@@ -349,13 +388,13 @@ export default function handler(req, res) {
 
     } catch (error) {
       console.error(
-        "CLOUDFLARE ERROR:",
+        "AI EDIT ERROR:",
         error
       );
 
       return res.status(500).json({
         error:
-          "Cloudflare AI error",
+          "AI editing failed",
 
         details:
           error.message,
