@@ -1,6 +1,7 @@
 import formidable from "formidable";
 import fs from "fs";
 import sharp from "sharp";
+import { Client } from "@gradio/client";
 
 export const config = {
   api: {
@@ -8,570 +9,341 @@ export const config = {
   },
 };
 
-const ESRGAN_BASE =
-  "https://nick088-real-esrgan-pytorch.hf.space";
+function parseForm(req) {
+  return new Promise((resolve, reject) => {
+    const form = formidable({
+      multiples: false,
+      keepExtensions: true,
+    });
+
+    form.parse(req, (err, fields, files) => {
+      if (err) reject(err);
+      else resolve({ fields, files });
+    });
+  });
+}
+
+function getField(fields, name) {
+  const value = fields[name];
+
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value || "";
+}
 
 async function realEsrganEnhance(imageBuffer) {
-  /* =========================
-     1. UPLOAD IMAGE TO GRADIO
-     ========================= */
+  console.log("Connecting to Hockman Real-ESRGAN...");
 
-  const uploadForm = new FormData();
+  const hfToken = process.env.HF_TOKEN;
 
-  uploadForm.append(
-    "files",
-    new Blob([imageBuffer], {
-      type: "image/jpeg",
-    }),
-    "photo.jpg"
+  const clientOptions = hfToken
+    ? { hf_token: hfToken }
+    : {};
+
+  const app = await Client.connect(
+    "Hockman/real-esrgan-upscaler",
+    clientOptions
   );
 
-  const uploadResponse = await fetch(
-    `${ESRGAN_BASE}/gradio_api/upload`,
-    {
-      method: "POST",
-      body: uploadForm,
-    }
-  );
+  console.log("Connected to Hockman Space.");
 
-  if (!uploadResponse.ok) {
-    const errorText =
-      await uploadResponse.text();
-
-    throw new Error(
-      `Real-ESRGAN upload failed: ${errorText}`
-    );
-  }
-
-  const uploadData =
-    await uploadResponse.json();
+  /*
+   * Hockman currently uses unnamed Gradio button endpoints.
+   * We inspect the API instead of guessing /predict.
+   */
+  const apiInfo = await app.view_api();
 
   console.log(
-    "REAL-ESRGAN UPLOAD:",
-    uploadData
+    "Hockman API:",
+    JSON.stringify(apiInfo)
   );
 
-  const uploadedPath =
-    Array.isArray(uploadData)
-      ? uploadData[0]
-      : uploadData.path;
+  let endpoint = null;
 
-  if (!uploadedPath) {
-    throw new Error(
-      "Real-ESRGAN upload path nahi mila."
-    );
+  if (
+    apiInfo &&
+    apiInfo.named_endpoints &&
+    Object.keys(apiInfo.named_endpoints).length > 0
+  ) {
+    endpoint = Object.keys(apiInfo.named_endpoints)[0];
   }
 
-  /* =========================
-     2. START PREDICTION
-     ========================= */
+  if (!endpoint && apiInfo && apiInfo.unnamed_endpoints) {
+    const unnamed = Object.keys(apiInfo.unnamed_endpoints);
 
-  const predictResponse = await fetch(
-    `${ESRGAN_BASE}/gradio_api/call/predict`,
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type":
-          "application/json",
-      },
-
-      body: JSON.stringify({
-        data: [
-          {
-            path: uploadedPath,
-            meta: {
-              _type: "gradio.FileData",
-            },
-          },
-          "4",
-        ],
-      }),
-    }
-  );
-
-  if (!predictResponse.ok) {
-    const errorText =
-      await predictResponse.text();
-
-    throw new Error(
-      `Real-ESRGAN prediction failed: ${errorText}`
-    );
-  }
-
-  const predictData =
-    await predictResponse.json();
-
-  console.log(
-    "REAL-ESRGAN PREDICT:",
-    predictData
-  );
-
-  const eventId =
-    predictData.event_id;
-
-  if (!eventId) {
-    throw new Error(
-      "Real-ESRGAN event ID nahi mila."
-    );
-  }
-
-  /* =========================
-     3. WAIT FOR RESULT
-     ========================= */
-
-  const resultResponse = await fetch(
-    `${ESRGAN_BASE}/gradio_api/call/predict/${eventId}`
-  );
-
-  if (!resultResponse.ok) {
-    const errorText =
-      await resultResponse.text();
-
-    throw new Error(
-      `Real-ESRGAN result failed: ${errorText}`
-    );
-  }
-
-  const resultText =
-    await resultResponse.text();
-
-  console.log(
-    "REAL-ESRGAN RESULT:",
-    resultText
-  );
-
-  /* =========================
-     4. FIND COMPLETE RESULT
-     ========================= */
-
-  const lines =
-    resultText.split("\n");
-
-  let outputData = null;
-
-  for (const line of lines) {
-    if (
-      line.startsWith("data:") &&
-      line.trim() !== "data:"
-    ) {
-      try {
-        const parsed =
-          JSON.parse(
-            line.substring(5).trim()
-          );
-
-        if (
-          Array.isArray(parsed) &&
-          parsed.length > 0
-        ) {
-          outputData = parsed[0];
-        }
-      } catch (e) {
-        // ignore non-JSON SSE lines
-      }
+    if (unnamed.length > 0) {
+      endpoint = unnamed[0];
     }
   }
 
-  if (!outputData) {
+  if (!endpoint) {
     throw new Error(
-      "Real-ESRGAN ne output image return nahi ki."
+      "Hockman Space me koi usable API endpoint nahi mila."
     );
   }
 
+  console.log("Using endpoint:", endpoint);
+
+  /*
+   * Hockman ka input:
+   * 1. Image
+   * 2. Upscale scale
+   *
+   * Hum x4 use kar rahe hain.
+   */
+  const result = await app.predict(endpoint, [
+    imageBuffer,
+    4,
+  ]);
+
   console.log(
-    "REAL-ESRGAN OUTPUT:",
-    outputData
+    "Hockman result:",
+    JSON.stringify(result)
   );
 
-  /* =========================
-     5. GET OUTPUT IMAGE
-     ========================= */
+  if (
+    !result ||
+    !result.data ||
+    !result.data.length
+  ) {
+    throw new Error(
+      "Hockman se image result nahi mila."
+    );
+  }
+
+  const output = result.data[0];
 
   let outputUrl = null;
 
-  if (
-    typeof outputData === "string"
-  ) {
-    outputUrl = outputData;
-  }
-
-  if (
-    outputData &&
-    typeof outputData === "object"
-  ) {
-    if (outputData.url) {
-      outputUrl = outputData.url;
-    } else if (outputData.path) {
-      outputUrl = outputData.path;
-    }
+  if (typeof output === "string") {
+    outputUrl = output;
+  } else if (output && output.url) {
+    outputUrl = output.url;
+  } else if (output && output.path) {
+    outputUrl = output.path;
   }
 
   if (!outputUrl) {
     throw new Error(
-      "Real-ESRGAN output URL nahi mila."
+      "Hockman output image URL nahi mili."
     );
   }
 
+  console.log("Output URL:", outputUrl);
+
+  /*
+   * Agar Gradio ne direct URL diya hai to download karo.
+   */
   if (
-    outputUrl.startsWith("/")
+    outputUrl.startsWith("http://") ||
+    outputUrl.startsWith("https://")
   ) {
-    outputUrl =
-      ESRGAN_BASE + outputUrl;
-  }
+    const response = await fetch(outputUrl);
 
-  const outputResponse =
-    await fetch(outputUrl);
+    if (!response.ok) {
+      throw new Error(
+        `Hockman output download failed: ${response.status}`
+      );
+    }
 
-  if (!outputResponse.ok) {
-    throw new Error(
-      "Real-ESRGAN output image download nahi ho payi."
+    return Buffer.from(
+      await response.arrayBuffer()
     );
   }
 
-  return Buffer.from(
-    await outputResponse.arrayBuffer()
+  /*
+   * Local path mila to read karne ki koshish.
+   */
+  if (fs.existsSync(outputUrl)) {
+    return fs.readFileSync(outputUrl);
+  }
+
+  throw new Error(
+    "Hockman output file access nahi ho rahi."
   );
 }
 
-export default function handler(req, res) {
+async function enhanceWithSharp(imageBuffer) {
+  return await sharp(imageBuffer)
+    .normalize()
+    .modulate({
+      brightness: 1.04,
+      saturation: 1.04,
+    })
+    .sharpen({
+      sigma: 1.0,
+      m1: 1.0,
+      m2: 2.0,
+    })
+    .png()
+    .toBuffer();
+}
+
+async function smoothSkin(imageBuffer) {
+  /*
+   * Natural skin smoothing.
+   * Face identity change nahi karta.
+   */
+  return await sharp(imageBuffer)
+    .median(3)
+    .modulate({
+      brightness: 1.01,
+      saturation: 1.01,
+    })
+    .sharpen({
+      sigma: 0.6,
+      m1: 0.6,
+      m2: 1.0,
+    })
+    .png()
+    .toBuffer();
+}
+
+async function improveHair(imageBuffer) {
+  /*
+   * Hair tool ke liye conservative enhancement.
+   * Face ko AI se redraw nahi karta.
+   */
+  return await sharp(imageBuffer)
+    .normalize()
+    .sharpen({
+      sigma: 1.1,
+      m1: 1.0,
+      m2: 1.5,
+    })
+    .modulate({
+      brightness: 1.02,
+      saturation: 1.03,
+    })
+    .png()
+    .toBuffer();
+}
+
+export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({
-      error: "POST only",
+      error: "Method not allowed",
     });
   }
 
-  const form = formidable({
-    multiples: false,
-    keepExtensions: true,
-  });
+  try {
+    const { fields, files } = await parseForm(req);
 
-  form.parse(
-    req,
-    async (err, fields, files) => {
+    const prompt = getField(fields, "prompt");
+
+    console.log("Prompt:", prompt);
+
+    let imageFile =
+      files.image ||
+      files.file ||
+      files.photo;
+
+    if (Array.isArray(imageFile)) {
+      imageFile = imageFile[0];
+    }
+
+    if (!imageFile) {
+      return res.status(400).json({
+        error: "Image file nahi mili.",
+      });
+    }
+
+    const imagePath = imageFile.filepath;
+
+    if (!imagePath) {
+      return res.status(400).json({
+        error: "Image path nahi mila.",
+      });
+    }
+
+    const originalBuffer =
+      fs.readFileSync(imagePath);
+
+    /*
+     * Prompt ke basis par tool select.
+     */
+
+    const promptLower =
+      String(prompt || "").toLowerCase();
+
+    let resultBuffer;
+
+    if (
+      promptLower.includes("smooth") ||
+      promptLower.includes("skin")
+    ) {
+      console.log("Using Smooth Skin...");
+
+      resultBuffer =
+        await smoothSkin(originalBuffer);
+
+    } else if (
+      promptLower.includes("hair")
+    ) {
+      console.log("Using Hair enhancement...");
+
+      resultBuffer =
+        await improveHair(originalBuffer);
+
+    } else {
+      /*
+       * Enhance:
+       * Real-ESRGAN x4
+       */
+      console.log(
+        "Using Hockman Real-ESRGAN x4..."
+      );
+
       try {
-        if (err) {
-          return res.status(400).json({
-            error:
-              "Form parsing failed",
-            details: err.message,
-          });
-        }
-
-        const imageFile =
-          Array.isArray(files.image)
-            ? files.image[0]
-            : files.image;
-
-        if (!imageFile) {
-          return res.status(400).json({
-            error:
-              "Image not received",
-          });
-        }
-
-        const maskFile =
-          Array.isArray(files.mask)
-            ? files.mask[0]
-            : files.mask;
-
-        const prompt =
-          Array.isArray(fields.prompt)
-            ? fields.prompt[0]
-            : fields.prompt ||
-              "Enhance this photo naturally.";
-
-        const imageBuffer =
-          fs.readFileSync(
-            imageFile.filepath
+        resultBuffer =
+          await realEsrganEnhance(
+            originalBuffer
           );
 
-        /* =========================
-           SMILE / MASK
-           ========================= */
-
-        if (maskFile) {
-          const maskBuffer =
-            fs.readFileSync(
-              maskFile.filepath
-            );
-
-          const imageData =
-            await sharp(imageBuffer)
-              .resize(768, 864, {
-                fit: "fill",
-              })
-              .jpeg({
-                quality: 60,
-              })
-              .toBuffer();
-
-          const maskData =
-            await sharp(maskBuffer)
-              .resize(768, 864, {
-                fit: "fill",
-              })
-              .greyscale()
-              .png()
-              .toBuffer();
-
-          const cloudflareBody = {
-            prompt:
-              "Create a subtle natural smile. Change only the mouth expression. Preserve the exact same person, identity, eyes, nose, cheeks, jawline, face shape, skin and hair. Do not change any other part of the face.",
-
-            negative_prompt:
-              "different person, changed face, changed eyes, changed nose, changed jawline, changed hairstyle, distorted face, unrealistic mouth",
-
-            image:
-              Array.from(imageData),
-
-            mask:
-              Array.from(maskData),
-
-            width: 768,
-            height: 864,
-            num_steps: 20,
-            strength: 0.35,
-            guidance: 7.5,
-          };
-
-          const smileResponse =
-            await fetch(
-              `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/runwayml/stable-diffusion-v1-5-inpainting`,
-              {
-                method: "POST",
-
-                headers: {
-                  Authorization:
-                    `Bearer ${process.env.CF_API_TOKEN}`,
-
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body:
-                  JSON.stringify(
-                    cloudflareBody
-                  ),
-              }
-            );
-
-          if (!smileResponse.ok) {
-            const errorText =
-              await smileResponse.text();
-
-            return res.status(500).json({
-              error:
-                "Cloudflare Smile AI error",
-              details:
-                errorText,
-            });
-          }
-
-          const smileOutputBuffer =
-            Buffer.from(
-              await smileResponse.arrayBuffer()
-            );
-
-          const originalMeta =
-            await sharp(
-              imageBuffer
-            ).metadata();
-
-          const finalMaskBuffer =
-            await sharp(maskBuffer)
-              .resize(
-                originalMeta.width,
-                originalMeta.height,
-                {
-                  fit: "fill",
-                }
-              )
-              .greyscale()
-              .png()
-              .toBuffer();
-
-          const resizedSmileOutput =
-            await sharp(
-              smileOutputBuffer
-            )
-              .resize(
-                originalMeta.width,
-                originalMeta.height,
-                {
-                  fit: "fill",
-                }
-              )
-              .png()
-              .toBuffer();
-
-          const finalBuffer =
-            await sharp(imageBuffer)
-              .composite([
-                {
-                  input:
-                    resizedSmileOutput,
-                  blend: "over",
-                  mask: {
-                    input:
-                      finalMaskBuffer,
-                  },
-                },
-              ])
-              .png()
-              .toBuffer();
-
-          res.setHeader(
-            "Content-Type",
-            "image/png"
-          );
-
-          return res
-            .status(200)
-            .send(finalBuffer);
-        }
-
-        /* =========================
-           ENHANCE = REAL ESRGAN 4X
-           ========================= */
-
-        const isSmooth =
-          prompt
-            .toLowerCase()
-            .includes(
-              "smooth the skin"
-            );
-
-        if (!isSmooth) {
-          console.log(
-            "REAL-ESRGAN: 4x enhancement started"
-          );
-
-          const enhancedBuffer =
-            await realEsrganEnhance(
-              imageBuffer
-            );
-
-          res.setHeader(
-            "Content-Type",
-            "image/png"
-          );
-
-          return res
-            .status(200)
-            .send(enhancedBuffer);
-        }
-
-        /* =========================
-           SMOOTH SKIN
-           ========================= */
-
-        const imageBlob =
-          new Blob(
-            [imageBuffer],
-            {
-              type:
-                imageFile.mimetype ||
-                "image/jpeg",
-            }
-          );
-
-        const cloudflareForm =
-          new FormData();
-
-        cloudflareForm.append(
-          "prompt",
-          prompt
+        console.log(
+          "Real-ESRGAN enhancement successful."
         );
 
-        cloudflareForm.append(
-          "input_image_0",
-          imageBlob,
-          "photo.jpg"
-        );
-
-        cloudflareForm.append(
-          "width",
-          "1024"
-        );
-
-        cloudflareForm.append(
-          "height",
-          "1024"
-        );
-
-        const response =
-          await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/black-forest-labs/flux-2-klein-4b`,
-            {
-              method: "POST",
-
-              headers: {
-                Authorization:
-                  `Bearer ${process.env.CF_API_TOKEN}`,
-              },
-
-              body:
-                cloudflareForm,
-            }
-          );
-
-        const data =
-          await response.json();
-
-        if (
-          !response.ok ||
-          !data.success
-        ) {
-          return res.status(500).json({
-            error:
-              "Cloudflare AI error",
-
-            details:
-              data.errors?.[0]?.message ||
-              "AI editing failed.",
-          });
-        }
-
-        if (
-          !data.result ||
-          !data.result.image
-        ) {
-          return res.status(500).json({
-            error:
-              "Invalid image response",
-          });
-        }
-
-        const outputBuffer =
-          Buffer.from(
-            data.result.image,
-            "base64"
-          );
-
-        res.setHeader(
-          "Content-Type",
-          "image/png"
-        );
-
-        return res
-          .status(200)
-          .send(outputBuffer);
-
-      } catch (error) {
+      } catch (aiError) {
         console.error(
-          "AI EDIT ERROR:",
-          error
+          "REAL-ESRGAN ERROR:",
+          aiError
         );
 
-        return res.status(500).json({
-          error:
-            "AI editing failed",
+        /*
+         * Agar Space temporary unavailable ho,
+         * app completely fail na ho.
+         */
+        console.log(
+          "Falling back to Sharp enhancement..."
+        );
 
-          details:
-            error.message,
-        });
+        resultBuffer =
+          await enhanceWithSharp(
+            originalBuffer
+          );
       }
     }
-  );
+
+    res.setHeader(
+      "Content-Type",
+      "image/png"
+    );
+
+    res.status(200).send(resultBuffer);
+
+  } catch (error) {
+    console.error(
+      "AI EDIT ERROR:",
+      error
+    );
+
+    res.status(500).json({
+      error:
+        error?.message ||
+        "AI photo editing failed.",
+    });
+  }
 }
