@@ -269,20 +269,50 @@ export default async function handler(req, res) {
       String(prompt || "").toLowerCase();
 
     let resultBuffer;
+if (promptLower.includes("hair")) {
 
-    if (
-      promptLower.includes("smooth") ||
-      promptLower.includes("skin")
-    ) {
-      console.log("Using Smooth Skin...");
+  console.log("Using Hair enhancement...");
 
-      resultBuffer =
-        await smoothSkin(originalBuffer);
+  resultBuffer =
+    await improveHair(originalBuffer);
 
-    } else if (
-      promptLower.includes("hair")
-    ) {
-      console.log("Using Hair enhancement...");
+} else if (promptLower.includes("smooth")) {
+
+  console.log("Using Smooth Skin...");
+
+  resultBuffer =
+    await smoothSkin(originalBuffer);
+
+} else {
+
+  console.log(
+    "Using Hockman Real-ESRGAN x4..."
+  );
+
+  try {
+
+    resultBuffer =
+      await realEsrganEnhance(originalBuffer);
+
+    console.log(
+      "Real-ESRGAN enhancement successful."
+    );
+
+  } catch (aiError) {
+
+    console.error(
+      "REAL-ESRGAN ERROR:",
+      aiError
+    );
+
+    console.log(
+      "Falling back to Sharp enhancement..."
+    );
+
+    resultBuffer =
+      await enhanceWithSharp(originalBuffer);
+  }
+}
 
       resultBuffer =
         await improveHair(originalBuffer);
