@@ -2,6 +2,7 @@
   "type": "module",
   "dependencies": {
     "@huggingface/inference": "^4.13.30",
+    "@gradio/client": "^2.7.0",
     "formidable": "^3.5.4",
     "sharp": "^0.34.3"
   }
