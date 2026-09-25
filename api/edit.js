@@ -2,7 +2,7 @@ import formidable from "formidable";
 import fs from "fs";
 import sharp from "sharp";
 import { Client } from "@gradio/client";
-
+export const maxDuration = 300;
 export const config = {
   api: {
     bodyParser: false,
