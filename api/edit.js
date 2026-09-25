@@ -91,11 +91,11 @@ async function realEsrganEnhance(imageBuffer) {
    * 1. Image
    * 2. Upscale scale
    *
-   * Hum x4 use kar rahe hain.
+   * Hum x2 use kar rahe hain.
    */
   const result = await app.predict(endpoint, [
     imageBuffer,
-    4,
+    2,
   ]);
 
   console.log(
