@@ -490,25 +490,30 @@
 console.log("API STATUS:", response.status);
 console.log("API TYPE:", response.headers.get("content-type"));
 
+if (!response.ok) {
 
-        if (!response.ok) {
+  const errorText = await response.text();
 
-          let errorText = "AI edit failed.";
-
-          try {
-            const errorData = await response.json();
-
-            if (errorData.error) {
-              errorText = errorData.error;
-            }
-
-          } catch (e) {}
-
-       
-        }
+  throw new Error(
+    "Server Error (" +
+    response.status +
+    "): " +
+    errorText
+  );
+}
 
 
-        const resultBlob = await response.blob();
+        const contentType = response.headers.get("content-type");
+
+if (!contentType || !contentType.startsWith("image/")) {
+  const errorText = await response.text();
+
+  throw new Error(
+    "Server returned: " + errorText
+  );
+}
+
+const resultBlob = await response.blob();
 
         const resultURL = URL.createObjectURL(resultBlob);
 
