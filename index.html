@@ -187,10 +187,12 @@
       display: block;
       margin-bottom: 7px;
     }
+
     .tool[data-tool="hair"] .toolIcon {
-  width: 58px;
-  height: 58px;
+      width: 58px;
+      height: 58px;
     }
+
     .tool.active .toolIcon {
       filter: brightness(0) invert(1);
     }
@@ -224,6 +226,25 @@
     }
 
     .apply-btn:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
+    /* DOWNLOAD BUTTON */
+
+    .download-btn {
+      width: 100%;
+      height: 50px;
+      margin-top: 11px;
+      border: 0;
+      border-radius: 15px;
+      background: #17171c;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .download-btn:active {
       transform: scale(0.99);
     }
 
@@ -262,6 +283,11 @@
       .toolIcon {
         width: 42px;
         height: 42px;
+      }
+
+      .tool[data-tool="hair"] .toolIcon {
+        width: 52px;
+        height: 52px;
       }
     }
   </style>
@@ -365,6 +391,16 @@
       ✨ Apply AI Edit
     </button>
 
+    <!-- DOWNLOAD BUTTON -->
+
+    <button
+      class="download-btn"
+      id="downloadBtn"
+      style="display:none;"
+    >
+      ⬇ Download Photo
+    </button>
+
     <div class="status" id="status"></div>
 
   </div>
@@ -377,12 +413,14 @@
     const preview = document.getElementById("preview");
     const emptyPhoto = document.getElementById("emptyPhoto");
     const applyBtn = document.getElementById("applyBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
     const status = document.getElementById("status");
 
     const tools = document.querySelectorAll(".tool");
 
     let selectedTool = "enhance";
     let selectedFile = null;
+    let resultURL = null;
 
 
     /* ADD PHOTO */
@@ -411,6 +449,9 @@
       emptyPhoto.style.display = "none";
 
       applyBtn.disabled = false;
+
+      // New photo select hone par purana download button hide
+      downloadBtn.style.display = "none";
 
       status.textContent = "Photo ready";
     });
@@ -448,6 +489,7 @@
 
       let prompt = "";
 
+
       if (selectedTool === "enhance") {
 
         prompt =
@@ -455,12 +497,14 @@
 
       }
 
+
       if (selectedTool === "smooth") {
 
         prompt =
           "Smooth the skin naturally. Reduce minor blemishes and uneven skin texture while keeping realistic skin pores and facial details. Preserve the exact same person, identity, eyes, nose, mouth, face shape, jawline and hairstyle. Do not change the face.";
 
       }
+
 
       if (selectedTool === "hair") {
 
@@ -471,6 +515,8 @@
 
 
       applyBtn.disabled = true;
+      downloadBtn.style.display = "none";
+
       status.textContent = "AI photo edit kar raha hai...";
 
 
@@ -483,45 +529,67 @@
 
 
         const response = await fetch("/api/edit", {
-  method: "POST",
-  body: formData
-});
-
-console.log("API STATUS:", response.status);
-console.log("API TYPE:", response.headers.get("content-type"));
-
-if (!response.ok) {
-
-  const errorText = await response.text();
-
-  throw new Error(
-    "Server Error (" +
-    response.status +
-    "): " +
-    errorText
-  );
-}
+          method: "POST",
+          body: formData
+        });
 
 
-        const contentType = response.headers.get("content-type");
+        console.log("API STATUS:", response.status);
+        console.log(
+          "API TYPE:",
+          response.headers.get("content-type")
+        );
 
-if (!contentType || !contentType.startsWith("image/")) {
-  const errorText = await response.text();
 
-  throw new Error(
-    "Server returned: " + errorText
-  );
-}
+        if (!response.ok) {
 
-const resultBlob = await response.blob();
+          const errorText = await response.text();
 
-        const resultURL = URL.createObjectURL(resultBlob);
+          throw new Error(
+            "Server Error (" +
+            response.status +
+            "): " +
+            errorText
+          );
+        }
+
+
+        const contentType =
+          response.headers.get("content-type");
+
+
+        if (
+          !contentType ||
+          !contentType.startsWith("image/")
+        ) {
+
+          const errorText = await response.text();
+
+          throw new Error(
+            "Server returned: " + errorText
+          );
+        }
+
+
+        const resultBlob =
+          await response.blob();
+
+
+        resultURL =
+          URL.createObjectURL(resultBlob);
+
 
         preview.src = resultURL;
         preview.style.display = "block";
         emptyPhoto.style.display = "none";
 
-        status.textContent = "AI Edit complete!";
+        status.textContent =
+          "AI Edit complete!";
+
+
+        /* SHOW DOWNLOAD BUTTON */
+
+        downloadBtn.style.display = "block";
 
 
       } catch (error) {
@@ -529,7 +597,10 @@ const resultBlob = await response.blob();
         console.error(error);
 
         status.textContent =
-          error.message || "AI edit failed.";
+          error.message ||
+          "AI edit failed.";
+
+        downloadBtn.style.display = "none";
 
       }
 
@@ -537,6 +608,34 @@ const resultBlob = await response.blob();
       applyBtn.disabled = false;
 
     });
+
+
+    /* DOWNLOAD PHOTO */
+
+    downloadBtn.addEventListener(
+      "click",
+      function () {
+
+        if (!resultURL) {
+          return;
+        }
+
+        const link =
+          document.createElement("a");
+
+        link.href = resultURL;
+
+        link.download =
+          "AI-Edited-Photo.png";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+      }
+    );
 
   </script>
 
