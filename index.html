@@ -483,9 +483,12 @@
 
 
         const response = await fetch("/api/edit", {
-          method: "POST",
-          body: formData
-        });
+  method: "POST",
+  body: formData
+});
+
+console.log("API STATUS:", response.status);
+console.log("API TYPE:", response.headers.get("content-type"));
 
 
         if (!response.ok) {
