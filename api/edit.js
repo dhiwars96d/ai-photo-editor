@@ -28,14 +28,6 @@ function parseForm(req) {
   });
 }
 
-function getField(field) {
-  if (Array.isArray(field)) {
-    return field[0];
-  }
-
-  return field || "";
-}
-
 function getFile(files) {
   const image = files.image;
 
@@ -46,48 +38,54 @@ function getFile(files) {
   return image;
 }
 
-async function realEsrganEnhance(imagePath) {
-  console.log("Connecting to Hockman Real-ESRGAN...");
+async function hockmanX2(imagePath) {
+  console.log("Connecting to Hockman...");
 
   const app = await Client.connect(
     "Hockman/real-esrgan-upscaler"
   );
 
-  console.log("Sending image to Hockman x2...");
+  console.log("Starting REAL X2 upscale...");
 
-  // Hockman's /lambda endpoint is the x2 processing endpoint.
-  const result = await app.predict("/lambda", {
-    x: handle_file(imagePath),
-  });
+  const result = await app.predict(
+    "/process_and_get_output",
+    {
+      img: handle_file(imagePath),
+    }
+  );
 
-  console.log("Hockman result received.");
-
-  console.log("RESULT:", JSON.stringify(result));
+  console.log(
+    "Hockman result:",
+    JSON.stringify(result)
+  );
 
   const data = result?.data;
 
   if (!data || !data[0]) {
-    throw new Error("Hockman did not return an image.");
+    throw new Error(
+      "Hockman did not return the X2 image."
+    );
   }
 
   const output = data[0];
 
-  console.log("OUTPUT:", JSON.stringify(output));
+  let outputUrl = output?.url;
 
-  let outputUrl = output.url;
-
-  if (!outputUrl && output.path) {
-    // Usually Gradio returns URL as well.
+  if (!outputUrl && output?.path) {
     outputUrl =
       "https://hockman-real-esrgan-upscaler.hf.space/file=" +
       encodeURIComponent(output.path);
   }
 
   if (!outputUrl) {
-    throw new Error("Hockman output image URL not found.");
+    throw new Error(
+      "Hockman X2 output URL not found."
+    );
   }
 
-  console.log("Downloading result...");
+  console.log(
+    "Downloading REAL X2 result..."
+  );
 
   const response = await fetch(outputUrl);
 
@@ -98,9 +96,15 @@ async function realEsrganEnhance(imagePath) {
     );
   }
 
-  const arrayBuffer = await response.arrayBuffer();
+  const arrayBuffer =
+    await response.arrayBuffer();
 
-  return Buffer.from(arrayBuffer);
+  return {
+    buffer: Buffer.from(arrayBuffer),
+    contentType:
+      response.headers.get("content-type") ||
+      "image/png",
+  };
 }
 
 export default async function handler(req, res) {
@@ -116,7 +120,8 @@ export default async function handler(req, res) {
   try {
     console.log("API EDIT START");
 
-    const { fields, files } = await parseForm(req);
+    const { fields, files } =
+      await parseForm(req);
 
     const imageFile = getFile(files);
 
@@ -129,73 +134,98 @@ export default async function handler(req, res) {
 
     tempPath = imageFile.filepath;
 
-    const prompt = getField(fields.prompt);
+    const prompt = Array.isArray(fields.prompt)
+      ? fields.prompt[0]
+      : fields.prompt || "";
 
     console.log("Prompt:", prompt);
     console.log("Image:", tempPath);
 
-    let resultBuffer;
+    const promptLower =
+      prompt.toLowerCase();
 
-    const promptLower = prompt.toLowerCase();
+    let resultBuffer;
+    let contentType = "image/png";
 
     /*
-     * Enhance
-     */
+      ENHANCE
+      Hockman REAL-ESRGAN X2
+    */
     if (
       promptLower.includes("enhance") ||
       promptLower.includes("improve overall")
     ) {
-      console.log("Using Hockman Real-ESRGAN x2...");
-
-      resultBuffer = await realEsrganEnhance(
-        tempPath
+      console.log(
+        "Using Hockman REAL X2..."
       );
+
+      const result =
+        await hockmanX2(tempPath);
+
+      resultBuffer = result.buffer;
+      contentType = result.contentType;
     }
 
     /*
-     * Smooth Skin
-     *
-     * फिलहाल original image return करेंगे।
-     * बाद में dedicated skin model जोड़ेंगे।
-     */
-    else if (promptLower.includes("smooth")) {
-      console.log("Smooth Skin selected.");
+      SMOOTH SKIN
+      Temporary: return original image.
+    */
+    else if (
+      promptLower.includes("smooth")
+    ) {
+      console.log(
+        "Smooth Skin selected."
+      );
 
-      // Temporary fallback:
-      // original image
-      resultBuffer = fs.readFileSync(tempPath);
+      resultBuffer =
+        fs.readFileSync(tempPath);
+
+      contentType =
+        imageFile.mimetype ||
+        "image/jpeg";
     }
 
     /*
-     * Hair
-     *
-     * फिलहाल original image return करेंगे।
-     * बाद में dedicated hair model जोड़ेंगे।
-     */
-    else if (promptLower.includes("hair")) {
-      console.log("Hair selected.");
+      HAIR
+      Temporary: return original image.
+    */
+    else if (
+      promptLower.includes("hair")
+    ) {
+      console.log(
+        "Hair selected."
+      );
 
-      // Temporary fallback:
-      // original image
-      resultBuffer = fs.readFileSync(tempPath);
+      resultBuffer =
+        fs.readFileSync(tempPath);
+
+      contentType =
+        imageFile.mimetype ||
+        "image/jpeg";
     }
 
     /*
-     * Unknown option
-     */
+      DEFAULT
+    */
     else {
-      console.log("Defaulting to Hockman Real-ESRGAN x2...");
-
-      resultBuffer = await realEsrganEnhance(
-        tempPath
+      console.log(
+        "Defaulting to Hockman REAL X2..."
       );
+
+      const result =
+        await hockmanX2(tempPath);
+
+      resultBuffer = result.buffer;
+      contentType = result.contentType;
     }
 
-    console.log("Sending image back to browser.");
+    console.log(
+      "Sending REAL result to browser..."
+    );
 
     res.setHeader(
       "Content-Type",
-      "image/png"
+      contentType
     );
 
     res.setHeader(
@@ -203,10 +233,15 @@ export default async function handler(req, res) {
       "no-store"
     );
 
-    res.status(200).send(resultBuffer);
+    res.status(200).send(
+      resultBuffer
+    );
 
   } catch (error) {
-    console.error("AI EDIT ERROR:", error);
+    console.error(
+      "AI EDIT ERROR:",
+      error
+    );
 
     res.status(500).json({
       error:
@@ -215,9 +250,6 @@ export default async function handler(req, res) {
     });
 
   } finally {
-    /*
-     * Delete temporary uploaded file
-     */
     if (tempPath) {
       try {
         if (fs.existsSync(tempPath)) {
