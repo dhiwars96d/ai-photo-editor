@@ -191,100 +191,59 @@ h1 {
 }
 
 /* =========================
-   PHOTO ADJUSTMENTS
+   ADJUSTMENTS BUTTON
 ========================= */
 
-.adjustments {
-  background: white;
-  border-radius: 20px;
-  padding: 16px;
-  margin-top: 22px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.05);
-}
-
-.adjustmentHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.adjustmentTitle {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.resetButton {
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  color: #374151;
-  padding: 7px 12px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.resetButton:active {
-  transform: scale(0.96);
-}
-
-.adjustmentRow {
-  margin-bottom: 15px;
-}
-
-.adjustmentRow:last-child {
-  margin-bottom: 0;
-}
-
-.adjustmentLabel {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.adjustmentValue {
-  min-width: 38px;
-  text-align: right;
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.slider {
+.adjustmentsToggle {
   width: 100%;
-  height: 5px;
-  appearance: none;
-  -webkit-appearance: none;
-  background: #e5e7eb;
-  border-radius: 10px;
-  outline: none;
+  margin-top: 16px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #111827;
+  border-radius: 17px;
+  padding: 15px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 18px rgba(0,0,0,0.04);
+  transition: 0.18s;
 }
 
-.slider::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #4f46e5;
-  border: 3px solid white;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.22);
-  cursor: pointer;
+.adjustmentsToggle:active {
+  transform: scale(0.99);
 }
 
-.slider::-moz-range-thumb {
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: #4f46e5;
-  border: 3px solid white;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.22);
-  cursor: pointer;
+.adjustmentsToggle.open {
+  border-color: #6366f1;
+  background: #f8f7ff;
+  color: #4338ca;
+}
+
+.adjustmentsChevron {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.adjustmentsPanel {
+  display: none;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.adjustmentsPanel.open {
+  display: block;
+}
+
+.adjustmentsFrame {
+  width: 100%;
+  height: 640px;
+  border: 0;
+  border-radius: 20px;
+  display: block;
+  background: transparent;
 }
 
 /* =========================
@@ -359,8 +318,8 @@ h1 {
     font-size: 10.5px;
   }
 
-  .adjustments {
-    padding: 14px;
+  .adjustmentsFrame {
+    height: 660px;
   }
 
 }
@@ -368,7 +327,6 @@ h1 {
 </style>
 
 </head>
-
 
 <body>
 
@@ -397,9 +355,7 @@ h1 {
 </div>
 
 
-<!-- =========================
-     PHOTO CARD
-========================= -->
+<!-- PHOTO CARD -->
 
 <div class="photoCard">
 
@@ -419,7 +375,6 @@ h1 {
       </div>
 
     </div>
-
 
     <img
       id="preview"
@@ -446,9 +401,7 @@ h1 {
 </div>
 
 
-<!-- =========================
-     AI TOOLS
-========================= -->
+<!-- AI TOOLS -->
 
 <div class="sectionTitle">
   AI Tools
@@ -456,9 +409,6 @@ h1 {
 
 
 <div class="tools">
-
-
-  <!-- ENHANCE -->
 
   <div
     class="tool"
@@ -478,8 +428,6 @@ h1 {
   </div>
 
 
-  <!-- SMOOTH SKIN -->
-
   <div
     class="tool"
     data-tool="smooth"
@@ -498,8 +446,6 @@ h1 {
   </div>
 
 
-  <!-- HAIR -->
-
   <div
     class="tool"
     data-tool="hair"
@@ -517,8 +463,6 @@ h1 {
 
   </div>
 
-
-  <!-- RETOUCH -->
 
   <div
     class="tool"
@@ -540,336 +484,41 @@ h1 {
 </div>
 
 
-<!-- =========================
-     PHOTO ADJUSTMENTS
-========================= -->
-
-<div class="adjustments">
-
-  <div class="adjustmentHeader">
-
-    <div class="adjustmentTitle">
-      Photo Adjustments
-    </div>
-
-    <button
-      class="resetButton"
-      id="resetAdjustments"
-    >
-      Reset
-    </button>
-
-  </div>
-
-
-  <!-- BRIGHTNESS -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Brightness
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="brightnessValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="brightness"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- CONTRAST -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Contrast
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="contrastValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="contrast"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- WARMTH -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Warmth
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="warmthValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="warmth"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- SATURATION -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Saturation
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="saturationValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="saturation"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- SHARPNESS -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Sharpness
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="sharpnessValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="sharpness"
-      type="range"
-      min="0"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- COLOR TEMP -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Color Temp
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="temperatureValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="temperature"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- VIBRANCE -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Vibrance
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="vibranceValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="vibrance"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- TINT -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Tint
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="tintValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="tint"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- SHADOWS -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Shadows
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="shadowsValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="shadows"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- CLARITY -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>
-        Clarity
-      </span>
-
-      <span
-        class="adjustmentValue"
-        id="clarityValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="clarity"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
+<!-- ADJUSTMENTS BUTTON -->
+
+<button
+  class="adjustmentsToggle"
+  id="adjustmentsToggle"
+  type="button"
+>
+
+  <span>
+    ⚙ Adjustments
+  </span>
+
+  <span
+    class="adjustmentsChevron"
+    id="adjustmentsChevron"
+  >
+    ›
+  </span>
+
+</button>
+
+
+<!-- SEPARATE ADJUSTMENTS FILE -->
+
+<div
+  class="adjustmentsPanel"
+  id="adjustmentsPanel"
+>
+
+  <iframe
+    class="adjustmentsFrame"
+    id="adjustmentsFrame"
+    src="adjustments.html"
+    title="Photo Adjustments"
+  ></iframe>
 
 </div>
 
@@ -891,7 +540,6 @@ h1 {
 <div class="smallNote">
   Your photo is processed only when you select an editing tool or change an adjustment.
 </div>
-
 
 </div>
 
@@ -926,20 +574,22 @@ const statusBox =
 const downloadButton =
   document.getElementById("downloadButton");
 
-const resetAdjustments =
-  document.getElementById("resetAdjustments");
+const adjustmentsToggle =
+  document.getElementById("adjustmentsToggle");
+
+const adjustmentsPanel =
+  document.getElementById("adjustmentsPanel");
+
+const adjustmentsChevron =
+  document.getElementById("adjustmentsChevron");
+
+const adjustmentsFrame =
+  document.getElementById("adjustmentsFrame");
 
 
 let selectedFile = null;
 
 let editedBlob = null;
-
-/*
-  Adjustment base image.
-  Sliders always work from this image
-  instead of repeatedly editing the
-  already-edited slider result.
-*/
 
 let adjustmentBaseBlob = null;
 
@@ -947,7 +597,8 @@ let adjustmentTimer = null;
 
 
 /* =========================================================
-   ADJUSTMENT ELEMENTS
+   ADJUSTMENT VALUES
+   These stay in the main editor.
 ========================================================= */
 
 const adjustmentIds = [
@@ -964,21 +615,213 @@ const adjustmentIds = [
 ];
 
 
-const adjustmentElements = {};
-
-const adjustmentValueElements = {};
-
+const adjustmentValues = {};
 
 adjustmentIds.forEach(
   (id) => {
 
-    adjustmentElements[id] =
-      document.getElementById(id);
+    adjustmentValues[id] = 0;
 
-    adjustmentValueElements[id] =
-      document.getElementById(
-        id + "Value"
+  }
+);
+
+
+/* =========================================================
+   ADJUSTMENTS OPEN / CLOSE
+========================================================= */
+
+adjustmentsToggle.addEventListener(
+  "click",
+  () => {
+
+    const isOpen =
+      adjustmentsPanel.classList.toggle(
+        "open"
       );
+
+    adjustmentsToggle.classList.toggle(
+      "open",
+      isOpen
+    );
+
+    adjustmentsChevron.textContent =
+      isOpen ? "⌄" : "›";
+
+  }
+);
+
+
+/* =========================================================
+   SEND STATE TO adjustments.html
+========================================================= */
+
+function sendAdjustmentState() {
+
+  if (
+    !adjustmentsFrame.contentWindow
+  ) {
+    return;
+  }
+
+
+  adjustmentsFrame.contentWindow.postMessage(
+    {
+      type: "set-adjustment-state",
+      values: {
+        ...adjustmentValues
+      }
+    },
+    "*"
+  );
+
+}
+
+
+/* =========================================================
+   RECEIVE FROM adjustments.html
+========================================================= */
+
+window.addEventListener(
+  "message",
+  async (event) => {
+
+    if (
+      event.source !==
+      adjustmentsFrame.contentWindow
+    ) {
+      return;
+    }
+
+
+    const data =
+      event.data || {};
+
+
+    /* IFRAME READY */
+
+    if (
+      data.type === "adjustments-ready"
+    ) {
+
+      sendAdjustmentState();
+
+      return;
+
+    }
+
+
+    /* SLIDER CHANGE */
+
+    if (
+      data.type === "adjustment-change"
+    ) {
+
+      if (
+        !adjustmentIds.includes(
+          data.id
+        )
+      ) {
+        return;
+      }
+
+
+      adjustmentValues[data.id] =
+        Number(data.value);
+
+
+      if (!adjustmentBaseBlob) {
+        return;
+      }
+
+
+      clearTimeout(
+        adjustmentTimer
+      );
+
+
+      adjustmentTimer =
+        setTimeout(
+          async () => {
+
+            try {
+
+              showStatus(
+                "Applying adjustment..."
+              );
+
+
+              await applyAdjustments();
+
+            }
+
+            catch (error) {
+
+              console.error(
+                error
+              );
+
+
+              showStatus(
+                "Adjustment failed. Please try again."
+              );
+
+            }
+
+          },
+          120
+        );
+
+      return;
+
+    }
+
+
+    /* RESET */
+
+    if (
+      data.type ===
+      "reset-adjustments"
+    ) {
+
+      resetAdjustmentValues();
+
+
+      if (!adjustmentBaseBlob) {
+        return;
+      }
+
+
+      editedBlob =
+        adjustmentBaseBlob;
+
+
+      const url =
+        URL.createObjectURL(
+          adjustmentBaseBlob
+        );
+
+
+      preview.src =
+        url;
+
+
+      preview.style.display =
+        "block";
+
+
+      placeholder.style.display =
+        "none";
+
+
+      downloadButton.style.display =
+        "block";
+
+
+      showStatus(
+        "Adjustments reset ✓"
+      );
+
+    }
 
   }
 );
@@ -1009,6 +852,7 @@ fileInput.addEventListener(
       return;
     }
 
+
     selectedFile =
       file;
 
@@ -1020,25 +864,34 @@ fileInput.addEventListener(
 
 
     const url =
-      URL.createObjectURL(file);
+      URL.createObjectURL(
+        file
+      );
+
 
     preview.src =
       url;
 
+
     preview.style.display =
       "block";
+
 
     placeholder.style.display =
       "none";
 
+
     downloadButton.style.display =
       "none";
+
 
     statusBox.style.display =
       "none";
 
 
     resetAdjustmentValues();
+
+    sendAdjustmentState();
 
   }
 );
@@ -1061,7 +914,6 @@ function showStatus(text) {
 
 /* =========================================================
    HOCKMAN REAL-ESRGAN 2X
-   EXISTING CODE PRESERVED
 ========================================================= */
 
 const HOCKMAN_SPACE =
@@ -1075,8 +927,10 @@ async function runHockmanX2(file) {
       HOCKMAN_SPACE
     );
 
+
   const image =
     handle_file(file);
+
 
   const job =
     app.submit(
@@ -1086,8 +940,10 @@ async function runHockmanX2(file) {
       }
     );
 
+
   let finalData =
     null;
+
 
   for await (
     const message of job
@@ -1133,6 +989,7 @@ async function runHockmanX2(file) {
 
     }
 
+
     if (
       message.type === "data"
     ) {
@@ -1159,6 +1016,7 @@ async function runHockmanX2(file) {
 
   const output =
     finalData[0];
+
 
   let outputURL =
     output.url;
@@ -1219,6 +1077,7 @@ function loadImage(file) {
       const img =
         new Image();
 
+
       img.onload =
         () => {
 
@@ -1226,8 +1085,10 @@ function loadImage(file) {
 
         };
 
+
       img.onerror =
         reject;
+
 
       img.src =
         URL.createObjectURL(
@@ -1249,8 +1110,10 @@ async function smoothSkin(file) {
   const img =
     await loadImage(file);
 
+
   const w =
     img.naturalWidth;
+
 
   const h =
     img.naturalHeight;
@@ -1261,8 +1124,10 @@ async function smoothSkin(file) {
       "canvas"
     );
 
+
   canvas.width =
     w;
+
 
   canvas.height =
     h;
@@ -1333,6 +1198,7 @@ async function smoothSkin(file) {
   work.width =
     sw;
 
+
   work.height =
     sh;
 
@@ -1364,6 +1230,7 @@ async function smoothSkin(file) {
   smoothCanvas.width =
     sw;
 
+
   smoothCanvas.height =
     sh;
 
@@ -1394,6 +1261,7 @@ async function smoothSkin(file) {
   pass2.width =
     sw;
 
+
   pass2.height =
     sh;
 
@@ -1423,6 +1291,7 @@ async function smoothSkin(file) {
 
   blurred.width =
     w;
+
 
   blurred.height =
     h;
@@ -1455,6 +1324,7 @@ async function smoothSkin(file) {
   mask.width =
     w;
 
+
   mask.height =
     h;
 
@@ -1468,11 +1338,14 @@ async function smoothSkin(file) {
   const faceX =
     w * 0.50;
 
+
   const faceY =
     h * 0.47;
 
+
   const faceW =
     w * 0.43;
+
 
   const faceH =
     h * 0.52;
@@ -1494,15 +1367,18 @@ async function smoothSkin(file) {
     "rgba(255,255,255,1)"
   );
 
+
   gradient.addColorStop(
     0.55,
     "rgba(255,255,255,0.92)"
   );
 
+
   gradient.addColorStop(
     0.82,
     "rgba(255,255,255,0.55)"
   );
+
 
   gradient.addColorStop(
     1,
@@ -1544,6 +1420,7 @@ async function smoothSkin(file) {
 
     maskCtx.beginPath();
 
+
     maskCtx.ellipse(
       x,
       y,
@@ -1554,6 +1431,7 @@ async function smoothSkin(file) {
       Math.PI * 2
     );
 
+
     maskCtx.fill();
 
   }
@@ -1562,8 +1440,10 @@ async function smoothSkin(file) {
   const eyeY =
     h * 0.40;
 
+
   const eyeRX =
     w * 0.075;
+
 
   const eyeRY =
     h * 0.028;
@@ -1649,8 +1529,10 @@ async function smoothSkin(file) {
   const src =
     original.data;
 
+
   const blur =
     blurredData;
+
 
   const dst =
     result.data;
@@ -1673,14 +1555,18 @@ async function smoothSkin(file) {
       dst[i] =
         src[i];
 
+
       dst[i + 1] =
         src[i + 1];
+
 
       dst[i + 2] =
         src[i + 2];
 
+
       dst[i + 3] =
         255;
+
 
       continue;
 
@@ -1690,8 +1576,10 @@ async function smoothSkin(file) {
     const r =
       src[i];
 
+
     const g =
       src[i + 1];
+
 
     const b =
       src[i + 2];
@@ -1700,8 +1588,10 @@ async function smoothSkin(file) {
     const br =
       blur[i];
 
+
     const bg =
       blur[i + 1];
+
 
     const bb =
       blur[i + 2];
@@ -1807,10 +1697,6 @@ function showResult(blob) {
   editedBlob =
     blob;
 
-  /*
-    AI result becomes the new base
-    for Photo Adjustments.
-  */
 
   adjustmentBaseBlob =
     blob;
@@ -1825,17 +1711,23 @@ function showResult(blob) {
   preview.src =
     url;
 
+
   preview.style.display =
     "block";
 
+
   placeholder.style.display =
     "none";
+
 
   downloadButton.style.display =
     "block";
 
 
   resetAdjustmentValues();
+
+
+  sendAdjustmentState();
 
 }
 
@@ -1934,6 +1826,7 @@ function rgbToHsv(
       b
     );
 
+
   const min =
     Math.min(
       r,
@@ -1945,7 +1838,10 @@ function rgbToHsv(
   let h = 0;
   let s = 0;
 
-  const v = max;
+
+  const v =
+    max;
+
 
   const d =
     max - min;
@@ -1985,6 +1881,7 @@ function rgbToHsv(
 
     }
 
+
     h /= 6;
 
   }
@@ -2015,14 +1912,18 @@ function hsvToRgb(
       h * 6
     );
 
+
   const f =
     h * 6 - i;
+
 
   const p =
     v * (1 - s);
 
+
   const q =
     v * (1 - f * s);
+
 
   const t =
     v * (1 - (1 - f) * s);
@@ -2033,36 +1934,52 @@ function hsvToRgb(
   ) {
 
     case 0:
+
       r = v;
       g = t;
       b = p;
+
       break;
 
+
     case 1:
+
       r = q;
       g = v;
       b = p;
+
       break;
 
+
     case 2:
+
       r = p;
       g = v;
       b = t;
+
       break;
 
+
     case 3:
+
       r = p;
       g = q;
       b = v;
+
       break;
 
+
     case 4:
+
       r = t;
       g = p;
       b = v;
+
       break;
 
+
     default:
+
       r = v;
       g = p;
       b = q;
@@ -2095,11 +2012,6 @@ async function applyAdjustments() {
       adjustmentBaseBlob
     );
 
-
-  /*
-    Limit processing width on mobile.
-    Original aspect ratio remains intact.
-  */
 
   const maxWidth =
     1400;
@@ -2139,6 +2051,7 @@ async function applyAdjustments() {
   canvas.width =
     w;
 
+
   canvas.height =
     h;
 
@@ -2176,67 +2089,63 @@ async function applyAdjustments() {
 
   const brightness =
     Number(
-      adjustmentElements.brightness.value
+      adjustmentValues.brightness
     );
 
 
   const contrast =
     Number(
-      adjustmentElements.contrast.value
+      adjustmentValues.contrast
     );
 
 
   const warmth =
     Number(
-      adjustmentElements.warmth.value
+      adjustmentValues.warmth
     );
 
 
   const saturation =
     Number(
-      adjustmentElements.saturation.value
+      adjustmentValues.saturation
     );
 
 
   const temperature =
     Number(
-      adjustmentElements.temperature.value
+      adjustmentValues.temperature
     );
 
 
   const vibrance =
     Number(
-      adjustmentElements.vibrance.value
+      adjustmentValues.vibrance
     );
 
 
   const tint =
     Number(
-      adjustmentElements.tint.value
+      adjustmentValues.tint
     );
 
 
   const shadows =
     Number(
-      adjustmentElements.shadows.value
+      adjustmentValues.shadows
     );
 
 
   const sharpness =
     Number(
-      adjustmentElements.sharpness.value
+      adjustmentValues.sharpness
     );
 
 
   const clarity =
     Number(
-      adjustmentElements.clarity.value
+      adjustmentValues.clarity
     );
 
-
-  /*
-    Contrast factor.
-  */
 
   const contrastFactor =
     (259 * (contrast + 255)) /
@@ -2252,16 +2161,16 @@ async function applyAdjustments() {
     let r =
       data[i];
 
+
     let g =
       data[i + 1];
+
 
     let b =
       data[i + 2];
 
 
-    /* =========================
-       BRIGHTNESS
-    ========================= */
+    /* BRIGHTNESS */
 
     const brightnessAmount =
       brightness * 2.55;
@@ -2270,26 +2179,28 @@ async function applyAdjustments() {
     r +=
       brightnessAmount;
 
+
     g +=
       brightnessAmount;
+
 
     b +=
       brightnessAmount;
 
 
-    /* =========================
-       CONTRAST
-    ========================= */
+    /* CONTRAST */
 
     r =
       contrastFactor *
       (r - 128) +
       128;
 
+
     g =
       contrastFactor *
       (g - 128) +
       128;
+
 
     b =
       contrastFactor *
@@ -2297,10 +2208,7 @@ async function applyAdjustments() {
       128;
 
 
-    /* =========================
-       WARMTH
-       Overall warm/cool look
-    ========================= */
+    /* WARMTH */
 
     const warmthAmount =
       warmth * 0.65;
@@ -2309,23 +2217,16 @@ async function applyAdjustments() {
     r +=
       warmthAmount;
 
+
     b -=
       warmthAmount;
 
-
-    /*
-      Small green compensation
-      keeps warmth more natural.
-    */
 
     g +=
       warmthAmount * 0.10;
 
 
-    /* =========================
-       COLOR TEMPERATURE
-       More targeted blue/yellow
-    ========================= */
+    /* COLOR TEMPERATURE */
 
     const tempAmount =
       temperature * 0.55;
@@ -2334,17 +2235,16 @@ async function applyAdjustments() {
     r +=
       tempAmount * 0.75;
 
+
     g +=
       tempAmount * 0.08;
+
 
     b -=
       tempAmount * 0.90;
 
 
-    /* =========================
-       TINT
-       Green <-> Magenta
-    ========================= */
+    /* TINT */
 
     const tintAmount =
       tint * 0.60;
@@ -2353,17 +2253,16 @@ async function applyAdjustments() {
     r +=
       tintAmount;
 
+
     b +=
       tintAmount;
+
 
     g -=
       tintAmount;
 
 
-    /* =========================
-       SHADOWS
-       Mainly affects darker pixels
-    ========================= */
+    /* SHADOWS */
 
     const luminance =
       0.2126 * r +
@@ -2382,23 +2281,24 @@ async function applyAdjustments() {
 
 
     const shadowAmount =
-      shadows * 1.25 *
+      shadows *
+      1.25 *
       shadowFactor;
 
 
     r +=
       shadowAmount;
 
+
     g +=
       shadowAmount;
+
 
     b +=
       shadowAmount;
 
 
-    /* =========================
-       SATURATION
-    ========================= */
+    /* SATURATION */
 
     let hsv =
       rgbToHsv(
@@ -2441,11 +2341,7 @@ async function applyAdjustments() {
       );
 
 
-    /*
-      VIBRANCE:
-      weak colors get more boost,
-      already saturated colors get less.
-    */
+    /* VIBRANCE */
 
     const vibranceAmount =
       vibrance / 100;
@@ -2493,8 +2389,10 @@ async function applyAdjustments() {
     r =
       rgb.r;
 
+
     g =
       rgb.g;
+
 
     b =
       rgb.b;
@@ -2503,8 +2401,10 @@ async function applyAdjustments() {
     data[i] =
       clamp(r);
 
+
     data[i + 1] =
       clamp(g);
+
 
     data[i + 2] =
       clamp(b);
@@ -2519,10 +2419,7 @@ async function applyAdjustments() {
   );
 
 
-  /*
-    SHARPNESS + CLARITY
-    Use local contrast from a blurred copy.
-  */
+  /* SHARPNESS + CLARITY */
 
   if (
     sharpness !== 0 ||
@@ -2537,6 +2434,7 @@ async function applyAdjustments() {
 
     originalCanvas.width =
       w;
+
 
     originalCanvas.height =
       h;
@@ -2567,6 +2465,7 @@ async function applyAdjustments() {
     blurCanvas.width =
       w;
 
+
     blurCanvas.height =
       h;
 
@@ -2577,10 +2476,2526 @@ async function applyAdjustments() {
       );
 
 
-    /*
-      Smaller blur = Sharpness.
-      Larger blur = Clarity.
-    */
+    const blurSize =
+      clarity < 0
+        ? 7
+        : 4;
+
+
+    blurCtx.filter =
+      "blur(" +
+      blurSize +
+      "px)";
+
+
+    blurCtx.drawImage(
+      originalCanvas,
+      0,
+      0
+    );
+
+
+    const originalData =
+      originalCtx.getImageData(
+        0,
+        0,
+        w,
+        h
+      ).data;
+
+
+    const blurData =
+      blurCtx.getImageData(
+        0,
+        0,
+        w,
+        h
+      ).data;
+
+
+    const sharpAmount =
+      sharpness / 100 *
+      0.85;
+
+onst clarityAmount =
+      clarity / 100 *
+ <!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>AI Photo Editor</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f6f8fb;
+  color: #111827;
+}
+
+.app {
+  max-width: 760px;
+  margin: auto;
+  padding: 22px 16px 40px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.logo {
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.badge {
+  background: #eef2ff;
+  color: #4f46e5;
+  padding: 7px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 34px;
+  line-height: 1.12;
+  margin: 0 0 12px;
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.photoCard {
+  background: white;
+  border-radius: 22px;
+  padding: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+}
+
+.previewBox {
+  width: 100%;
+  min-height: 280px;
+  background: #f1f3f7;
+  border-radius: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#preview {
+  display: none;
+  width: 100%;
+  height: auto;
+  max-height: 560px;
+  object-fit: contain;
+  border-radius: 17px;
+}
+
+.placeholder {
+  text-align: center;
+  color: #9ca3af;
+  padding: 40px 20px;
+}
+
+.placeholderIcon {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.addButton {
+  width: 100%;
+  border: 0;
+  background: #111827;
+  color: white;
+  padding: 14px;
+  border-radius: 14px;
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addButton:active {
+  transform: scale(0.98);
+}
+
+#fileInput {
+  display: none;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 24px 0 12px;
+}
+
+/* =========================
+   AI TOOLS
+========================= */
+
+.tools {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+  width: 100%;
+}
+
+.tool {
+  min-width: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 17px;
+  padding: 12px 5px;
+  cursor: pointer;
+  text-align: center;
+  transition: 0.15s;
+}
+
+.tool:active {
+  transform: scale(0.97);
+}
+
+.tool.active {
+  border-color: #6366f1;
+  background: #f5f3ff;
+}
+
+.toolIcon {
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 8px;
+}
+
+.tool[data-tool="hair"] .toolIcon {
+  width: 53px;
+  height: 53px;
+  margin-top: -4px;
+  margin-bottom: 4px;
+}
+
+.tool[data-tool="retouch"] .toolIcon {
+  width: 45px;
+  height: 45px;
+}
+
+.toolName {
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+}
+
+/* =========================
+   ADJUSTMENTS BUTTON
+========================= */
+
+.adjustmentsToggle {
+  width: 100%;
+  margin-top: 16px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #111827;
+  border-radius: 17px;
+  padding: 15px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 18px rgba(0,0,0,0.04);
+  transition: 0.18s;
+}
+
+.adjustmentsToggle:active {
+  transform: scale(0.99);
+}
+
+.adjustmentsToggle.open {
+  border-color: #6366f1;
+  background: #f8f7ff;
+  color: #4338ca;
+}
+
+.adjustmentsChevron {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.adjustmentsPanel {
+  display: none;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.adjustmentsPanel.open {
+  display: block;
+}
+
+.adjustmentsFrame {
+  width: 100%;
+  height: 640px;
+  border: 0;
+  border-radius: 20px;
+  display: block;
+  background: transparent;
+}
+
+/* =========================
+   STATUS
+========================= */
+
+.status {
+  display: none;
+  background: #eef2ff;
+  color: #4338ca;
+  border-radius: 13px;
+  padding: 13px;
+  margin-top: 18px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.downloadButton {
+  display: none;
+  width: 100%;
+  border: 0;
+  background: #16a34a;
+  color: white;
+  padding: 14px;
+  border-radius: 14px;
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.downloadButton:active {
+  transform: scale(0.98);
+}
+
+.smallNote {
+  color: #9ca3af;
+  font-size: 11px;
+  text-align: center;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 380px) {
+
+  .app {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .tools {
+    gap: 6px;
+  }
+
+  .tool {
+    padding: 11px 3px;
+    border-radius: 15px;
+  }
+
+  .toolIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tool[data-tool="hair"] .toolIcon {
+    width: 47px;
+    height: 47px;
+  }
+
+  .toolName {
+    font-size: 10.5px;
+  }
+
+  .adjustmentsFrame {
+    height: 660px;
+  }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+<header>
+
+  <div class="logo">
+    AI Photo Editor
+  </div>
+
+  <div class="badge">
+    AI Powered
+  </div>
+
+</header>
+
+
+<h1>
+  Make your photos better.
+</h1>
+
+
+<div class="subtitle">
+  Enhance your photos and improve skin appearance with simple AI-powered tools.
+</div>
+
+
+<!-- PHOTO CARD -->
+
+<div class="photoCard">
+
+  <div class="previewBox">
+
+    <div
+      class="placeholder"
+      id="placeholder"
+    >
+
+      <div class="placeholderIcon">
+        📷
+      </div>
+
+      <div>
+        Select a photo to get started
+      </div>
+
+    </div>
+
+    <img
+      id="preview"
+      alt="Photo Preview"
+    >
+
+  </div>
+
+
+  <input
+    type="file"
+    id="fileInput"
+    accept="image/*"
+  >
+
+
+  <button
+    class="addButton"
+    id="addPhoto"
+  >
+    Add Photo
+  </button>
+
+</div>
+
+
+<!-- AI TOOLS -->
+
+<div class="sectionTitle">
+  AI Tools
+</div>
+
+
+<div class="tools">
+
+  <div
+    class="tool"
+    data-tool="enhance"
+  >
+
+    <img
+      class="toolIcon"
+      src="enhance-icon.png"
+      alt="Enhance"
+    >
+
+    <div class="toolName">
+      Enhance
+    </div>
+
+  </div>
+
+
+  <div
+    class="tool"
+    data-tool="smooth"
+  >
+
+    <img
+      class="toolIcon"
+      src="smooth-icon.png"
+      alt="Smooth Skin"
+    >
+
+    <div class="toolName">
+      Smooth Skin
+    </div>
+
+  </div>
+
+
+  <div
+    class="tool"
+    data-tool="hair"
+  >
+
+    <img
+      class="toolIcon"
+      src="hair-icon.png"
+      alt="Hair"
+    >
+
+    <div class="toolName">
+      Hair
+    </div>
+
+  </div>
+
+
+  <div
+    class="tool"
+    data-tool="retouch"
+  >
+
+    <img
+      class="toolIcon"
+      src="retouch-icon.png"
+      alt="Retouch"
+    >
+
+    <div class="toolName">
+      Retouch
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ADJUSTMENTS BUTTON -->
+
+<button
+  class="adjustmentsToggle"
+  id="adjustmentsToggle"
+  type="button"
+>
+
+  <span>
+    ⚙ Adjustments
+  </span>
+
+  <span
+    class="adjustmentsChevron"
+    id="adjustmentsChevron"
+  >
+    ›
+  </span>
+
+</button>
+
+
+<!-- SEPARATE ADJUSTMENTS FILE -->
+
+<div
+  class="adjustmentsPanel"
+  id="adjustmentsPanel"
+>
+
+  <iframe
+    class="adjustmentsFrame"
+    id="adjustmentsFrame"
+    src="adjustments.html"
+    title="Photo Adjustments"
+  ></iframe>
+
+</div>
+
+
+<div
+  class="status"
+  id="status"
+></div>
+
+
+<button
+  class="downloadButton"
+  id="downloadButton"
+>
+  Download Edited Photo
+</button>
+
+
+<div class="smallNote">
+  Your photo is processed only when you select an editing tool or change an adjustment.
+</div>
+
+</div>
+
+
+<script type="module">
+
+import {
+  Client,
+  handle_file
+} from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+
+
+/* =========================================================
+   BASIC ELEMENTS
+========================================================= */
+
+const fileInput =
+  document.getElementById("fileInput");
+
+const addPhoto =
+  document.getElementById("addPhoto");
+
+const preview =
+  document.getElementById("preview");
+
+const placeholder =
+  document.getElementById("placeholder");
+
+const statusBox =
+  document.getElementById("status");
+
+const downloadButton =
+  document.getElementById("downloadButton");
+
+const adjustmentsToggle =
+  document.getElementById("adjustmentsToggle");
+
+const adjustmentsPanel =
+  document.getElementById("adjustmentsPanel");
+
+const adjustmentsChevron =
+  document.getElementById("adjustmentsChevron");
+
+const adjustmentsFrame =
+  document.getElementById("adjustmentsFrame");
+
+
+let selectedFile = null;
+
+let editedBlob = null;
+
+let adjustmentBaseBlob = null;
+
+let adjustmentTimer = null;
+
+
+/* =========================================================
+   ADJUSTMENT VALUES
+   These stay in the main editor.
+========================================================= */
+
+const adjustmentIds = [
+  "brightness",
+  "contrast",
+  "warmth",
+  "saturation",
+  "sharpness",
+  "temperature",
+  "vibrance",
+  "tint",
+  "shadows",
+  "clarity"
+];
+
+
+const adjustmentValues = {};
+
+adjustmentIds.forEach(
+  (id) => {
+
+    adjustmentValues[id] = 0;
+
+  }
+);
+
+
+/* =========================================================
+   ADJUSTMENTS OPEN / CLOSE
+========================================================= */
+
+adjustmentsToggle.addEventListener(
+  "click",
+  () => {
+
+    const isOpen =
+      adjustmentsPanel.classList.toggle(
+        "open"
+      );
+
+    adjustmentsToggle.classList.toggle(
+      "open",
+      isOpen
+    );
+
+    adjustmentsChevron.textContent =
+      isOpen ? "⌄" : "›";
+
+  }
+);
+
+
+/* =========================================================
+   SEND STATE TO adjustments.html
+========================================================= */
+
+function sendAdjustmentState() {
+
+  if (
+    !adjustmentsFrame.contentWindow
+  ) {
+    return;
+  }
+
+
+  adjustmentsFrame.contentWindow.postMessage(
+    {
+      type: "set-adjustment-state",
+      values: {
+        ...adjustmentValues
+      }
+    },
+    "*"
+  );
+
+}
+
+
+/* =========================================================
+   RECEIVE FROM adjustments.html
+========================================================= */
+
+window.addEventListener(
+  "message",
+  async (event) => {
+
+    if (
+      event.source !==
+      adjustmentsFrame.contentWindow
+    ) {
+      return;
+    }
+
+
+    const data =
+      event.data || {};
+
+
+    /* IFRAME READY */
+
+    if (
+      data.type === "adjustments-ready"
+    ) {
+
+      sendAdjustmentState();
+
+      return;
+
+    }
+
+
+    /* SLIDER CHANGE */
+
+    if (
+      data.type === "adjustment-change"
+    ) {
+
+      if (
+        !adjustmentIds.includes(
+          data.id
+        )
+      ) {
+        return;
+      }
+
+
+      adjustmentValues[data.id] =
+        Number(data.value);
+
+
+      if (!adjustmentBaseBlob) {
+        return;
+      }
+
+
+      clearTimeout(
+        adjustmentTimer
+      );
+
+
+      adjustmentTimer =
+        setTimeout(
+          async () => {
+
+            try {
+
+              showStatus(
+                "Applying adjustment..."
+              );
+
+
+              await applyAdjustments();
+
+            }
+
+            catch (error) {
+
+              console.error(
+                error
+              );
+
+
+              showStatus(
+                "Adjustment failed. Please try again."
+              );
+
+            }
+
+          },
+          120
+        );
+
+      return;
+
+    }
+
+
+    /* RESET */
+
+    if (
+      data.type ===
+      "reset-adjustments"
+    ) {
+
+      resetAdjustmentValues();
+
+
+      if (!adjustmentBaseBlob) {
+        return;
+      }
+
+
+      editedBlob =
+        adjustmentBaseBlob;
+
+
+      const url =
+        URL.createObjectURL(
+          adjustmentBaseBlob
+        );
+
+
+      preview.src =
+        url;
+
+
+      preview.style.display =
+        "block";
+
+
+      placeholder.style.display =
+        "none";
+
+
+      downloadButton.style.display =
+        "block";
+
+
+      showStatus(
+        "Adjustments reset ✓"
+      );
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   ADD PHOTO
+========================================================= */
+
+addPhoto.addEventListener(
+  "click",
+  () => {
+
+    fileInput.click();
+
+  }
+);
+
+
+fileInput.addEventListener(
+  "change",
+  () => {
+
+    const file =
+      fileInput.files[0];
+
+    if (!file) {
+      return;
+    }
+
+
+    selectedFile =
+      file;
+
+    editedBlob =
+      null;
+
+    adjustmentBaseBlob =
+      file;
+
+
+    const url =
+      URL.createObjectURL(
+        file
+      );
+
+
+    preview.src =
+      url;
+
+
+    preview.style.display =
+      "block";
+
+
+    placeholder.style.display =
+      "none";
+
+
+    downloadButton.style.display =
+      "none";
+
+
+    statusBox.style.display =
+      "none";
+
+
+    resetAdjustmentValues();
+
+    sendAdjustmentState();
+
+  }
+);
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function showStatus(text) {
+
+  statusBox.textContent =
+    text;
+
+  statusBox.style.display =
+    "block";
+
+}
+
+
+/* =========================================================
+   HOCKMAN REAL-ESRGAN 2X
+========================================================= */
+
+const HOCKMAN_SPACE =
+  "Hockman/real-esrgan-upscaler";
+
+
+async function runHockmanX2(file) {
+
+  const app =
+    await Client.connect(
+      HOCKMAN_SPACE
+    );
+
+
+  const image =
+    handle_file(file);
+
+
+  const job =
+    app.submit(
+      "/process_and_get_output",
+      {
+        img: image
+      }
+    );
+
+
+  let finalData =
+    null;
+
+
+  for await (
+    const message of job
+  ) {
+
+    if (
+      message.type === "status"
+    ) {
+
+      if (message.status) {
+
+        if (
+          message.status === "pending"
+        ) {
+
+          showStatus(
+            "Enhance AI is waiting..."
+          );
+
+        }
+
+        else if (
+          message.status === "generating"
+        ) {
+
+          showStatus(
+            "AI is enhancing your photo..."
+          );
+
+        }
+
+        else if (
+          message.status === "processing"
+        ) {
+
+          showStatus(
+            "Enhancing photo..."
+          );
+
+        }
+
+      }
+
+    }
+
+
+    if (
+      message.type === "data"
+    ) {
+
+      finalData =
+        message.data;
+
+    }
+
+  }
+
+
+  if (
+    !finalData ||
+    !finalData[0]
+  ) {
+
+    throw new Error(
+      "No image returned from AI"
+    );
+
+  }
+
+
+  const output =
+    finalData[0];
+
+
+  let outputURL =
+    output.url;
+
+
+  if (
+    !outputURL &&
+    output.path
+  ) {
+
+    outputURL =
+      "https://hockman-real-esrgan-upscaler.hf.space/file=" +
+      encodeURIComponent(
+        output.path
+      );
+
+  }
+
+
+  if (!outputURL) {
+
+    throw new Error(
+      "Output image URL missing"
+    );
+
+  }
+
+
+  const response =
+    await fetch(
+      outputURL
+    );
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      "Could not download AI result"
+    );
+
+  }
+
+
+  return await response.blob();
+
+}
+
+
+/* =========================================================
+   IMAGE LOADER
+========================================================= */
+
+function loadImage(file) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const img =
+        new Image();
+
+
+      img.onload =
+        () => {
+
+          resolve(img);
+
+        };
+
+
+      img.onerror =
+        reject;
+
+
+      img.src =
+        URL.createObjectURL(
+          file
+        );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   CURRENT SMOOTH SKIN
+========================================================= */
+
+async function smoothSkin(file) {
+
+  const img =
+    await loadImage(file);
+
+
+  const w =
+    img.naturalWidth;
+
+
+  const h =
+    img.naturalHeight;
+
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  canvas.width =
+    w;
+
+
+  canvas.height =
+    h;
+
+
+  const ctx =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
+
+
+  ctx.drawImage(
+    img,
+    0,
+    0,
+    w,
+    h
+  );
+
+
+  const original =
+    ctx.getImageData(
+      0,
+      0,
+      w,
+      h
+    );
+
+
+  const maxWorkWidth =
+    900;
+
+
+  const scale =
+    Math.min(
+      1,
+      maxWorkWidth / w
+    );
+
+
+  const sw =
+    Math.max(
+      1,
+      Math.round(
+        w * scale
+      )
+    );
+
+
+  const sh =
+    Math.max(
+      1,
+      Math.round(
+        h * scale
+      )
+    );
+
+
+  const work =
+    document.createElement(
+      "canvas"
+    );
+
+
+  work.width =
+    sw;
+
+
+  work.height =
+    sh;
+
+
+  const workCtx =
+    work.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
+
+
+  workCtx.drawImage(
+    img,
+    0,
+    0,
+    sw,
+    sh
+  );
+
+
+  const smoothCanvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  smoothCanvas.width =
+    sw;
+
+
+  smoothCanvas.height =
+    sh;
+
+
+  const smoothCtx =
+    smoothCanvas.getContext(
+      "2d"
+    );
+
+
+  smoothCtx.filter =
+    "blur(3.2px)";
+
+
+  smoothCtx.drawImage(
+    work,
+    0,
+    0
+  );
+
+
+  const pass2 =
+    document.createElement(
+      "canvas"
+    );
+
+
+  pass2.width =
+    sw;
+
+
+  pass2.height =
+    sh;
+
+
+  const pass2Ctx =
+    pass2.getContext(
+      "2d"
+    );
+
+
+  pass2Ctx.filter =
+    "blur(1.8px)";
+
+
+  pass2Ctx.drawImage(
+    smoothCanvas,
+    0,
+    0
+  );
+
+
+  const blurred =
+    document.createElement(
+      "canvas"
+    );
+
+
+  blurred.width =
+    w;
+
+
+  blurred.height =
+    h;
+
+
+  const blurredCtx =
+    blurred.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
+
+
+  blurredCtx.drawImage(
+    pass2,
+    0,
+    0,
+    w,
+    h
+  );
+
+
+  const mask =
+    document.createElement(
+      "canvas"
+    );
+
+
+  mask.width =
+    w;
+
+
+  mask.height =
+    h;
+
+
+  const maskCtx =
+    mask.getContext(
+      "2d"
+    );
+
+
+  const faceX =
+    w * 0.50;
+
+
+  const faceY =
+    h * 0.47;
+
+
+  const faceW =
+    w * 0.43;
+
+
+  const faceH =
+    h * 0.52;
+
+
+  const gradient =
+    maskCtx.createRadialGradient(
+      faceX,
+      faceY,
+      faceW * 0.18,
+      faceX,
+      faceY,
+      faceW
+    );
+
+
+  gradient.addColorStop(
+    0,
+    "rgba(255,255,255,1)"
+  );
+
+
+  gradient.addColorStop(
+    0.55,
+    "rgba(255,255,255,0.92)"
+  );
+
+
+  gradient.addColorStop(
+    0.82,
+    "rgba(255,255,255,0.55)"
+  );
+
+
+  gradient.addColorStop(
+    1,
+    "rgba(255,255,255,0)"
+  );
+
+
+  maskCtx.fillStyle =
+    gradient;
+
+
+  maskCtx.beginPath();
+
+
+  maskCtx.ellipse(
+    faceX,
+    faceY,
+    faceW,
+    faceH,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+
+  maskCtx.fill();
+
+
+  maskCtx.globalCompositeOperation =
+    "destination-out";
+
+
+  function cutEllipse(
+    x,
+    y,
+    rx,
+    ry
+  ) {
+
+    maskCtx.beginPath();
+
+
+    maskCtx.ellipse(
+      x,
+      y,
+      rx,
+      ry,
+      0,
+      0,
+      Math.PI * 2
+    );
+
+
+    maskCtx.fill();
+
+  }
+
+
+  const eyeY =
+    h * 0.40;
+
+
+  const eyeRX =
+    w * 0.075;
+
+
+  const eyeRY =
+    h * 0.028;
+
+
+  cutEllipse(
+    w * 0.405,
+    eyeY,
+    eyeRX,
+    eyeRY
+  );
+
+
+  cutEllipse(
+    w * 0.595,
+    eyeY,
+    eyeRX,
+    eyeRY
+  );
+
+
+  cutEllipse(
+    w * 0.405,
+    h * 0.355,
+    w * 0.085,
+    h * 0.018
+  );
+
+
+  cutEllipse(
+    w * 0.595,
+    h * 0.355,
+    w * 0.085,
+    h * 0.018
+  );
+
+
+  cutEllipse(
+    w * 0.50,
+    h * 0.625,
+    w * 0.105,
+    h * 0.035
+  );
+
+
+  cutEllipse(
+    w * 0.50,
+    h * 0.51,
+    w * 0.055,
+    h * 0.115
+  );
+
+
+  maskCtx.globalCompositeOperation =
+    "source-over";
+
+
+  const maskData =
+    maskCtx.getImageData(
+      0,
+      0,
+      w,
+      h
+    ).data;
+
+
+  const blurredData =
+    blurredCtx.getImageData(
+      0,
+      0,
+      w,
+      h
+    ).data;
+
+
+  const result =
+    ctx.createImageData(
+      w,
+      h
+    );
+
+
+  const src =
+    original.data;
+
+
+  const blur =
+    blurredData;
+
+
+  const dst =
+    result.data;
+
+
+  for (
+    let i = 0;
+    i < src.length;
+    i += 4
+  ) {
+
+    const maskValue =
+      maskData[i + 3] / 255;
+
+
+    if (
+      maskValue <= 0
+    ) {
+
+      dst[i] =
+        src[i];
+
+
+      dst[i + 1] =
+        src[i + 1];
+
+
+      dst[i + 2] =
+        src[i + 2];
+
+
+      dst[i + 3] =
+        255;
+
+
+      continue;
+
+    }
+
+
+    const r =
+      src[i];
+
+
+    const g =
+      src[i + 1];
+
+
+    const b =
+      src[i + 2];
+
+
+    const br =
+      blur[i];
+
+
+    const bg =
+      blur[i + 1];
+
+
+    const bb =
+      blur[i + 2];
+
+
+    const difference =
+      Math.abs(r - br) +
+      Math.abs(g - bg) +
+      Math.abs(b - bb);
+
+
+    let strength =
+      0.78 * maskValue;
+
+
+    if (
+      difference > 70
+    ) {
+
+      strength *=
+        0.18;
+
+    }
+
+    else if (
+      difference > 45
+    ) {
+
+      strength *=
+        0.38;
+
+    }
+
+    else if (
+      difference > 28
+    ) {
+
+      strength *=
+        0.62;
+
+    }
+
+
+    dst[i] =
+      Math.round(
+        r * (1 - strength) +
+        br * strength
+      );
+
+
+    dst[i + 1] =
+      Math.round(
+        g * (1 - strength) +
+        bg * strength
+      );
+
+
+    dst[i + 2] =
+      Math.round(
+        b * (1 - strength) +
+        bb * strength
+      );
+
+
+    dst[i + 3] =
+      255;
+
+  }
+
+
+  ctx.putImageData(
+    result,
+    0,
+    0
+  );
+
+
+  return await new Promise(
+    (resolve) => {
+
+      canvas.toBlob(
+        (blob) => {
+
+          resolve(blob);
+
+        },
+        "image/jpeg",
+        0.94
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   SHOW RESULT
+========================================================= */
+
+function showResult(blob) {
+
+  editedBlob =
+    blob;
+
+
+  adjustmentBaseBlob =
+    blob;
+
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+
+  preview.src =
+    url;
+
+
+  preview.style.display =
+    "block";
+
+
+  placeholder.style.display =
+    "none";
+
+
+  downloadButton.style.display =
+    "block";
+
+
+  resetAdjustmentValues();
+
+
+  sendAdjustmentState();
+
+}
+
+
+/* =========================================================
+   DOWNLOAD
+========================================================= */
+
+downloadButton.addEventListener(
+  "click",
+  () => {
+
+    if (!editedBlob) {
+      return;
+    }
+
+
+    const url =
+      URL.createObjectURL(
+        editedBlob
+      );
+
+
+    const a =
+      document.createElement(
+        "a"
+      );
+
+
+    a.href =
+      url;
+
+
+    a.download =
+      "AI-Edited-Photo.jpg";
+
+
+    document.body.appendChild(
+      a
+    );
+
+
+    a.click();
+
+
+    a.remove();
+
+
+    setTimeout(
+      () => {
+
+        URL.revokeObjectURL(
+          url
+        );
+
+      },
+      1000
+    );
+
+  }
+);
+
+
+/* =========================================================
+   RGB HELPERS
+========================================================= */
+
+function clamp(value) {
+
+  return Math.max(
+    0,
+    Math.min(
+      255,
+      value
+    )
+  );
+
+}
+
+
+function rgbToHsv(
+  r,
+  g,
+  b
+) {
+
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+
+  const max =
+    Math.max(
+      r,
+      g,
+      b
+    );
+
+
+  const min =
+    Math.min(
+      r,
+      g,
+      b
+    );
+
+
+  let h = 0;
+  let s = 0;
+
+
+  const v =
+    max;
+
+
+  const d =
+    max - min;
+
+
+  if (max !== 0) {
+
+    s =
+      d / max;
+
+  }
+
+
+  if (d !== 0) {
+
+    if (max === r) {
+
+      h =
+        (g - b) / d +
+        (g < b ? 6 : 0);
+
+    }
+
+    else if (max === g) {
+
+      h =
+        (b - r) / d +
+        2;
+
+    }
+
+    else {
+
+      h =
+        (r - g) / d +
+        4;
+
+    }
+
+
+    h /= 6;
+
+  }
+
+
+  return {
+    h,
+    s,
+    v
+  };
+
+}
+
+
+function hsvToRgb(
+  h,
+  s,
+  v
+) {
+
+  let r;
+  let g;
+  let b;
+
+
+  const i =
+    Math.floor(
+      h * 6
+    );
+
+
+  const f =
+    h * 6 - i;
+
+
+  const p =
+    v * (1 - s);
+
+
+  const q =
+    v * (1 - f * s);
+
+
+  const t =
+    v * (1 - (1 - f) * s);
+
+
+  switch (
+    i % 6
+  ) {
+
+    case 0:
+
+      r = v;
+      g = t;
+      b = p;
+
+      break;
+
+
+    case 1:
+
+      r = q;
+      g = v;
+      b = p;
+
+      break;
+
+
+    case 2:
+
+      r = p;
+      g = v;
+      b = t;
+
+      break;
+
+
+    case 3:
+
+      r = p;
+      g = q;
+      b = v;
+
+      break;
+
+
+    case 4:
+
+      r = t;
+      g = p;
+      b = v;
+
+      break;
+
+
+    default:
+
+      r = v;
+      g = p;
+      b = q;
+
+  }
+
+
+  return {
+    r: r * 255,
+    g: g * 255,
+    b: b * 255
+  };
+
+}
+
+
+/* =========================================================
+   ADJUSTMENT PROCESSOR
+========================================================= */
+
+async function applyAdjustments() {
+
+  if (!adjustmentBaseBlob) {
+    return;
+  }
+
+
+  const img =
+    await loadImage(
+      adjustmentBaseBlob
+    );
+
+
+  const maxWidth =
+    1400;
+
+
+  const scale =
+    Math.min(
+      1,
+      maxWidth / img.naturalWidth
+    );
+
+
+  const w =
+    Math.max(
+      1,
+      Math.round(
+        img.naturalWidth * scale
+      )
+    );
+
+
+  const h =
+    Math.max(
+      1,
+      Math.round(
+        img.naturalHeight * scale
+      )
+    );
+
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  canvas.width =
+    w;
+
+
+  canvas.height =
+    h;
+
+
+  const ctx =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
+
+
+  ctx.drawImage(
+    img,
+    0,
+    0,
+    w,
+    h
+  );
+
+
+  const imageData =
+    ctx.getImageData(
+      0,
+      0,
+      w,
+      h
+    );
+
+
+  const data =
+    imageData.data;
+
+
+  const brightness =
+    Number(
+      adjustmentValues.brightness
+    );
+
+
+  const contrast =
+    Number(
+      adjustmentValues.contrast
+    );
+
+
+  const warmth =
+    Number(
+      adjustmentValues.warmth
+    );
+
+
+  const saturation =
+    Number(
+      adjustmentValues.saturation
+    );
+
+
+  const temperature =
+    Number(
+      adjustmentValues.temperature
+    );
+
+
+  const vibrance =
+    Number(
+      adjustmentValues.vibrance
+    );
+
+
+  const tint =
+    Number(
+      adjustmentValues.tint
+    );
+
+
+  const shadows =
+    Number(
+      adjustmentValues.shadows
+    );
+
+
+  const sharpness =
+    Number(
+      adjustmentValues.sharpness
+    );
+
+
+  const clarity =
+    Number(
+      adjustmentValues.clarity
+    );
+
+
+  const contrastFactor =
+    (259 * (contrast + 255)) /
+    (255 * (259 - contrast));
+
+
+  for (
+    let i = 0;
+    i < data.length;
+    i += 4
+  ) {
+
+    let r =
+      data[i];
+
+
+    let g =
+      data[i + 1];
+
+
+    let b =
+      data[i + 2];
+
+
+    /* BRIGHTNESS */
+
+    const brightnessAmount =
+      brightness * 2.55;
+
+
+    r +=
+      brightnessAmount;
+
+
+    g +=
+      brightnessAmount;
+
+
+    b +=
+      brightnessAmount;
+
+
+    /* CONTRAST */
+
+    r =
+      contrastFactor *
+      (r - 128) +
+      128;
+
+
+    g =
+      contrastFactor *
+      (g - 128) +
+      128;
+
+
+    b =
+      contrastFactor *
+      (b - 128) +
+      128;
+
+
+    /* WARMTH */
+
+    const warmthAmount =
+      warmth * 0.65;
+
+
+    r +=
+      warmthAmount;
+
+
+    b -=
+      warmthAmount;
+
+
+    g +=
+      warmthAmount * 0.10;
+
+
+    /* COLOR TEMPERATURE */
+
+    const tempAmount =
+      temperature * 0.55;
+
+
+    r +=
+      tempAmount * 0.75;
+
+
+    g +=
+      tempAmount * 0.08;
+
+
+    b -=
+      tempAmount * 0.90;
+
+
+    /* TINT */
+
+    const tintAmount =
+      tint * 0.60;
+
+
+    r +=
+      tintAmount;
+
+
+    b +=
+      tintAmount;
+
+
+    g -=
+      tintAmount;
+
+
+    /* SHADOWS */
+
+    const luminance =
+      0.2126 * r +
+      0.7152 * g +
+      0.0722 * b;
+
+
+    const shadowFactor =
+      Math.max(
+        0,
+        Math.min(
+          1,
+          (145 - luminance) / 145
+        )
+      );
+
+
+    const shadowAmount =
+      shadows *
+      1.25 *
+      shadowFactor;
+
+
+    r +=
+      shadowAmount;
+
+
+    g +=
+      shadowAmount;
+
+
+    b +=
+      shadowAmount;
+
+
+    /* SATURATION */
+
+    let hsv =
+      rgbToHsv(
+        clamp(r),
+        clamp(g),
+        clamp(b)
+      );
+
+
+    let satMultiplier;
+
+
+    if (
+      saturation >= 0
+    ) {
+
+      satMultiplier =
+        1 +
+        saturation / 100;
+
+    }
+
+    else {
+
+      satMultiplier =
+        1 +
+        saturation / 120;
+
+    }
+
+
+    hsv.s =
+      Math.max(
+        0,
+        Math.min(
+          1,
+          hsv.s *
+          satMultiplier
+        )
+      );
+
+
+    /* VIBRANCE */
+
+    const vibranceAmount =
+      vibrance / 100;
+
+
+    if (
+      vibranceAmount > 0
+    ) {
+
+      const boost =
+        vibranceAmount *
+        (1 - hsv.s) *
+        0.75;
+
+
+      hsv.s =
+        Math.min(
+          1,
+          hsv.s + boost
+        );
+
+    }
+
+    else {
+
+      hsv.s =
+        Math.max(
+          0,
+          hsv.s +
+          vibranceAmount *
+          0.35
+        );
+
+    }
+
+
+    const rgb =
+      hsvToRgb(
+        hsv.h,
+        hsv.s,
+        hsv.v
+      );
+
+
+    r =
+      rgb.r;
+
+
+    g =
+      rgb.g;
+
+
+    b =
+      rgb.b;
+
+
+    data[i] =
+      clamp(r);
+
+
+    data[i + 1] =
+      clamp(g);
+
+
+    data[i + 2] =
+      clamp(b);
+
+  }
+
+
+  ctx.putImageData(
+    imageData,
+    0,
+    0
+  );
+
+
+  /* SHARPNESS + CLARITY */
+
+  if (
+    sharpness !== 0 ||
+    clarity !== 0
+  ) {
+
+    const originalCanvas =
+      document.createElement(
+        "canvas"
+      );
+
+
+    originalCanvas.width =
+      w;
+
+
+    originalCanvas.height =
+      h;
+
+
+    const originalCtx =
+      originalCanvas.getContext(
+        "2d",
+        {
+          willReadFrequently: true
+        }
+      );
+
+
+    originalCtx.drawImage(
+      canvas,
+      0,
+      0
+    );
+
+
+    const blurCanvas =
+      document.createElement(
+        "canvas"
+      );
+
+
+    blurCanvas.width =
+      w;
+
+
+    blurCanvas.height =
+      h;
+
+
+    const blurCtx =
+      blurCanvas.getContext(
+        "2d"
+      );
+
 
     const blurSize =
       clarity < 0
@@ -2654,8 +5069,10 @@ async function applyAdjustments() {
       const r =
         originalData[i];
 
+
       const g =
         originalData[i + 1];
+
 
       const b =
         originalData[i + 2];
@@ -2664,8 +5081,10 @@ async function applyAdjustments() {
       const br =
         blurData[i];
 
+
       const bg =
         blurData[i + 1];
+
 
       const bb =
         blurData[i + 2];
@@ -2674,8 +5093,10 @@ async function applyAdjustments() {
       const detailR =
         r - br;
 
+
       const detailG =
         g - bg;
+
 
       const detailB =
         b - bb;
@@ -2717,10 +5138,6 @@ async function applyAdjustments() {
       0
     );
 
-
-    /*
-      Put final result back.
-    */
 
     ctx.clearRect(
       0,
@@ -2796,26 +5213,7 @@ async function applyAdjustments() {
 
 
 /* =========================================================
-   UPDATE ADJUSTMENT VALUE
-========================================================= */
-
-function updateAdjustmentValues() {
-
-  adjustmentIds.forEach(
-    (id) => {
-
-      adjustmentValueElements[id]
-        .textContent =
-        adjustmentElements[id].value;
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   RESET VALUES
+   RESET
 ========================================================= */
 
 function resetAdjustmentValues() {
@@ -2823,142 +5221,20 @@ function resetAdjustmentValues() {
   adjustmentIds.forEach(
     (id) => {
 
-      adjustmentElements[id].value =
+      adjustmentValues[id] =
         0;
 
     }
   );
 
 
-  /*
-    Sharpness already starts at zero.
-  */
-
-  updateAdjustmentValues();
+  sendAdjustmentState();
 
 }
 
 
 /* =========================================================
-   RESET BUTTON
-========================================================= */
-
-resetAdjustments.addEventListener(
-  "click",
-  async () => {
-
-    if (!adjustmentBaseBlob) {
-
-      resetAdjustmentValues();
-
-      return;
-
-    }
-
-
-    resetAdjustmentValues();
-
-
-    editedBlob =
-      adjustmentBaseBlob;
-
-
-    const url =
-      URL.createObjectURL(
-        adjustmentBaseBlob
-      );
-
-
-    preview.src =
-      url;
-
-
-    preview.style.display =
-      "block";
-
-
-    downloadButton.style.display =
-      "block";
-
-
-    showStatus(
-      "Adjustments reset ✓"
-    );
-
-  }
-);
-
-
-/* =========================================================
-   SLIDER EVENTS
-========================================================= */
-
-adjustmentIds.forEach(
-  (id) => {
-
-    adjustmentElements[id]
-      .addEventListener(
-        "input",
-        () => {
-
-          updateAdjustmentValues();
-
-
-          if (
-            !adjustmentBaseBlob
-          ) {
-
-            return;
-
-          }
-
-
-          clearTimeout(
-            adjustmentTimer
-          );
-
-
-          adjustmentTimer =
-            setTimeout(
-              async () => {
-
-                try {
-
-                  showStatus(
-                    "Applying adjustment..."
-                  );
-
-
-                  await applyAdjustments();
-
-                }
-
-                catch (error) {
-
-                  console.error(
-                    error
-                  );
-
-
-                  showStatus(
-                    "Adjustment failed. Please try again."
-                  );
-
-                }
-
-              },
-              120
-            );
-
-        }
-      );
-
-  }
-);
-
-
-/* =========================================================
-   TOOL BUTTONS
+   AI TOOL BUTTONS
 ========================================================= */
 
 document
@@ -3009,10 +5285,7 @@ document
 
           try {
 
-
-            /* =========================
-               ENHANCE
-            ========================= */
+            /* ENHANCE */
 
             if (
               type === "enhance"
@@ -3041,9 +5314,7 @@ document
             }
 
 
-            /* =========================
-               SMOOTH SKIN
-            ========================= */
+            /* SMOOTH SKIN */
 
             else if (
               type === "smooth"
@@ -3081,9 +5352,7 @@ document
             }
 
 
-            /* =========================
-               HAIR
-            ========================= */
+            /* HAIR */
 
             else if (
               type === "hair"
@@ -3100,9 +5369,7 @@ document
             }
 
 
-            /* =========================
-               RETOUCH
-            ========================= */
+            /* RETOUCH */
 
             else if (
               type === "retouch"
@@ -3142,13 +5409,199 @@ document
 
 
 /* =========================================================
-   INITIAL VALUES
+   INITIAL
 ========================================================= */
 
-updateAdjustmentValues();
+resetAdjustmentValues();
 
 </script>
 
 </body>
 
-  </html>
+</html>￼Enter     0.55;
+
+
+    const totalLocal =
+      sharpAmount +
+      clarityAmount;
+
+
+    const finalData =
+      originalCtx.createImageData(
+        w,
+        h
+      );
+
+
+    const out =
+      finalData.data;
+
+
+    for (
+      let i = 0;
+      i < originalData.length;
+      i += 4
+    ) {
+
+      const r =
+        originalData[i];
+
+
+      const g =
+        originalData[i + 1];
+
+
+      const b =
+        originalData[i + 2];
+
+
+      const br =
+        blurData[i];
+
+
+      const bg =
+        blurData[i + 1];
+
+
+      const bb =
+        blurData[i + 2];
+
+
+      const detailR =
+        r - br;
+
+
+      const detailG =
+        g - bg;
+
+
+      const detailB =
+        b - bb;
+
+
+      out[i] =
+        clamp(
+          r +
+          detailR *
+          totalLocal
+        );
+
+
+      out[i + 1] =
+        clamp(
+          g +
+          detailG *
+          totalLocal
+        );
+
+
+      out[i + 2] =
+        clamp(
+          b +
+          detailB *
+          totalLocal
+        );
+
+
+      out[i + 3] =
+        255;
+
+    }
+
+
+    originalCtx.putImageData(
+      finalData,
+      0,
+      0
+    );
+
+
+    ctx.clearRect(
+      0,
+      0,
+      w,
+      h
+    );
+
+
+    ctx.drawImage(
+      originalCanvas,
+      0,
+      0
+    );
+
+  }
+
+
+  const blob =
+    await new Promise(
+      (resolve) => {
+
+        canvas.toBlob(
+          (result) => {
+
+            resolve(result);
+
+          },
+          "image/jpeg",
+          0.94
+        );
+
+      }
+    );
+
+
+  if (!blob) {
+    return;
+  }
+
+
+  editedBlob =
+    blob;
+
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+
+  preview.src =
+    url;
+
+
+  preview.style.display =
+    "block";
+
+
+  placeholder.style.display =
+    "none";
+
+
+  downloadButton.style.display =
+    "block";
+
+
+  showStatus(
+    "Photo adjustment applied ✓"
+  );
+
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetAdjustmentValues() {
+
+  adjustmentIds.forEach(
+    (id) => {
+
+      adjustmentValues[id] =
+        0;
+
+    }
+  );
+
+
