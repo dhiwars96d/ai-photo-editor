@@ -1,6 +1,5 @@
 import formidable from "formidable";
 import fs from "fs";
-import { InferenceClient } from "@huggingface/inference";
 
 export const config = {
   api: {
@@ -9,7 +8,6 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed",
@@ -17,7 +15,9 @@ export default async function handler(req, res) {
   }
 
   try {
-
+    // -----------------------------
+    // 1. Read uploaded image
+    // -----------------------------
     const form = formidable({
       multiples: false,
       keepExtensions: true,
@@ -33,107 +33,173 @@ export default async function handler(req, res) {
       });
     }
 
-    const imageBuffer =
-      fs.readFileSync(uploadedFile.filepath);
+    // -----------------------------
+    // 2. Read image
+    // -----------------------------
+    const imageBuffer = fs.readFileSync(
+      uploadedFile.filepath
+    );
 
+    // Convert image to Base64
+    const imageBase64 =
+      imageBuffer.toString("base64");
 
-    const hf =
-      new InferenceClient(
-        process.env.HF_TOKEN,
-        {
-          provider: "fal-ai",
-        }
-      );
-
-
+    // -----------------------------
+    // 3. Smooth Skin prompt
+    // -----------------------------
     const prompt = `
-Naturally smooth the skin of the person in this photo.
+Naturally smooth the skin in this photo.
 
 Keep the exact same person and preserve identity.
-Keep the original face shape, facial proportions,
-eyes, eyebrows, nose, lips, mouth, jawline and hair unchanged.
 
-Only reduce minor skin texture, small blemishes,
-uneven skin texture and roughness.
+Only make subtle improvements to skin:
+- reduce minor blemishes
+- reduce rough skin texture
+- reduce uneven skin texture
+- make skin look naturally smoother
 
-Keep natural pores and realistic skin texture.
-Keep natural skin color and lighting.
-Do not beautify excessively.
-Do not reshape the face.
-Do not change facial expression.
-Do not make the skin plastic, waxy or airbrushed.
+Preserve:
+- exact face shape
+- facial proportions
+- eyes
+- eyebrows
+- nose
+- lips
+- mouth
+- jawline
+- hairstyle
+- facial expression
+- skin color
+- lighting
+- overall appearance
 
-The final result should look like the same
-real person with naturally smoother skin.
+Keep realistic pores and natural skin texture.
+
+Do not make the face look artificial.
+The result must look like the same real person,
+with only naturally smoother skin.
 `;
 
-
+    // -----------------------------
+    // 4. Negative prompt
+    // -----------------------------
     const negativePrompt = `
 different person,
+identity change,
 face reconstruction,
 face reshaping,
+changed face shape,
+changed facial proportions,
 changed eyes,
+changed eyebrows,
 changed nose,
 changed lips,
 changed mouth,
-changed expression,
+changed jawline,
 changed hairstyle,
+changed expression,
+beauty filter,
 plastic skin,
 waxy skin,
+airbrushed skin,
 over retouched skin,
-airbrushed face,
-beauty filter,
-unnatural skin,
 artificial face,
-identity change
+unnatural skin,
+smooth plastic face,
+cartoon,
+painting,
+blurry face,
+distorted face
 `;
 
+    // -----------------------------
+    // 5. Cloudflare Workers AI
+    // -----------------------------
+    const accountId =
+      process.env.CF_ACCOUNT_ID;
 
-    const result =
-      await hf.imageToImage({
+    const apiToken =
+      process.env.CF_API_TOKEN;
 
-        inputs:
-          new Blob([
-            imageBuffer
-          ]),
-
-        model:
-          "Qwen/Qwen-Image-Edit",
-
-        parameters: {
-
-          prompt:
-            prompt,
-
-          negative_prompt:
-            negativePrompt,
-
-          num_inference_steps:
-            20,
-
-          guidance_scale:
-            4
-
-        }
-
+    if (!accountId || !apiToken) {
+      return res.status(500).json({
+        error:
+          "Cloudflare Account ID or API Token is missing.",
       });
-
-
-    if (!result) {
-
-      throw new Error(
-        "Hugging Face returned no image"
-      );
-
     }
 
+    const apiURL =
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/runwayml/stable-diffusion-v1-5-img2img`;
 
-    const outputBuffer =
-      Buffer.from(
-        await result.arrayBuffer()
+    // -----------------------------
+    // 6. AI request
+    // -----------------------------
+    const aiResponse = await fetch(apiURL, {
+      method: "POST",
+
+      headers: {
+        "Authorization":
+          `Bearer ${apiToken}`,
+
+        "Content-Type":
+          "application/json",
+      },
+
+      body: JSON.stringify({
+        prompt: prompt,
+
+        negative_prompt:
+          negativePrompt,
+
+        image_b64:
+          imageBase64,
+
+        // Low strength = keep original
+        // image closer to input.
+        strength: 0.18,
+
+        // Maximum supported by model.
+        num_steps: 20,
+
+        // Moderate prompt guidance.
+        guidance: 5,
+
+        // Keep original image dimensions.
+        // Cloudflare model supports 256-2048.
+        width: 512,
+        height: 512,
+      }),
+    });
+
+    // -----------------------------
+    // 7. Check Cloudflare response
+    // -----------------------------
+    if (!aiResponse.ok) {
+      const errorText =
+        await aiResponse.text();
+
+      console.error(
+        "CLOUDFLARE AI ERROR:",
+        errorText
       );
 
+      return res.status(500).json({
+        error:
+          `Cloudflare AI failed: ${errorText}`,
+      });
+    }
 
+    // -----------------------------
+    // 8. Get generated PNG
+    // -----------------------------
+    const outputBuffer =
+      Buffer.from(
+        await aiResponse.arrayBuffer()
+      );
+
+    // -----------------------------
+    // 9. Return image
+    // -----------------------------
     res.setHeader(
       "Content-Type",
       "image/png"
@@ -148,9 +214,7 @@ identity change
       .status(200)
       .send(outputBuffer);
 
-  }
-
-  catch (error) {
+  } catch (error) {
 
     console.error(
       "SMOOTH AI ERROR:",
@@ -158,13 +222,9 @@ identity change
     );
 
     return res.status(500).json({
-
       error:
         error?.message ||
         "Smooth AI failed",
-
     });
-
   }
-
 }
