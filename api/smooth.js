@@ -39,7 +39,10 @@ export default async function handler(req, res) {
 
     const hf =
       new InferenceClient(
-        process.env.HF_TOKEN
+        process.env.HF_TOKEN,
+        {
+          provider: "fal-ai",
+        }
       );
 
 
@@ -88,21 +91,41 @@ identity change
 
     const result =
       await hf.imageToImage({
-        data: imageBuffer,
+
+        inputs:
+          new Blob([
+            imageBuffer
+          ]),
 
         model:
           "Qwen/Qwen-Image-Edit",
 
-        prompt: prompt,
-
-        negative_prompt:
-          negativePrompt,
-
         parameters: {
-          num_inference_steps: 20,
-          guidance_scale: 4,
-        },
+
+          prompt:
+            prompt,
+
+          negative_prompt:
+            negativePrompt,
+
+          num_inference_steps:
+            20,
+
+          guidance_scale:
+            4
+
+        }
+
       });
+
+
+    if (!result) {
+
+      throw new Error(
+        "Hugging Face returned no image"
+      );
+
+    }
 
 
     const outputBuffer =
@@ -121,9 +144,9 @@ identity change
       "no-store"
     );
 
-    return res.status(200).send(
-      outputBuffer
-    );
+    return res
+      .status(200)
+      .send(outputBuffer);
 
   }
 
@@ -135,9 +158,11 @@ identity change
     );
 
     return res.status(500).json({
+
       error:
         error?.message ||
         "Smooth AI failed",
+
     });
 
   }
