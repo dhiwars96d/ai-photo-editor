@@ -1,605 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
+  <title>Adjustments</title>
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-<title>Photo Adjustments</title>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: Arial, sans-serif;
+      color: #111827;
+    }
 
-<style>
+    .adjustmentsCard {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 5px 18px rgba(0, 0, 0, 0.04);
+    }
 
-* {
-  box-sizing: border-box;
-}
+    .adjustmentTitle {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #111827;
+    }
 
-body {
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  font-family: Arial, Helvetica, sans-serif;
-  color: #111827;
-}
+    .control {
+      margin-bottom: 17px;
+    }
 
-.panel {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  padding: 16px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.05);
-}
+    .control:last-of-type {
+      margin-bottom: 14px;
+    }
 
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
+    .controlTop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
 
-.panelTitle {
-  font-size: 16px;
-  font-weight: 700;
-}
+    .controlName {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
 
-.resetButton {
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  color: #374151;
-  padding: 7px 12px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
+    .controlValue {
+      min-width: 38px;
+      text-align: right;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+    }
 
-.resetButton:active {
-  transform: scale(0.96);
-}
+    input[type="range"] {
+      width: 100%;
+      height: 5px;
+      margin: 0;
+      padding: 0;
+      accent-color: #6366f1;
+      cursor: pointer;
+    }
 
-.adjustmentRow {
-  margin-bottom: 15px;
-}
+    .resetButton {
+      width: 100%;
+      margin-top: 4px;
+      padding: 12px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f9fafb;
+      color: #374151;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
 
-.adjustmentRow:last-child {
-  margin-bottom: 0;
-}
+    .resetButton:active {
+      transform: scale(0.99);
+    }
 
-.adjustmentLabel {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-}
+    @media (max-width: 380px) {
+      .adjustmentsCard {
+        padding: 14px;
+      }
 
-.adjustmentValue {
-  min-width: 38px;
-  text-align: right;
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.slider {
-  width: 100%;
-  height: 5px;
-  appearance: none;
-  -webkit-appearance: none;
-  background: #e5e7eb;
-  border-radius: 10px;
-  outline: none;
-}
-
-.slider::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #4f46e5;
-  border: 3px solid white;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.22);
-  cursor: pointer;
-}
-
-.slider::-moz-range-thumb {
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: #4f46e5;
-  border: 3px solid white;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.22);
-  cursor: pointer;
-}
-
-</style>
-
+      .control {
+        margin-bottom: 16px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="panel">
+  <div class="adjustmentsCard">
 
-  <div class="panelHeader">
-
-    <div class="panelTitle">
+    <div class="adjustmentTitle">
       Photo Adjustments
     </div>
 
-    <button
-      class="resetButton"
-      id="resetAdjustments"
-      type="button"
-    >
-      Reset
+    <!-- Brightness -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Brightness</span>
+        <span class="controlValue" id="brightnessValue">0</span>
+      </div>
+      <input id="brightness" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <!-- Contrast -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Contrast</span>
+        <span class="controlValue" id="contrastValue">0</span>
+      </div>
+      <input id="contrast" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <!-- Warmth -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Warmth</span>
+        <span class="controlValue" id="warmthValue">0</span>
+      </div>
+      <input id="warmth" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <!-- Saturation -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Saturation</span>
+        <span class="controlValue" id="saturationValue">0</span>
+      </div>
+      <input id="saturation" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <!-- Sharpness -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Sharpness</span>
+        <span class="controlValue" id="sharpnessValue">0</span>
+      </div>
+      <input id="sharpness" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <!-- Color Temp -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Color Temp</span>
+        <span class="controlValue" id="temperatureValue">0</span>
+      </div>
+      <input id="temperature" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <!-- Vibrance -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Vibrance</span>
+        <span class="controlValue" id="vibranceValue">0</span>
+      </div>
+      <input id="vibrance" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <!-- Tint -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Tint</span>
+        <span class="controlValue" id="tintValue">0</span>
+      </div>
+      <input id="tint" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <!-- Shadows -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Shadows</span>
+        <span class="controlValue" id="shadowsValue">0</span>
+      </div>
+      <input id="shadows" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <!-- Clarity -->
+    <div class="control">
+      <div class="controlTop">
+        <span class="controlName">Clarity</span>
+        <span class="controlValue" id="clarityValue">0</span>
+      </div>
+      <input id="clarity" type="range" min="-100" max="100" value="0">
+    </div>
+
+    <button class="resetButton" id="resetAdjustments">
+      Reset Adjustments
     </button>
 
   </div>
 
-
-  <!-- BRIGHTNESS -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Brightness</span>
-
-      <span
-        class="adjustmentValue"
-        id="brightnessValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="brightness"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- CONTRAST -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Contrast</span>
-
-      <span
-        class="adjustmentValue"
-        id="contrastValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="contrast"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- WARMTH -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Warmth</span>
-
-      <span
-        class="adjustmentValue"
-        id="warmthValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="warmth"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- SATURATION -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Saturation</span>
-
-      <span
-        class="adjustmentValue"
-        id="saturationValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="saturation"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- SHARPNESS -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Sharpness</span>
-
-      <span
-        class="adjustmentValue"
-        id="sharpnessValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="sharpness"
-      type="range"
-      min="0"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- COLOR TEMP -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Color Temp</span>
-
-      <span
-        class="adjustmentValue"
-        id="temperatureValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="temperature"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- VIBRANCE -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Vibrance</span>
-
-      <span
-        class="adjustmentValue"
-        id="vibranceValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="vibrance"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- TINT -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Tint</span>
-
-      <span
-        class="adjustmentValue"
-        id="tintValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="tint"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- SHADOWS -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Shadows</span>
-
-      <span
-        class="adjustmentValue"
-        id="shadowsValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="shadows"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-
-  <!-- CLARITY -->
-
-  <div class="adjustmentRow">
-
-    <div class="adjustmentLabel">
-
-      <span>Clarity</span>
-
-      <span
-        class="adjustmentValue"
-        id="clarityValue"
-      >
-        0
-      </span>
-
-    </div>
-
-    <input
-      class="slider"
-      id="clarity"
-      type="range"
-      min="-100"
-      max="100"
-      value="0"
-    >
-
-  </div>
-
-</div>
-
-
-<script>
-
-const adjustmentIds = [
-  "brightness",
-  "contrast",
-  "warmth",
-  "saturation",
-  "sharpness",
-  "temperature",
-  "vibrance",
-  "tint",
-  "shadows",
-  "clarity"
-];
-
-
-const sliders = {};
-const values = {};
-
-
-adjustmentIds.forEach(
-  (id) => {
-
-    sliders[id] =
-      document.getElementById(id);
-
-    values[id] =
-      document.getElementById(
-        id + "Value"
-      );
-
-  }
-);
-
-
-/* SEND SLIDER VALUE */
-
-function sendChange(id) {
-
-  window.parent.postMessage(
-    {
-      type: "adjustment-change",
-      id: id,
-      value: Number(
-        sliders[id].value
-      )
-    },
-    "*"
-  );
-
-}
-
-
-/* SLIDER EVENTS */
-
-adjustmentIds.forEach(
-  (id) => {
-
-    sliders[id].addEventListener(
-      "input",
-      () => {
-
-        values[id].textContent =
-          sliders[id].value;
-
-        sendChange(id);
-
+  <script>
+    const adjustmentIds = [
+      "brightness",
+      "contrast",
+      "warmth",
+      "saturation",
+      "sharpness",
+      "temperature",
+      "vibrance",
+      "tint",
+      "shadows",
+      "clarity"
+    ];
+
+    const values = {};
+
+    function sendMessage(message) {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          message,
+          window.location.origin
+        );
       }
-    );
-
-  }
-);
-
-
-/* RESET */
-
-document
-  .getElementById(
-    "resetAdjustments"
-  )
-  .addEventListener(
-    "click",
-    () => {
-
-      adjustmentIds.forEach(
-        (id) => {
-
-          sliders[id].value =
-            0;
-
-          values[id].textContent =
-            "0";
-
-        }
-      );
-
-
-      window.parent.postMessage(
-        {
-          type: "reset-adjustments"
-        },
-        "*"
-      );
-
-    }
-  );
-
-
-/* RECEIVE VALUES FROM MAIN PAGE */
-
-window.addEventListener(
-  "message",
-  (event) => {
-
-    const data =
-      event.data || {};
-
-
-    if (
-      data.type !==
-      "set-adjustment-state"
-    ) {
-      return;
     }
 
+    adjustmentIds.forEach(id => {
 
-    const incoming =
-      data.values || {};
+      const slider = document.getElementById(id);
+      const valueElement = document.getElementById(id + "Value");
+
+      values[id] = 0;
+
+      slider.addEventListener("input", () => {
+
+        const value = Number(slider.value);
+
+        values[id] = value;
+
+        valueElement.textContent = value;
+
+        sendMessage({
+          type: "adjustmentChange",
+          id: id,
+          value: value
+        });
+
+      });
+
+    });
 
 
-    adjustmentIds.forEach(
-      (id) => {
+    document
+      .getElementById("resetAdjustments")
+      .addEventListener("click", () => {
 
-        if (
-          typeof incoming[id] !==
-          "undefined"
-        ) {
+        adjustmentIds.forEach(id => {
 
-          sliders[id].value =
-            incoming[id];
+          const slider = document.getElementById(id);
+          const valueElement =
+            document.getElementById(id + "Value");
 
-          values[id].textContent =
-            incoming[id];
+          slider.value = 0;
+          valueElement.textContent = "0";
 
-        }
+          values[id] = 0;
 
+        });
+
+        sendMessage({
+          type: "resetAdjustments"
+        });
+
+      });
+
+
+    window.addEventListener("message", event => {
+
+      if (event.source !== window.parent) {
+        return;
       }
-    );
 
-  }
-);
+      const data = event.data || {};
+
+      if (
+        data.type !== "setValues" ||
+        !data.values
+      ) {
+        return;
+      }
+
+      adjustmentIds.forEach(id => {
+
+        const slider = document.getElementById(id);
+        const valueElement =
+          document.getElementById(id + "Value");
+
+        const value =
+          Number(data.values[id] ?? 0);
+
+        slider.value = value;
+        valueElement.textContent = value;
+
+        values[id] = value;
+
+      });
+
+    });
 
 
-/* TELL MAIN PAGE WE ARE READY */
+    // Tell index.html that this file is ready
+    sendMessage({
+      type: "adjustmentReady"
+    });
 
-window.parent.postMessage(
-  {
-    type: "adjustments-ready"
-  },
-  "*"
-);
-
-</script>
+  </script>
 
 </body>
-
 </html>
