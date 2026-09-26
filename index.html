@@ -125,19 +125,21 @@
       margin: 24px 0 12px;
     }
 
+    /* 4 TOOL CARDS */
+
     .tools {
-      display: flex;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 9px;
       width: 100%;
     }
 
     .tool {
-      flex: 1;
       min-width: 0;
       background: white;
       border: 1px solid #e5e7eb;
       border-radius: 17px;
-      padding: 13px 8px;
+      padding: 12px 5px;
       cursor: pointer;
       text-align: center;
       transition: 0.15s;
@@ -153,24 +155,30 @@
     }
 
     .toolIcon {
-      width: 48px;
-      height: 48px;
+      width: 45px;
+      height: 45px;
       object-fit: contain;
       display: block;
       margin: 0 auto 8px;
     }
 
     .tool[data-tool="hair"] .toolIcon {
-      width: 58px;
-      height: 58px;
-      margin-top: -5px;
-      margin-bottom: 3px;
+      width: 53px;
+      height: 53px;
+      margin-top: -4px;
+      margin-bottom: 4px;
+    }
+
+    .tool[data-tool="retouch"] .toolIcon {
+      width: 45px;
+      height: 45px;
     }
 
     .toolName {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       color: #111827;
+      white-space: nowrap;
     }
 
     .status {
@@ -211,31 +219,34 @@
       line-height: 1.5;
     }
 
-    @media (max-width: 420px) {
-      h1 {
-        font-size: 29px;
+    @media (max-width: 380px) {
+
+      .app {
+        padding-left: 12px;
+        padding-right: 12px;
       }
 
       .tools {
-        gap: 7px;
+        gap: 6px;
       }
 
       .tool {
-        padding: 11px 5px;
+        padding: 11px 3px;
+        border-radius: 15px;
       }
 
       .toolIcon {
-        width: 43px;
-        height: 43px;
+        width: 40px;
+        height: 40px;
       }
 
       .tool[data-tool="hair"] .toolIcon {
-        width: 53px;
-        height: 53px;
+        width: 47px;
+        height: 47px;
       }
 
       .toolName {
-        font-size: 12px;
+        font-size: 10.5px;
       }
     }
   </style>
@@ -287,6 +298,8 @@
 
   <div class="tools">
 
+    <!-- ENHANCE -->
+
     <div class="tool" data-tool="enhance">
 
       <img
@@ -300,6 +313,9 @@
       </div>
 
     </div>
+
+
+    <!-- SMOOTH SKIN -->
 
     <div class="tool" data-tool="smooth">
 
@@ -315,6 +331,9 @@
 
     </div>
 
+
+    <!-- HAIR -->
+
     <div class="tool" data-tool="hair">
 
       <img
@@ -325,6 +344,23 @@
 
       <div class="toolName">
         Hair
+      </div>
+
+    </div>
+
+
+    <!-- RETOUCH -->
+
+    <div class="tool" data-tool="retouch">
+
+      <img
+        class="toolIcon"
+        src="smooth-icon.png"
+        alt="Retouch"
+      >
+
+      <div class="toolName">
+        Retouch
       </div>
 
     </div>
@@ -356,12 +392,24 @@ import {
    BASIC ELEMENTS
 ========================================================= */
 
-const fileInput = document.getElementById("fileInput");
-const addPhoto = document.getElementById("addPhoto");
-const preview = document.getElementById("preview");
-const placeholder = document.getElementById("placeholder");
-const statusBox = document.getElementById("status");
-const downloadButton = document.getElementById("downloadButton");
+const fileInput =
+  document.getElementById("fileInput");
+
+const addPhoto =
+  document.getElementById("addPhoto");
+
+const preview =
+  document.getElementById("preview");
+
+const placeholder =
+  document.getElementById("placeholder");
+
+const statusBox =
+  document.getElementById("status");
+
+const downloadButton =
+  document.getElementById("downloadButton");
+
 
 let selectedFile = null;
 let editedBlob = null;
@@ -371,33 +419,53 @@ let editedBlob = null;
    ADD PHOTO
 ========================================================= */
 
-addPhoto.addEventListener("click", () => {
-  fileInput.click();
-});
+addPhoto.addEventListener(
+  "click",
+  () => {
 
+    fileInput.click();
 
-fileInput.addEventListener("change", () => {
-
-  const file = fileInput.files[0];
-
-  if (!file) {
-    return;
   }
+);
 
-  selectedFile = file;
-  editedBlob = null;
 
-  const url = URL.createObjectURL(file);
+fileInput.addEventListener(
+  "change",
+  () => {
 
-  preview.src = url;
-  preview.style.display = "block";
-  placeholder.style.display = "none";
+    const file =
+      fileInput.files[0];
 
-  downloadButton.style.display = "none";
+    if (!file) {
+      return;
+    }
 
-  statusBox.style.display = "none";
+    selectedFile =
+      file;
 
-});
+    editedBlob =
+      null;
+
+    const url =
+      URL.createObjectURL(file);
+
+    preview.src =
+      url;
+
+    preview.style.display =
+      "block";
+
+    placeholder.style.display =
+      "none";
+
+    downloadButton.style.display =
+      "none";
+
+    statusBox.style.display =
+      "none";
+
+  }
+);
 
 
 /* =========================================================
@@ -406,14 +474,18 @@ fileInput.addEventListener("change", () => {
 
 function showStatus(text) {
 
-  statusBox.textContent = text;
-  statusBox.style.display = "block";
+  statusBox.textContent =
+    text;
+
+  statusBox.style.display =
+    "block";
 
 }
 
 
 /* =========================================================
    HOCKMAN REAL-ESRGAN 2X
+   DO NOT CHANGE
 ========================================================= */
 
 const HOCKMAN_SPACE =
@@ -423,7 +495,9 @@ const HOCKMAN_SPACE =
 async function runHockmanX2(file) {
 
   const app =
-    await Client.connect(HOCKMAN_SPACE);
+    await Client.connect(
+      HOCKMAN_SPACE
+    );
 
   const image =
     handle_file(file);
@@ -436,31 +510,56 @@ async function runHockmanX2(file) {
       }
     );
 
-  let finalData = null;
+  let finalData =
+    null;
 
-  for await (const message of job) {
+  for await (
+    const message of job
+  ) {
 
-    if (message.type === "status") {
+    if (
+      message.type === "status"
+    ) {
 
       if (message.status) {
 
-        if (message.status === "pending") {
-          showStatus("Enhance AI is waiting...");
+        if (
+          message.status === "pending"
+        ) {
+
+          showStatus(
+            "Enhance AI is waiting..."
+          );
+
         }
 
-        else if (message.status === "generating") {
-          showStatus("AI is enhancing your photo...");
+        else if (
+          message.status === "generating"
+        ) {
+
+          showStatus(
+            "AI is enhancing your photo..."
+          );
+
         }
 
-        else if (message.status === "processing") {
-          showStatus("Enhancing photo...");
+        else if (
+          message.status === "processing"
+        ) {
+
+          showStatus(
+            "Enhancing photo..."
+          );
+
         }
 
       }
 
     }
 
-    if (message.type === "data") {
+    if (
+      message.type === "data"
+    ) {
 
       finalData =
         message.data;
@@ -469,7 +568,10 @@ async function runHockmanX2(file) {
 
   }
 
-  if (!finalData || !finalData[0]) {
+  if (
+    !finalData ||
+    !finalData[0]
+  ) {
 
     throw new Error(
       "No image returned from AI"
@@ -483,11 +585,16 @@ async function runHockmanX2(file) {
   let outputURL =
     output.url;
 
-  if (!outputURL && output.path) {
+  if (
+    !outputURL &&
+    output.path
+  ) {
 
     outputURL =
       "https://hockman-real-esrgan-upscaler.hf.space/file=" +
-      encodeURIComponent(output.path);
+      encodeURIComponent(
+        output.path
+      );
 
   }
 
@@ -500,7 +607,9 @@ async function runHockmanX2(file) {
   }
 
   const response =
-    await fetch(outputURL);
+    await fetch(
+      outputURL
+    );
 
   if (!response.ok) {
 
@@ -527,14 +636,20 @@ function loadImage(file) {
       const img =
         new Image();
 
-      img.onload = () => {
-        resolve(img);
-      };
+      img.onload =
+        () => {
 
-      img.onerror = reject;
+          resolve(img);
+
+        };
+
+      img.onerror =
+        reject;
 
       img.src =
-        URL.createObjectURL(file);
+        URL.createObjectURL(
+          file
+        );
 
     }
   );
@@ -543,7 +658,7 @@ function loadImage(file) {
 
 
 /* =========================================================
-   BETTER LOCAL SKIN SMOOTHING
+   CURRENT SMOOTH SKIN
 ========================================================= */
 
 async function smoothSkin(file) {
@@ -558,20 +673,24 @@ async function smoothSkin(file) {
     img.naturalHeight;
 
 
-  /*
-   * Main canvas
-   */
-
   const canvas =
-    document.createElement("canvas");
+    document.createElement(
+      "canvas"
+    );
 
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width =
+    w;
+
+  canvas.height =
+    h;
 
   const ctx =
-    canvas.getContext("2d", {
-      willReadFrequently: true
-    });
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
 
   ctx.drawImage(
     img,
@@ -582,10 +701,6 @@ async function smoothSkin(file) {
   );
 
 
-  /*
-   * Original pixels
-   */
-
   const original =
     ctx.getImageData(
       0,
@@ -595,14 +710,8 @@ async function smoothSkin(file) {
     );
 
 
-  /*
-   * Work canvas.
-   *
-   * We use a smaller working image for
-   * faster mobile processing.
-   */
-
-  const maxWorkWidth = 900;
+  const maxWorkWidth =
+    900;
 
   const scale =
     Math.min(
@@ -613,26 +722,38 @@ async function smoothSkin(file) {
   const sw =
     Math.max(
       1,
-      Math.round(w * scale)
+      Math.round(
+        w * scale
+      )
     );
 
   const sh =
     Math.max(
       1,
-      Math.round(h * scale)
+      Math.round(
+        h * scale
+      )
     );
 
 
   const work =
-    document.createElement("canvas");
+    document.createElement(
+      "canvas"
+    );
 
-  work.width = sw;
-  work.height = sh;
+  work.width =
+    sw;
+
+  work.height =
+    sh;
 
   const workCtx =
-    work.getContext("2d", {
-      willReadFrequently: true
-    });
+    work.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
 
   workCtx.drawImage(
     img,
@@ -643,23 +764,21 @@ async function smoothSkin(file) {
   );
 
 
-  /*
-   * Create several smoothing passes.
-   */
-
   const smoothCanvas =
-    document.createElement("canvas");
+    document.createElement(
+      "canvas"
+    );
 
-  smoothCanvas.width = sw;
-  smoothCanvas.height = sh;
+  smoothCanvas.width =
+    sw;
+
+  smoothCanvas.height =
+    sh;
 
   const smoothCtx =
-    smoothCanvas.getContext("2d");
-
-
-  /*
-   * First smoothing pass.
-   */
+    smoothCanvas.getContext(
+      "2d"
+    );
 
   smoothCtx.filter =
     "blur(3.2px)";
@@ -671,21 +790,21 @@ async function smoothSkin(file) {
   );
 
 
-  /*
-   * Second very light pass.
-   *
-   * This makes pores/skin texture
-   * softer without creating a plastic face.
-   */
-
   const pass2 =
-    document.createElement("canvas");
+    document.createElement(
+      "canvas"
+    );
 
-  pass2.width = sw;
-  pass2.height = sh;
+  pass2.width =
+    sw;
+
+  pass2.height =
+    sh;
 
   const pass2Ctx =
-    pass2.getContext("2d");
+    pass2.getContext(
+      "2d"
+    );
 
   pass2Ctx.filter =
     "blur(1.8px)";
@@ -697,19 +816,24 @@ async function smoothSkin(file) {
   );
 
 
-  /*
-   * Put the smoothed result back onto
-   * the original-size canvas.
-   */
-
   const blurred =
-    document.createElement("canvas");
+    document.createElement(
+      "canvas"
+    );
 
-  blurred.width = w;
-  blurred.height = h;
+  blurred.width =
+    w;
+
+  blurred.height =
+    h;
 
   const blurredCtx =
-    blurred.getContext("2d");
+    blurred.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
 
   blurredCtx.drawImage(
     pass2,
@@ -720,21 +844,22 @@ async function smoothSkin(file) {
   );
 
 
-  /*
-   * Face/skin mask.
-   *
-   * This is intentionally limited to the
-   * central face area.
-   */
-
   const mask =
-    document.createElement("canvas");
+    document.createElement(
+      "canvas"
+    );
 
-  mask.width = w;
-  mask.height = h;
+  mask.width =
+    w;
+
+  mask.height =
+    h;
 
   const maskCtx =
-    mask.getContext("2d");
+    mask.getContext(
+      "2d"
+    );
+
 
   const faceX =
     w * 0.50;
@@ -749,10 +874,6 @@ async function smoothSkin(file) {
     h * 0.52;
 
 
-  /*
-   * Soft elliptical face mask.
-   */
-
   const gradient =
     maskCtx.createRadialGradient(
       faceX,
@@ -762,6 +883,7 @@ async function smoothSkin(file) {
       faceY,
       faceW
     );
+
 
   gradient.addColorStop(
     0,
@@ -802,12 +924,9 @@ async function smoothSkin(file) {
   maskCtx.fill();
 
 
-  /*
-   * Preserve eyes.
-   */
-
   maskCtx.globalCompositeOperation =
     "destination-out";
+
 
   function cutEllipse(
     x,
@@ -858,10 +977,6 @@ async function smoothSkin(file) {
   );
 
 
-  /*
-   * Preserve eyebrows.
-   */
-
   cutEllipse(
     w * 0.405,
     h * 0.355,
@@ -877,10 +992,6 @@ async function smoothSkin(file) {
   );
 
 
-  /*
-   * Preserve mouth.
-   */
-
   cutEllipse(
     w * 0.50,
     h * 0.625,
@@ -888,10 +999,6 @@ async function smoothSkin(file) {
     h * 0.035
   );
 
-
-  /*
-   * Preserve nose center/edges.
-   */
 
   cutEllipse(
     w * 0.50,
@@ -901,18 +1008,9 @@ async function smoothSkin(file) {
   );
 
 
-  /*
-   * Restore normal drawing.
-   */
-
   maskCtx.globalCompositeOperation =
     "source-over";
 
-
-  /*
-   * Draw the blurred skin over the
-   * original image.
-   */
 
   const maskData =
     maskCtx.getImageData(
@@ -947,13 +1045,6 @@ async function smoothSkin(file) {
     result.data;
 
 
-  /*
-   * Strong but controlled skin smoothing.
-   *
-   * The mask controls where smoothing happens.
-   * High-contrast facial details are protected.
-   */
-
   for (
     let i = 0;
     i < src.length;
@@ -963,7 +1054,10 @@ async function smoothSkin(file) {
     const maskValue =
       maskData[i + 3] / 255;
 
-    if (maskValue <= 0) {
+
+    if (
+      maskValue <= 0
+    ) {
 
       dst[i] =
         src[i];
@@ -1002,14 +1096,6 @@ async function smoothSkin(file) {
       blur[i + 2];
 
 
-    /*
-     * Detect strong local edges.
-     *
-     * When the original and blurred pixels
-     * differ greatly, it is probably a
-     * facial feature rather than skin texture.
-     */
-
     const difference =
       Math.abs(r - br) +
       Math.abs(g - bg) +
@@ -1020,25 +1106,30 @@ async function smoothSkin(file) {
       0.78 * maskValue;
 
 
-    /*
-     * Protect strong details.
-     */
+    if (
+      difference > 70
+    ) {
 
-    if (difference > 70) {
-
-      strength *= 0.18;
-
-    }
-
-    else if (difference > 45) {
-
-      strength *= 0.38;
+      strength *=
+        0.18;
 
     }
 
-    else if (difference > 28) {
+    else if (
+      difference > 45
+    ) {
 
-      strength *= 0.62;
+      strength *=
+        0.38;
+
+    }
+
+    else if (
+      difference > 28
+    ) {
+
+      strength *=
+        0.62;
 
     }
 
@@ -1074,10 +1165,6 @@ async function smoothSkin(file) {
   );
 
 
-  /*
-   * JPEG output.
-   */
-
   return await new Promise(
     (resolve) => {
 
@@ -1107,7 +1194,9 @@ function showResult(blob) {
     blob;
 
   const url =
-    URL.createObjectURL(blob);
+    URL.createObjectURL(
+      blob
+    );
 
   preview.src =
     url;
@@ -1142,7 +1231,9 @@ downloadButton.addEventListener(
       );
 
     const a =
-      document.createElement("a");
+      document.createElement(
+        "a"
+      );
 
     a.href =
       url;
@@ -1150,7 +1241,9 @@ downloadButton.addEventListener(
     a.download =
       "AI-Edited-Photo.jpg";
 
-    document.body.appendChild(a);
+    document.body.appendChild(
+      a
+    );
 
     a.click();
 
@@ -1158,7 +1251,11 @@ downloadButton.addEventListener(
 
     setTimeout(
       () => {
-        URL.revokeObjectURL(url);
+
+        URL.revokeObjectURL(
+          url
+        );
+
       },
       1000
     );
@@ -1199,11 +1296,14 @@ document
             .querySelectorAll(".tool")
             .forEach(
               (item) => {
+
                 item.classList.remove(
                   "active"
                 );
+
               }
             );
+
 
           tool.classList.add(
             "active"
@@ -1220,20 +1320,25 @@ document
                ENHANCE
             ========================= */
 
-            if (type === "enhance") {
+            if (
+              type === "enhance"
+            ) {
 
               showStatus(
                 "Connecting to Enhance AI..."
               );
+
 
               const blob =
                 await runHockmanX2(
                   selectedFile
                 );
 
+
               showResult(
                 blob
               );
+
 
               showStatus(
                 "AI Enhance complete! ✨"
@@ -1246,16 +1351,14 @@ document
                SMOOTH SKIN
             ========================= */
 
-            else if (type === "smooth") {
+            else if (
+              type === "smooth"
+            ) {
 
               showStatus(
                 "Smoothing skin texture..."
               );
 
-              /*
-               * Small delay lets the status
-               * message render before CPU work.
-               */
 
               await new Promise(
                 (resolve) =>
@@ -1271,9 +1374,11 @@ document
                   selectedFile
                 );
 
+
               showResult(
                 blob
               );
+
 
               showStatus(
                 "Smooth Skin complete! ✨"
@@ -1286,11 +1391,33 @@ document
                HAIR
             ========================= */
 
-            else if (type === "hair") {
+            else if (
+              type === "hair"
+            ) {
 
               showStatus(
                 "Hair AI is coming next."
               );
+
+
+              downloadButton.style.display =
+                "none";
+
+            }
+
+
+            /* =========================
+               RETOUCH
+            ========================= */
+
+            else if (
+              type === "retouch"
+            ) {
+
+              showStatus(
+                "Retouch AI is coming next."
+              );
+
 
               downloadButton.style.display =
                 "none";
@@ -1304,6 +1431,7 @@ document
             console.error(
               error
             );
+
 
             showStatus(
               "Something went wrong. Please try again."
