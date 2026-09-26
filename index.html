@@ -386,7 +386,7 @@
   </div>
 
 
-  <!-- Gradio JavaScript Client -->
+  <!-- Gradio Client -->
   <script type="module">
 
     import {
@@ -480,6 +480,8 @@
 
         downloadBtn.style.display =
           "none";
+
+        resultURL = null;
 
         status.textContent =
           "Photo ready";
@@ -738,6 +740,446 @@
 
 
     /*
+      SMOOTH SKIN
+      LOCAL BROWSER PROCESSING
+    */
+
+    async function smoothSkin(
+      file
+    ) {
+
+      status.textContent =
+        "Loading photo...";
+
+
+      const image =
+        new Image();
+
+
+      const imageURL =
+        URL.createObjectURL(file);
+
+
+      image.src =
+        imageURL;
+
+
+      await new Promise(
+        function (resolve, reject) {
+
+          image.onload =
+            resolve;
+
+          image.onerror =
+            reject;
+
+        }
+      );
+
+
+      /*
+        We use a canvas at the original
+        image resolution.
+      */
+
+      const canvas =
+        document.createElement(
+          "canvas"
+        );
+
+      const ctx =
+        canvas.getContext(
+          "2d",
+          {
+            willReadFrequently: true
+          }
+        );
+
+
+      canvas.width =
+        image.naturalWidth;
+
+      canvas.height =
+        image.naturalHeight;
+
+
+      /*
+        Draw original image.
+      */
+
+      ctx.drawImage(
+        image,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      /*
+        Moderate skin smoothing.
+        We intentionally keep this
+        relatively low to protect
+        facial identity and details.
+      */
+
+      status.textContent =
+        "Smoothing skin...";
+
+
+      const tempCanvas =
+        document.createElement(
+          "canvas"
+        );
+
+      tempCanvas.width =
+        canvas.width;
+
+      tempCanvas.height =
+        canvas.height;
+
+
+      const tempCtx =
+        tempCanvas.getContext(
+          "2d"
+        );
+
+
+      /*
+        Slight blur.
+        This is NOT face regeneration.
+      */
+
+      tempCtx.filter =
+        "blur(2.2px)";
+
+      tempCtx.drawImage(
+        canvas,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      /*
+        Face area approximation.
+
+        Instead of changing the complete
+        image, we use several soft
+        elliptical regions around the
+        central face.
+
+        This keeps hair/background
+        mostly untouched.
+      */
+
+      const w =
+        canvas.width;
+
+      const h =
+        canvas.height;
+
+
+      /*
+        Estimate a portrait face area
+        from the visible image.
+
+        These values intentionally cover
+        a moderate central region.
+      */
+
+      const faceX =
+        w * 0.50;
+
+      const faceY =
+        h * 0.47;
+
+      const faceW =
+        w * 0.40;
+
+      const faceH =
+        h * 0.48;
+
+
+      /*
+        Soft mask.
+      */
+
+      const maskCanvas =
+        document.createElement(
+          "canvas"
+        );
+
+      maskCanvas.width =
+        w;
+
+      maskCanvas.height =
+        h;
+
+
+      const maskCtx =
+        maskCanvas.getContext(
+          "2d"
+        );
+
+
+      const gradient =
+        maskCtx.createRadialGradient(
+          faceX,
+          faceY,
+          faceW * 0.15,
+          faceX,
+          faceY,
+          faceW * 0.72
+        );
+
+
+      gradient.addColorStop(
+        0,
+        "rgba(255,255,255,0.72)"
+      );
+
+      gradient.addColorStop(
+        0.55,
+        "rgba(255,255,255,0.52)"
+      );
+
+      gradient.addColorStop(
+        1,
+        "rgba(255,255,255,0)"
+      );
+
+
+      maskCtx.fillStyle =
+        gradient;
+
+
+      maskCtx.beginPath();
+
+      maskCtx.ellipse(
+        faceX,
+        faceY,
+        faceW / 2,
+        faceH / 2,
+        0,
+        0,
+        Math.PI * 2
+      );
+
+      maskCtx.fill();
+
+
+      /*
+        Remove eye areas.
+      */
+
+      maskCtx.globalCompositeOperation =
+        "destination-out";
+
+
+      function cutEllipse(
+        x,
+        y,
+        rx,
+        ry
+      ) {
+
+        maskCtx.beginPath();
+
+        maskCtx.ellipse(
+          x,
+          y,
+          rx,
+          ry,
+          0,
+          0,
+          Math.PI * 2
+        );
+
+        maskCtx.fill();
+
+      }
+
+
+      cutEllipse(
+        w * 0.42,
+        h * 0.40,
+        w * 0.075,
+        h * 0.035
+      );
+
+
+      cutEllipse(
+        w * 0.58,
+        h * 0.40,
+        w * 0.075,
+        h * 0.035
+      );
+
+
+      /*
+        Remove mouth area.
+      */
+
+      cutEllipse(
+        w * 0.50,
+        h * 0.59,
+        w * 0.10,
+        h * 0.045
+      );
+
+
+      /*
+        Remove nose center slightly.
+        This protects facial structure.
+      */
+
+      cutEllipse(
+        w * 0.50,
+        h * 0.49,
+        w * 0.045,
+        h * 0.075
+      );
+
+
+      /*
+        Apply blurred image with mask.
+      */
+
+      ctx.save();
+
+      ctx.globalCompositeOperation =
+        "source-over";
+
+
+      const oldImage =
+        document.createElement(
+          "canvas"
+        );
+
+      oldImage.width =
+        w;
+
+      oldImage.height =
+        h;
+
+
+      oldImage
+        .getContext("2d")
+        .drawImage(
+          canvas,
+          0,
+          0
+        );
+
+
+      /*
+        Put blurred image into
+        a separate layer.
+      */
+
+      const smoothLayer =
+        document.createElement(
+          "canvas"
+        );
+
+      smoothLayer.width =
+        w;
+
+      smoothLayer.height =
+        h;
+
+
+      const smoothCtx =
+        smoothLayer.getContext(
+          "2d"
+        );
+
+
+      smoothCtx.drawImage(
+        tempCanvas,
+        0,
+        0
+      );
+
+
+      /*
+        Apply mask to smooth layer.
+      */
+
+      smoothCtx.globalCompositeOperation =
+        "destination-in";
+
+
+      smoothCtx.drawImage(
+        maskCanvas,
+        0,
+        0
+      );
+
+
+      /*
+        Blend smooth layer over
+        original image.
+      */
+
+      ctx.globalAlpha =
+        0.48;
+
+
+      ctx.drawImage(
+        smoothLayer,
+        0,
+        0
+      );
+
+
+      ctx.restore();
+
+
+      /*
+        Convert result to JPEG.
+      */
+
+      status.textContent =
+        "Preparing result...";
+
+
+      const blob =
+        await new Promise(
+          function (resolve) {
+
+            canvas.toBlob(
+              resolve,
+              "image/jpeg",
+              0.94
+            );
+
+          }
+        );
+
+
+      URL.revokeObjectURL(
+        imageURL
+      );
+
+
+      if (!blob) {
+
+        throw new Error(
+          "Smooth Skin result could not be created."
+        );
+
+      }
+
+
+      return blob;
+
+    }
+
+
+    /*
       AI EDIT
     */
 
@@ -767,7 +1209,6 @@
 
           /*
             ENHANCE
-            DIRECT HOCKMAN X2
           */
 
           if (
@@ -809,7 +1250,6 @@
 
           /*
             SMOOTH SKIN
-            TEMPORARY
           */
 
           else if (
@@ -817,15 +1257,40 @@
             "smooth"
           ) {
 
+            const resultBlob =
+              await smoothSkin(
+                selectedFile
+              );
+
+
+            resultURL =
+              URL.createObjectURL(
+                resultBlob
+              );
+
+
+            preview.src =
+              resultURL;
+
+            preview.style.display =
+              "block";
+
+            emptyPhoto.style.display =
+              "none";
+
+
             status.textContent =
-              "Smooth Skin AI is coming next.";
+              "Smooth Skin complete!";
+
+
+            downloadBtn.style.display =
+              "block";
 
           }
 
 
           /*
             HAIR
-            TEMPORARY
           */
 
           else if (
@@ -896,7 +1361,7 @@
 
 
         link.download =
-          "AI-Edited-Photo.png";
+          "AI-Edited-Photo.jpg";
 
 
         document.body.appendChild(
