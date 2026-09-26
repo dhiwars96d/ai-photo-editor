@@ -592,7 +592,7 @@ function sendAdjustmentState(){
 
   adjustmentsFrame.contentWindow.postMessage(
     {
-      type:"set-adjustment-state",
+      type:"setValues",
       values:{
         ...adjustmentValues
       }
@@ -625,8 +625,7 @@ window.addEventListener(
     /* IFRAME READY */
 
     if(
-      data.type ===
-      "adjustments-ready"
+      data.type === "adjustmentReady"
     ){
 
       sendAdjustmentState();
@@ -639,8 +638,7 @@ window.addEventListener(
     /* SLIDER CHANGE */
 
     if(
-      data.type ===
-      "adjustment-change"
+      data.type === "adjustmentChange"
     ){
 
       if(
@@ -701,8 +699,7 @@ window.addEventListener(
     /* RESET */
 
     if(
-      data.type ===
-      "reset-adjustments"
+      data.type === "resetAdjustments"
     ){
 
       resetAdjustmentValues();
