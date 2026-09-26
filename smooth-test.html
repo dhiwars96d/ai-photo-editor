@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Smooth Skin AI Test</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  padding:20px;
+  background:#f6f8fb;
+  font-family:Arial,Helvetica,sans-serif;
+  color:#111827;
+}
+
+.container{
+  max-width:600px;
+  margin:auto;
+}
+
+h1{
+  font-size:26px;
+  margin:0 0 8px;
+}
+
+.note{
+  color:#6b7280;
+  font-size:14px;
+  line-height:1.5;
+  margin-bottom:20px;
+}
+
+.card{
+  background:#fff;
+  border-radius:20px;
+  padding:16px;
+  box-shadow:0 8px 30px rgba(0,0,0,.06);
+}
+
+input[type="file"]{
+  width:100%;
+  margin-bottom:12px;
+}
+
+button{
+  width:100%;
+  border:0;
+  background:#111827;
+  color:#fff;
+  padding:14px;
+  border-radius:13px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+button:disabled{
+  opacity:.5;
+}
+
+.status{
+  display:none;
+  margin-top:14px;
+  padding:12px;
+  border-radius:12px;
+  background:#eef2ff;
+  color:#4338ca;
+  text-align:center;
+  font-size:13px;
+  font-weight:600;
+}
+
+.preview{
+  display:none;
+  width:100%;
+  margin-top:18px;
+  border-radius:16px;
+}
+
+.download{
+  display:none;
+  margin-top:12px;
+  background:#16a34a;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>Smooth Skin AI Test</h1>
+
+  <div class="note">
+    This page is only for testing the Smooth Skin AI API.
+  </div>
+
+  <div class="card">
+
+    <input
+      type="file"
+      id="imageInput"
+      accept="image/*"
+    >
+
+    <button
+      id="testButton"
+      type="button"
+    >
+      Test Smooth Skin AI
+    </button>
+
+    <div
+      class="status"
+      id="status"
+    ></div>
+
+    <img
+      id="result"
+      class="preview"
+      alt="AI Result"
+    >
+
+    <button
+      id="downloadButton"
+      class="download"
+      type="button"
+    >
+      Download Result
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+
+const imageInput =
+  document.getElementById("imageInput");
+
+const testButton =
+  document.getElementById("testButton");
+
+const statusBox =
+  document.getElementById("status");
+
+const result =
+  document.getElementById("result");
+
+const downloadButton =
+  document.getElementById("downloadButton");
+
+
+let resultBlob = null;
+
+
+function showStatus(text){
+
+  statusBox.textContent = text;
+
+  statusBox.style.display = "block";
+
+}
+
+
+testButton.addEventListener(
+  "click",
+  async () => {
+
+    const file =
+      imageInput.files &&
+      imageInput.files[0];
+
+    if(!file){
+
+      showStatus(
+        "Please select a photo first."
+      );
+
+      return;
+
+    }
+
+
+    if(!file.type.startsWith("image/")){
+
+      showStatus(
+        "Please select an image."
+      );
+
+      return;
+
+    }
+
+
+    try{
+
+      testButton.disabled = true;
+
+      result.style.display = "none";
+
+      downloadButton.style.display = "none";
+
+      showStatus(
+        "Uploading photo to Smooth Skin AI..."
+      );
+
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "image",
+        file
+      );
+
+
+      showStatus(
+        "Smooth Skin AI is processing..."
+      );
+
+
+      const response =
+        await fetch(
+          "/api/smooth",
+          {
+            method:"POST",
+            body:formData
+          }
+        );
+
+
+      if(!response.ok){
+
+        let errorText =
+          "Smooth AI failed.";
+
+        try{
+
+          const errorData =
+            await response.json();
+
+          if(errorData.error){
+
+            errorText =
+              errorData.error;
+
+          }
+
+        }
+
+        catch(e){
+
+          const text =
+            await response.text();
+
+          if(text){
+
+            errorText =
+              text;
+          }
+
+        }
+
+
+        throw new Error(
+          errorText
+        );
+
+      }
+
+
+      resultBlob =
+        await response.blob();
+
+
+      const resultURL =
+        URL.createObjectURL(
+          resultBlob
+        );
+
+
+      result.src =
+        resultURL;
+
+      result.style.display =
+        "block";
+
+      downloadButton.style.display =
+        "block";
+
+
+      showStatus(
+        "Smooth Skin AI complete ✓"
+      );
+
+    }
+
+    catch(error){
+
+      console.error(
+        "SMOOTH TEST ERROR:",
+        error
+      );
+
+
+      showStatus(
+        "Error: " +
+        error.message
+      );
+
+    }
+
+    finally{
+
+      testButton.disabled = false;
+
+    }
+
+  }
+);
+
+
+downloadButton.addEventListener(
+  "click",
+  () => {
+
+    if(!resultBlob){
+
+      return;
+
+    }
+
+
+    const url =
+      URL.createObjectURL(
+        resultBlob
+      );
+
+
+    const a =
+      document.createElement(
+        "a"
+      );
+
+    a.href = url;
+
+    a.download =
+      "smooth-skin-ai-result.png";
+
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+
+    setTimeout(
+      () => {
+
+        URL.revokeObjectURL(url);
+
+      },
+      1000
+    );
+
+  }
+);
+
+</script>
+
+</body>
+</html>￼EnterYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Smooth Skin AI Test</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  padding:20px;
+  background:#f6f8fb;
+  font-family:Arial,Helvetica,sans-serif;
+  color:#111827;
+}
+
+.container{
+  max-width:600px;
+  margin:auto;
+}
+
+h1{
+  font-size:26px;
+  margin:0 0 8px;
+}
+
+.note{
+  color:#6b7280;
+  font-size:14px;
+  line-height:1.5;
+  margin-bottom:20px;
+}
+
+.card{
+  background:#fff;
+  border-radius:20px;
+  padding:16px;
+  box-shadow:0 8px 30px rgba(0,0,0,.06);
+}
+
+input[type="file"]{
+  width:100%;
+  margin-bottom:12px;
+}
+
+button{
+  width:100%;
+  border:0;
+  background:#111827;
+  color:#fff;
+  padding:14px;
+  border-radius:13px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+button:disabled{
+  opacity:.5;
+}
+
+.status{
+  display:none;
+  margin-top:14px;
+  padding:12px;
+  border-radius:12px;
+  background:#eef2ff;
+  color:#4338ca;
+  text-align:center;
+  font-size:13px;
+  font-weight:600;
+}
+
+.preview{
+  display:none;
+  width:100%;
+  margin-top:18px;
+  border-radius:16px;
+}
+
+.download{
+  display:none;
+  margin-top:12px;
+  background:#16a34a;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>Smooth Skin AI Test</h1>
+
+  <div class="note">
+    This page is only for testing the Smooth Skin AI API.
+  </div>
+
+  <div class="card">
+
+    <input
+      type="file"
+      id="imageInput"
+      accept="image/*"
+    >
+
+    <button
+      id="testButton"
+      type="button"
+    >
+      Test Smooth Skin AI
+    </button>
+
+    <div
+      class="status"
+      id="status"
+    ></div>
+
+    <img
+      id="result"
+      class="preview"
+      alt="AI Result"
+    >
+
+    <button
+      id="downloadButton"
+      class="download"
+      type="button"
+    >
+      Download Result
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+
+const imageInput =
+  document.getElementById("imageInput");
+
+const testButton =
+  document.getElementById("testButton");
+
+const statusBox =
+  document.getElementById("status");
+
+const result =
+  document.getElementById("result");
+
+const downloadButton =
+  document.getElementById("downloadButton");
+
+
+let resultBlob = null;
+
+
+function showStatus(text){
+
+  statusBox.textContent = text;
+
+  statusBox.style.display = "block";
+
+}
+
+
+testButton.addEventListener(
+  "click",
+  async () => {
+
+    const file =
+      imageInput.files &&
+      imageInput.files[0];
+
+    if(!file){
+
+      showStatus(
+        "Please select a photo first."
+      );
+
+      return;
+
+    }
+
