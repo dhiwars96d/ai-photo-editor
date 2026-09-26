@@ -1,1 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>Photo Adjustments</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px 14px 30px;
+      background: #f5f7fb;
+      font-family: Arial, sans-serif;
+      color: #111827;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .topBar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .backBtn {
+      border: 1px solid #e5e7eb;
+      background: white;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #111827;
+      cursor: pointer;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 18px 16px;
+      box-shadow: 0 6px 22px rgba(0,0,0,0.04);
+    }
+
+    .panelHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .panelTitle {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .resetBtn {
+      border: 0;
+      background: #f1f3f8;
+      color: #4f46e5;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .adjustment {
+      margin-bottom: 20px;
+    }
+
+    .adjustment:last-child {
+      margin-bottom: 0;
+    }
+
+    .adjustmentTop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+
+    .adjustmentName {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .value {
+      min-width: 42px;
+      text-align: right;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 5px;
+      accent-color: #6366f1;
+      cursor: pointer;
+    }
+
+    .note {
+      margin-top: 16px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #6b7280;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="topBar">
+      <div class="title">Photo Adjustments</div>
+
+      <button class="backBtn" onclick="goBack()">
+        ← Back
+      </button>
+    </div>
+
+    <div class="panel">
+
+      <div class="panelHeader">
+        <div class="panelTitle">Adjustments</div>
+
+        <button class="resetBtn" id="resetBtn">
+          Reset
+        </button>
+      </div>
+
+
+      <!-- Brightness -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Brightness</span>
+          <span class="value" id="brightnessValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="brightness"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+
+      <!-- Contrast -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Contrast</span>
+          <span class="value" id="contrastValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="contrast"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+
+      <!-- Warmth -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Warmth</span>
+          <span class="value" id="warmthValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="warmth"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+
+      <!-- Saturation -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Saturation</span>
+          <span class="value" id="saturationValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="saturation"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+
+      <!-- Sharpness -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Sharpness</span>
+          <span class="value" id="sharpnessValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="sharpness"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+
+      <!-- Color Temp -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Color Temp</span>
+          <span class="value" id="colorTempValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="colorTemp"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+
+      <!-- Vibrance -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Vibrance</span>
+          <span class="value" id="vibranceValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="vibrance"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+
+      <!-- Tint -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Tint</span>
+          <span class="value" id="tintValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="tint"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+
+      <!-- Shadows -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Shadows</span>
+          <span class="value" id="shadowsValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="shadows"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+
+      <!-- Clarity -->
+      <div class="adjustment">
+        <div class="adjustmentTop">
+          <span class="adjustmentName">Clarity</span>
+          <span class="value" id="clarityValue">0</span>
+        </div>
+
+        <input
+          type="range"
+          id="clarity"
+          min="-100"
+          max="100"
+          value="0"
+        >
+      </div>
+
+    </div>
+
+    <div class="note">
+      Adjustments will be connected to the main photo editor next.
+    </div>
+
+  </div>
+
+
+  <script>
+
+    const controls = [
+      "brightness",
+      "contrast",
+      "warmth",
+      "saturation",
+      "sharpness",
+      "colorTemp",
+      "vibrance",
+      "tint",
+      "shadows",
+      "clarity"
+    ];
+
+
+    controls.forEach(function(id) {
+
+      const slider = document.getElementById(id);
+      const value = document.getElementById(id + "Value");
+
+      slider.addEventListener("input", function() {
+        value.textContent = slider.value;
+      });
+
+    });
+
+
+    document.getElementById("resetBtn").addEventListener("click", function() {
+
+      controls.forEach(function(id) {
+
+        const slider = document.getElementById(id);
+        const value = document.getElementById(id + "Value");
+
+        slider.value = 0;
+        value.textContent = "0";
+
+      });
+
+    });
+
+
+    function goBack() {
+      window.history.back();
+    }
+
+  </script>
+
+</body>
+</html>
