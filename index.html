@@ -31,8 +31,6 @@
       padding: 18px 16px 40px;
     }
 
-    /* HEADER */
-
     .header {
       width: 100%;
       display: flex;
@@ -57,8 +55,6 @@
       white-space: nowrap;
     }
 
-    /* TITLE */
-
     .title {
       margin: 0;
       font-size: 30px;
@@ -72,8 +68,6 @@
       font-size: 14px;
       line-height: 1.5;
     }
-
-    /* PHOTO AREA */
 
     .photo-card {
       width: 100%;
@@ -116,8 +110,6 @@
       margin-bottom: 5px;
     }
 
-    /* ADD PHOTO */
-
     .add-photo {
       width: 100%;
       margin-top: 11px;
@@ -138,8 +130,6 @@
     #fileInput {
       display: none;
     }
-
-    /* TOOLS */
 
     .section-title {
       margin: 25px 0 11px;
@@ -203,8 +193,6 @@
       line-height: 1.2;
     }
 
-    /* APPLY BUTTON */
-
     .apply-btn {
       width: 100%;
       height: 52px;
@@ -229,8 +217,6 @@
       transform: scale(0.99);
     }
 
-    /* DOWNLOAD BUTTON */
-
     .download-btn {
       width: 100%;
       height: 50px;
@@ -248,8 +234,6 @@
       transform: scale(0.99);
     }
 
-    /* STATUS */
-
     .status {
       width: 100%;
       min-height: 20px;
@@ -259,8 +243,6 @@
       font-size: 13px;
       line-height: 1.4;
     }
-
-    /* SMALL MOBILE */
 
     @media (max-width: 380px) {
       .app {
@@ -391,8 +373,6 @@
       ✨ Apply AI Edit
     </button>
 
-    <!-- DOWNLOAD BUTTON -->
-
     <button
       class="download-btn"
       id="downloadBtn"
@@ -406,211 +386,495 @@
   </div>
 
 
-  <script>
+  <!-- Gradio JavaScript Client -->
+  <script type="module">
 
-    const fileInput = document.getElementById("fileInput");
-    const addPhotoBtn = document.getElementById("addPhotoBtn");
-    const preview = document.getElementById("preview");
-    const emptyPhoto = document.getElementById("emptyPhoto");
-    const applyBtn = document.getElementById("applyBtn");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const status = document.getElementById("status");
+    import {
+      Client,
+      handle_file
+    } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
 
-    const tools = document.querySelectorAll(".tool");
+
+    const fileInput =
+      document.getElementById("fileInput");
+
+    const addPhotoBtn =
+      document.getElementById("addPhotoBtn");
+
+    const preview =
+      document.getElementById("preview");
+
+    const emptyPhoto =
+      document.getElementById("emptyPhoto");
+
+    const applyBtn =
+      document.getElementById("applyBtn");
+
+    const downloadBtn =
+      document.getElementById("downloadBtn");
+
+    const status =
+      document.getElementById("status");
+
+    const tools =
+      document.querySelectorAll(".tool");
+
 
     let selectedTool = "enhance";
     let selectedFile = null;
     let resultURL = null;
 
 
-    /* ADD PHOTO */
+    /*
+      HOCKMAN REAL-ESRGAN
+    */
 
-    addPhotoBtn.addEventListener("click", function () {
-      fileInput.click();
-    });
-
-
-    /* PHOTO SELECT */
-
-    fileInput.addEventListener("change", function () {
-
-      const file = fileInput.files[0];
-
-      if (!file) {
-        return;
-      }
-
-      selectedFile = file;
-
-      const imageURL = URL.createObjectURL(file);
-
-      preview.src = imageURL;
-      preview.style.display = "block";
-      emptyPhoto.style.display = "none";
-
-      applyBtn.disabled = false;
-
-      // New photo select hone par purana download button hide
-      downloadBtn.style.display = "none";
-
-      status.textContent = "Photo ready";
-    });
+    const HOCKMAN_SPACE =
+      "Hockman/real-esrgan-upscaler";
 
 
-    /* TOOL SELECT */
+    /*
+      ADD PHOTO
+    */
 
-    tools.forEach(function (tool) {
+    addPhotoBtn.addEventListener(
+      "click",
+      function () {
 
-      tool.addEventListener("click", function () {
-
-        tools.forEach(function (item) {
-          item.classList.remove("active");
-        });
-
-        tool.classList.add("active");
-
-        selectedTool = tool.dataset.tool;
-
-        status.textContent = "";
-
-      });
-
-    });
-
-
-    /* AI EDIT */
-
-    applyBtn.addEventListener("click", async function () {
-
-      if (!selectedFile) {
-        status.textContent = "Please select a photo first.";
-        return;
-      }
-
-      let prompt = "";
-
-
-      if (selectedTool === "enhance") {
-
-        prompt =
-          "Enhance this photo naturally. Improve overall image quality, sharpness, lighting and details. Preserve the exact same person, face identity, facial features, skin texture and hairstyle. Do not change the person's identity.";
+        fileInput.click();
 
       }
+    );
 
 
-      if (selectedTool === "smooth") {
+    /*
+      PHOTO SELECT
+    */
 
-        prompt =
-          "Smooth the skin naturally. Reduce minor blemishes and uneven skin texture while keeping realistic skin pores and facial details. Preserve the exact same person, identity, eyes, nose, mouth, face shape, jawline and hairstyle. Do not change the face.";
+    fileInput.addEventListener(
+      "change",
+      function () {
+
+        const file =
+          fileInput.files[0];
+
+        if (!file) {
+          return;
+        }
+
+        selectedFile = file;
+
+        const imageURL =
+          URL.createObjectURL(file);
+
+        preview.src = imageURL;
+
+        preview.style.display =
+          "block";
+
+        emptyPhoto.style.display =
+          "none";
+
+        applyBtn.disabled =
+          false;
+
+        downloadBtn.style.display =
+          "none";
+
+        status.textContent =
+          "Photo ready";
 
       }
+    );
 
 
-      if (selectedTool === "hair") {
+    /*
+      TOOL SELECT
+    */
 
-        prompt =
-          "Improve and enhance the person's hair naturally. Keep the exact same person and face identity. Preserve the face, eyes, nose, mouth, skin, face shape and hairstyle structure. Make only a subtle natural improvement to the hair.";
+    tools.forEach(
+      function (tool) {
+
+        tool.addEventListener(
+          "click",
+          function () {
+
+            tools.forEach(
+              function (item) {
+
+                item.classList.remove(
+                  "active"
+                );
+
+              }
+            );
+
+            tool.classList.add(
+              "active"
+            );
+
+            selectedTool =
+              tool.dataset.tool;
+
+            status.textContent =
+              "";
+
+          }
+        );
 
       }
+    );
 
 
-      applyBtn.disabled = true;
-      downloadBtn.style.display = "none";
+    /*
+      HOCKMAN X2
+    */
 
-      status.textContent = "AI photo edit kar raha hai...";
+    async function runHockmanX2(
+      file
+    ) {
 
+      status.textContent =
+        "Connecting to AI...";
 
-      try {
-
-        const formData = new FormData();
-
-        formData.append("image", selectedFile);
-        formData.append("prompt", prompt);
-
-
-        const response = await fetch("/api/edit", {
-          method: "POST",
-          body: formData
-        });
-
-
-        console.log("API STATUS:", response.status);
-        console.log(
-          "API TYPE:",
-          response.headers.get("content-type")
+      const app =
+        await Client.connect(
+          HOCKMAN_SPACE
         );
 
 
-        if (!response.ok) {
-
-          const errorText = await response.text();
-
-          throw new Error(
-            "Server Error (" +
-            response.status +
-            "): " +
-            errorText
-          );
-        }
+      status.textContent =
+        "Uploading photo...";
 
 
-        const contentType =
-          response.headers.get("content-type");
+      const image =
+        handle_file(file);
+
+
+      status.textContent =
+        "Starting X2 enhancement...";
+
+
+      const job =
+        app.submit(
+          "/process_and_get_output",
+          {
+            img: image
+          }
+        );
+
+
+      let finalData = null;
+
+
+      for await (
+        const message of job
+      ) {
+
+        console.log(
+          "HOCKMAN MESSAGE:",
+          message
+        );
 
 
         if (
-          !contentType ||
-          !contentType.startsWith("image/")
+          message.type ===
+          "status"
         ) {
 
-          const errorText = await response.text();
+          const stage =
+            message.stage;
 
-          throw new Error(
-            "Server returned: " + errorText
-          );
+
+          if (
+            stage === "pending"
+          ) {
+
+            if (
+              message.position !==
+              undefined
+            ) {
+
+              status.textContent =
+                "Waiting in AI queue...";
+
+            } else {
+
+              status.textContent =
+                "Waiting for AI...";
+
+            }
+
+          }
+
+
+          else if (
+            stage === "generating"
+          ) {
+
+            status.textContent =
+              "X2 enhancement processing...";
+
+          }
+
+
+          else if (
+            stage === "complete"
+          ) {
+
+            status.textContent =
+              "AI processing complete...";
+
+          }
+
+
+          else if (
+            stage === "error"
+          ) {
+
+            throw new Error(
+              message.message ||
+              "Hockman processing failed."
+            );
+
+          }
+
         }
 
 
-        const resultBlob =
-          await response.blob();
+        if (
+          message.type ===
+          "data"
+        ) {
 
+          console.log(
+            "HOCKMAN DATA:",
+            message.data
+          );
 
-        resultURL =
-          URL.createObjectURL(resultBlob);
+          finalData =
+            message.data;
 
-
-        preview.src = resultURL;
-        preview.style.display = "block";
-        emptyPhoto.style.display = "none";
-
-        status.textContent =
-          "AI Edit complete!";
-
-
-        /* SHOW DOWNLOAD BUTTON */
-
-        downloadBtn.style.display = "block";
-
-
-      } catch (error) {
-
-        console.error(error);
-
-        status.textContent =
-          error.message ||
-          "AI edit failed.";
-
-        downloadBtn.style.display = "none";
+        }
 
       }
 
 
-      applyBtn.disabled = false;
+      if (
+        !finalData ||
+        !finalData[0]
+      ) {
 
-    });
+        throw new Error(
+          "Hockman did not return an image."
+        );
+
+      }
 
 
-    /* DOWNLOAD PHOTO */
+      const output =
+        finalData[0];
+
+
+      console.log(
+        "HOCKMAN OUTPUT:",
+        output
+      );
+
+
+      let outputURL =
+        output.url;
+
+
+      if (
+        !outputURL &&
+        output.path
+      ) {
+
+        outputURL =
+          "https://hockman-real-esrgan-upscaler.hf.space/file=" +
+          encodeURIComponent(
+            output.path
+          );
+
+      }
+
+
+      if (!outputURL) {
+
+        throw new Error(
+          "Hockman output image URL not found."
+        );
+
+      }
+
+
+      status.textContent =
+        "Downloading X2 result...";
+
+
+      const response =
+        await fetch(
+          outputURL
+        );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          "Could not download X2 result."
+        );
+
+      }
+
+
+      const blob =
+        await response.blob();
+
+
+      return blob;
+
+    }
+
+
+    /*
+      AI EDIT
+    */
+
+    applyBtn.addEventListener(
+      "click",
+      async function () {
+
+        if (!selectedFile) {
+
+          status.textContent =
+            "Please select a photo first.";
+
+          return;
+
+        }
+
+
+        applyBtn.disabled =
+          true;
+
+        downloadBtn.style.display =
+          "none";
+
+
+        try {
+
+
+          /*
+            ENHANCE
+            DIRECT HOCKMAN X2
+          */
+
+          if (
+            selectedTool ===
+            "enhance"
+          ) {
+
+            const resultBlob =
+              await runHockmanX2(
+                selectedFile
+              );
+
+
+            resultURL =
+              URL.createObjectURL(
+                resultBlob
+              );
+
+
+            preview.src =
+              resultURL;
+
+            preview.style.display =
+              "block";
+
+            emptyPhoto.style.display =
+              "none";
+
+
+            status.textContent =
+              "AI Edit complete!";
+
+
+            downloadBtn.style.display =
+              "block";
+
+          }
+
+
+          /*
+            SMOOTH SKIN
+            TEMPORARY
+          */
+
+          else if (
+            selectedTool ===
+            "smooth"
+          ) {
+
+            status.textContent =
+              "Smooth Skin AI is coming next.";
+
+          }
+
+
+          /*
+            HAIR
+            TEMPORARY
+          */
+
+          else if (
+            selectedTool ===
+            "hair"
+          ) {
+
+            status.textContent =
+              "Hair AI is coming next.";
+
+          }
+
+
+        }
+
+
+        catch (error) {
+
+          console.error(
+            "AI EDIT ERROR:",
+            error
+          );
+
+
+          status.textContent =
+            error.message ||
+            "AI edit failed.";
+
+
+          downloadBtn.style.display =
+            "none";
+
+        }
+
+
+        finally {
+
+          applyBtn.disabled =
+            false;
+
+        }
+
+      }
+    );
+
+
+    /*
+      DOWNLOAD
+    */
 
     downloadBtn.addEventListener(
       "click",
@@ -620,19 +884,32 @@
           return;
         }
 
-        const link =
-          document.createElement("a");
 
-        link.href = resultURL;
+        const link =
+          document.createElement(
+            "a"
+          );
+
+
+        link.href =
+          resultURL;
+
 
         link.download =
           "AI-Edited-Photo.png";
 
-        document.body.appendChild(link);
+
+        document.body.appendChild(
+          link
+        );
+
 
         link.click();
 
-        document.body.removeChild(link);
+
+        document.body.removeChild(
+          link
+        );
 
       }
     );
