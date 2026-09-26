@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>AI Photo Editor</title>
 
   <style>
@@ -10,266 +11,231 @@
       box-sizing: border-box;
     }
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      min-height: 100%;
-    }
-
     body {
+      margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background: #f5f6fa;
-      color: #17171c;
-      overflow-x: hidden;
+      background: #f6f8fb;
+      color: #111827;
     }
 
     .app {
-      width: 100%;
-      max-width: 560px;
-      margin: 0 auto;
-      padding: 18px 16px 40px;
+      max-width: 760px;
+      margin: auto;
+      padding: 22px 16px 40px;
     }
 
-    .header {
-      width: 100%;
+    header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 26px;
+      margin-bottom: 30px;
     }
 
-    .brand {
-      font-size: 18px;
+    .logo {
+      font-size: 21px;
       font-weight: 700;
-      letter-spacing: -0.3px;
     }
 
     .badge {
-      font-size: 11px;
-      font-weight: 600;
-      background: #eeeaff;
-      color: #6547d9;
-      padding: 7px 11px;
+      background: #eef2ff;
+      color: #4f46e5;
+      padding: 7px 12px;
       border-radius: 20px;
-      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 700;
     }
 
-    .title {
-      margin: 0;
-      font-size: 30px;
+    h1 {
+      font-size: 34px;
       line-height: 1.12;
+      margin: 0 0 12px;
       letter-spacing: -1px;
     }
 
     .subtitle {
-      margin: 9px 0 22px;
-      color: #777780;
-      font-size: 14px;
+      color: #6b7280;
+      font-size: 15px;
       line-height: 1.5;
+      margin-bottom: 24px;
     }
 
-    .photo-card {
-      width: 100%;
-      background: #ffffff;
-      border: 1px solid #e7e7ec;
+    .photoCard {
+      background: white;
       border-radius: 22px;
-      padding: 12px;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.05);
+      padding: 14px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
     }
 
-    .photo-box {
+    .previewBox {
       width: 100%;
-      height: 300px;
+      min-height: 280px;
+      background: #f1f3f7;
       border-radius: 17px;
-      background: #f0f1f5;
-      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
 
-    .photo-box img {
+    #preview {
       display: none;
       width: 100%;
-      height: 100%;
+      height: auto;
+      max-height: 560px;
       object-fit: contain;
-      background: #f0f1f5;
+      border-radius: 17px;
     }
 
-    .empty-photo {
+    .placeholder {
       text-align: center;
-      color: #9999a2;
-      font-size: 14px;
+      color: #9ca3af;
+      padding: 40px 20px;
     }
 
-    .empty-photo-title {
-      color: #55555e;
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 5px;
+    .placeholderIcon {
+      font-size: 42px;
+      margin-bottom: 10px;
     }
 
-    .add-photo {
+    .addButton {
       width: 100%;
-      margin-top: 11px;
-      height: 48px;
       border: 0;
-      border-radius: 14px;
-      background: #17171c;
+      background: #111827;
       color: white;
-      font-size: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      margin-top: 12px;
+      font-size: 15px;
       font-weight: 700;
       cursor: pointer;
     }
 
-    .add-photo:active {
-      transform: scale(0.99);
+    .addButton:active {
+      transform: scale(0.98);
     }
 
     #fileInput {
       display: none;
     }
 
-    .section-title {
-      margin: 25px 0 11px;
+    .sectionTitle {
       font-size: 16px;
       font-weight: 700;
+      margin: 24px 0 12px;
     }
 
     .tools {
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      display: flex;
       gap: 10px;
+      width: 100%;
     }
 
     .tool {
+      flex: 1;
       min-width: 0;
-      height: 122px;
-      padding: 12px 7px;
-      border: 1px solid #e2e2e8;
-      border-radius: 18px;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 17px;
+      padding: 13px 8px;
       cursor: pointer;
-      transition: 0.2s ease;
+      text-align: center;
+      transition: 0.15s;
     }
 
-    .tool:hover {
-      border-color: #8d73e8;
+    .tool:active {
+      transform: scale(0.97);
     }
 
     .tool.active {
-      background: #6846d9;
-      border-color: #6846d9;
-      color: white;
+      border-color: #6366f1;
+      background: #f5f3ff;
     }
 
     .toolIcon {
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       object-fit: contain;
       display: block;
-      margin-bottom: 7px;
+      margin: 0 auto 8px;
     }
 
     .tool[data-tool="hair"] .toolIcon {
       width: 58px;
       height: 58px;
+      margin-top: -5px;
+      margin-bottom: 3px;
     }
 
-    .tool.active .toolIcon {
-      filter: brightness(0) invert(1);
-    }
-
-    .tool-name {
-      font-size: 12px;
+    .toolName {
+      font-size: 13px;
       font-weight: 700;
-      line-height: 1.2;
-    }
-
-    .apply-btn {
-      width: 100%;
-      height: 52px;
-      margin-top: 22px;
-      border: 0;
-      border-radius: 16px;
-      background: #6846d9;
-      color: white;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(104,70,217,0.22);
-    }
-
-    .apply-btn:disabled {
-      background: #c9c6d4;
-      box-shadow: none;
-      cursor: not-allowed;
-    }
-
-    .apply-btn:active:not(:disabled) {
-      transform: scale(0.99);
-    }
-
-    .download-btn {
-      width: 100%;
-      height: 50px;
-      margin-top: 11px;
-      border: 0;
-      border-radius: 15px;
-      background: #17171c;
-      color: white;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .download-btn:active {
-      transform: scale(0.99);
+      color: #111827;
     }
 
     .status {
-      width: 100%;
-      min-height: 20px;
-      margin-top: 13px;
+      display: none;
+      background: #eef2ff;
+      color: #4338ca;
+      border-radius: 13px;
+      padding: 13px;
+      margin-top: 18px;
       text-align: center;
-      color: #777780;
       font-size: 13px;
-      line-height: 1.4;
+      font-weight: 600;
     }
 
-    @media (max-width: 380px) {
-      .app {
-        padding-left: 12px;
-        padding-right: 12px;
+    .downloadButton {
+      display: none;
+      width: 100%;
+      border: 0;
+      background: #16a34a;
+      color: white;
+      padding: 14px;
+      border-radius: 14px;
+      margin-top: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .downloadButton:active {
+      transform: scale(0.98);
+    }
+
+    .smallNote {
+      color: #9ca3af;
+      font-size: 11px;
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 420px) {
+      h1 {
+        font-size: 29px;
       }
 
-      .title {
-        font-size: 27px;
-      }
-
-      .photo-box {
-        height: 270px;
+      .tools {
+        gap: 7px;
       }
 
       .tool {
-        height: 118px;
+        padding: 11px 5px;
       }
 
       .toolIcon {
-        width: 42px;
-        height: 42px;
+        width: 43px;
+        height: 43px;
       }
 
       .tool[data-tool="hair"] .toolIcon {
-        width: 52px;
-        height: 52px;
+        width: 53px;
+        height: 53px;
+      }
+
+      .toolName {
+        font-size: 12px;
       }
     }
   </style>
@@ -277,1109 +243,1081 @@
 
 <body>
 
-  <div class="app">
+<div class="app">
 
-    <header class="header">
-      <div class="brand">AI Photo Editor</div>
-      <div class="badge">AI Powered</div>
-    </header>
+  <header>
+    <div class="logo">AI Photo Editor</div>
+    <div class="badge">AI Powered</div>
+  </header>
 
-    <h1 class="title">Make your photos better.</h1>
+  <h1>Make your photos better.</h1>
 
-    <p class="subtitle">
-      Choose a photo and select an AI editing tool.
-    </p>
+  <div class="subtitle">
+    Enhance your photos and improve skin appearance with simple AI-powered tools.
+  </div>
 
-    <section class="photo-card">
+  <div class="photoCard">
 
-      <div class="photo-box">
+    <div class="previewBox">
 
-        <div class="empty-photo" id="emptyPhoto">
-          <div class="empty-photo-title">No photo selected</div>
-          <div>Choose a photo to get started</div>
-        </div>
-
-        <img id="preview" alt="Photo Preview">
-
+      <div class="placeholder" id="placeholder">
+        <div class="placeholderIcon">📷</div>
+        <div>Select a photo to get started</div>
       </div>
 
-      <button class="add-photo" id="addPhotoBtn">
-        + Add Photo
-      </button>
-
-      <input
-        type="file"
-        id="fileInput"
-        accept="image/*"
-      >
-
-    </section>
-
-    <div class="section-title">
-      Choose an edit
-    </div>
-
-    <div class="tools">
-
-      <div class="tool active" data-tool="enhance">
-
-        <img
-          class="toolIcon"
-          src="./enhance-icon.png"
-          alt="Enhance"
-        >
-
-        <div class="tool-name">
-          Enhance
-        </div>
-
-      </div>
-
-      <div class="tool" data-tool="smooth">
-
-        <img
-          class="toolIcon"
-          src="./smooth-icon.png"
-          alt="Smooth Skin"
-        >
-
-        <div class="tool-name">
-          Smooth Skin
-        </div>
-
-      </div>
-
-      <div class="tool" data-tool="hair">
-
-        <img
-          class="toolIcon"
-          src="./hair-icon.png"
-          alt="Hair"
-        >
-
-        <div class="tool-name">
-          Hair
-        </div>
-
-      </div>
+      <img id="preview" alt="Photo Preview">
 
     </div>
 
-    <button
-      class="apply-btn"
-      id="applyBtn"
-      disabled
+    <input
+      type="file"
+      id="fileInput"
+      accept="image/*"
     >
-      ✨ Apply AI Edit
-    </button>
 
-    <button
-      class="download-btn"
-      id="downloadBtn"
-      style="display:none;"
-    >
-      ⬇ Download Photo
+    <button class="addButton" id="addPhoto">
+      Add Photo
     </button>
-
-    <div class="status" id="status"></div>
 
   </div>
 
+  <div class="sectionTitle">
+    AI Tools
+  </div>
 
-  <!-- Gradio Client -->
-  <script type="module">
+  <div class="tools">
 
-    import {
-      Client,
-      handle_file
-    } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+    <div class="tool" data-tool="enhance">
+
+      <img
+        class="toolIcon"
+        src="enhance-icon.png"
+        alt="Enhance"
+      >
+
+      <div class="toolName">
+        Enhance
+      </div>
+
+    </div>
+
+    <div class="tool" data-tool="smooth">
+
+      <img
+        class="toolIcon"
+        src="smooth-icon.png"
+        alt="Smooth Skin"
+      >
+
+      <div class="toolName">
+        Smooth Skin
+      </div>
+
+    </div>
+
+    <div class="tool" data-tool="hair">
+
+      <img
+        class="toolIcon"
+        src="hair-icon.png"
+        alt="Hair"
+      >
+
+      <div class="toolName">
+        Hair
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <button class="downloadButton" id="downloadButton">
+    Download Edited Photo
+  </button>
+
+  <div class="smallNote">
+    Your photo is processed only when you select an editing tool.
+  </div>
+
+</div>
 
 
-    const fileInput =
-      document.getElementById("fileInput");
+<script type="module">
 
-    const addPhotoBtn =
-      document.getElementById("addPhotoBtn");
-
-    const preview =
-      document.getElementById("preview");
-
-    const emptyPhoto =
-      document.getElementById("emptyPhoto");
-
-    const applyBtn =
-      document.getElementById("applyBtn");
-
-    const downloadBtn =
-      document.getElementById("downloadBtn");
-
-    const status =
-      document.getElementById("status");
-
-    const tools =
-      document.querySelectorAll(".tool");
+import {
+  Client,
+  handle_file
+} from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
 
 
-    let selectedTool = "enhance";
-    let selectedFile = null;
-    let resultURL = null;
+/* =========================================================
+   BASIC ELEMENTS
+========================================================= */
+
+const fileInput = document.getElementById("fileInput");
+const addPhoto = document.getElementById("addPhoto");
+const preview = document.getElementById("preview");
+const placeholder = document.getElementById("placeholder");
+const statusBox = document.getElementById("status");
+const downloadButton = document.getElementById("downloadButton");
+
+let selectedFile = null;
+let editedBlob = null;
 
 
-    /*
-      HOCKMAN REAL-ESRGAN
-    */
+/* =========================================================
+   ADD PHOTO
+========================================================= */
 
-    const HOCKMAN_SPACE =
-      "Hockman/real-esrgan-upscaler";
+addPhoto.addEventListener("click", () => {
+  fileInput.click();
+});
 
 
-    /*
-      ADD PHOTO
-    */
+fileInput.addEventListener("change", () => {
 
-    addPhotoBtn.addEventListener(
-      "click",
-      function () {
+  const file = fileInput.files[0];
 
-        fileInput.click();
+  if (!file) {
+    return;
+  }
 
+  selectedFile = file;
+  editedBlob = null;
+
+  const url = URL.createObjectURL(file);
+
+  preview.src = url;
+  preview.style.display = "block";
+  placeholder.style.display = "none";
+
+  downloadButton.style.display = "none";
+
+  statusBox.style.display = "none";
+
+});
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function showStatus(text) {
+
+  statusBox.textContent = text;
+  statusBox.style.display = "block";
+
+}
+
+
+/* =========================================================
+   HOCKMAN REAL-ESRGAN 2X
+========================================================= */
+
+const HOCKMAN_SPACE =
+  "Hockman/real-esrgan-upscaler";
+
+
+async function runHockmanX2(file) {
+
+  const app =
+    await Client.connect(HOCKMAN_SPACE);
+
+  const image =
+    handle_file(file);
+
+  const job =
+    app.submit(
+      "/process_and_get_output",
+      {
+        img: image
       }
     );
 
+  let finalData = null;
 
-    /*
-      PHOTO SELECT
-    */
+  for await (const message of job) {
 
-    fileInput.addEventListener(
-      "change",
-      function () {
+    if (message.type === "status") {
 
-        const file =
-          fileInput.files[0];
+      if (message.status) {
 
-        if (!file) {
-          return;
+        if (message.status === "pending") {
+          showStatus("Enhance AI is waiting...");
         }
 
-        selectedFile = file;
+        else if (message.status === "generating") {
+          showStatus("AI is enhancing your photo...");
+        }
 
-        const imageURL =
-          URL.createObjectURL(file);
-
-        preview.src = imageURL;
-
-        preview.style.display =
-          "block";
-
-        emptyPhoto.style.display =
-          "none";
-
-        applyBtn.disabled =
-          false;
-
-        downloadBtn.style.display =
-          "none";
-
-        resultURL = null;
-
-        status.textContent =
-          "Photo ready";
+        else if (message.status === "processing") {
+          showStatus("Enhancing photo...");
+        }
 
       }
+
+    }
+
+    if (message.type === "data") {
+
+      finalData =
+        message.data;
+
+    }
+
+  }
+
+  if (!finalData || !finalData[0]) {
+
+    throw new Error(
+      "No image returned from AI"
+    );
+
+  }
+
+  const output =
+    finalData[0];
+
+  let outputURL =
+    output.url;
+
+  if (!outputURL && output.path) {
+
+    outputURL =
+      "https://hockman-real-esrgan-upscaler.hf.space/file=" +
+      encodeURIComponent(output.path);
+
+  }
+
+  if (!outputURL) {
+
+    throw new Error(
+      "Output image URL missing"
+    );
+
+  }
+
+  const response =
+    await fetch(outputURL);
+
+  if (!response.ok) {
+
+    throw new Error(
+      "Could not download AI result"
+    );
+
+  }
+
+  return await response.blob();
+
+}
+
+
+/* =========================================================
+   IMAGE LOADER
+========================================================= */
+
+function loadImage(file) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const img =
+        new Image();
+
+      img.onload = () => {
+        resolve(img);
+      };
+
+      img.onerror = reject;
+
+      img.src =
+        URL.createObjectURL(file);
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   BETTER LOCAL SKIN SMOOTHING
+========================================================= */
+
+async function smoothSkin(file) {
+
+  const img =
+    await loadImage(file);
+
+  const w =
+    img.naturalWidth;
+
+  const h =
+    img.naturalHeight;
+
+
+  /*
+   * Main canvas
+   */
+
+  const canvas =
+    document.createElement("canvas");
+
+  canvas.width = w;
+  canvas.height = h;
+
+  const ctx =
+    canvas.getContext("2d", {
+      willReadFrequently: true
+    });
+
+  ctx.drawImage(
+    img,
+    0,
+    0,
+    w,
+    h
+  );
+
+
+  /*
+   * Original pixels
+   */
+
+  const original =
+    ctx.getImageData(
+      0,
+      0,
+      w,
+      h
     );
 
 
+  /*
+   * Work canvas.
+   *
+   * We use a smaller working image for
+   * faster mobile processing.
+   */
+
+  const maxWorkWidth = 900;
+
+  const scale =
+    Math.min(
+      1,
+      maxWorkWidth / w
+    );
+
+  const sw =
+    Math.max(
+      1,
+      Math.round(w * scale)
+    );
+
+  const sh =
+    Math.max(
+      1,
+      Math.round(h * scale)
+    );
+
+
+  const work =
+    document.createElement("canvas");
+
+  work.width = sw;
+  work.height = sh;
+
+  const workCtx =
+    work.getContext("2d", {
+      willReadFrequently: true
+    });
+
+  workCtx.drawImage(
+    img,
+    0,
+    0,
+    sw,
+    sh
+  );
+
+
+  /*
+   * Create several smoothing passes.
+   */
+
+  const smoothCanvas =
+    document.createElement("canvas");
+
+  smoothCanvas.width = sw;
+  smoothCanvas.height = sh;
+
+  const smoothCtx =
+    smoothCanvas.getContext("2d");
+
+
+  /*
+   * First smoothing pass.
+   */
+
+  smoothCtx.filter =
+    "blur(3.2px)";
+
+  smoothCtx.drawImage(
+    work,
+    0,
+    0
+  );
+
+
+  /*
+   * Second very light pass.
+   *
+   * This makes pores/skin texture
+   * softer without creating a plastic face.
+   */
+
+  const pass2 =
+    document.createElement("canvas");
+
+  pass2.width = sw;
+  pass2.height = sh;
+
+  const pass2Ctx =
+    pass2.getContext("2d");
+
+  pass2Ctx.filter =
+    "blur(1.8px)";
+
+  pass2Ctx.drawImage(
+    smoothCanvas,
+    0,
+    0
+  );
+
+
+  /*
+   * Put the smoothed result back onto
+   * the original-size canvas.
+   */
+
+  const blurred =
+    document.createElement("canvas");
+
+  blurred.width = w;
+  blurred.height = h;
+
+  const blurredCtx =
+    blurred.getContext("2d");
+
+  blurredCtx.drawImage(
+    pass2,
+    0,
+    0,
+    w,
+    h
+  );
+
+
+  /*
+   * Face/skin mask.
+   *
+   * This is intentionally limited to the
+   * central face area.
+   */
+
+  const mask =
+    document.createElement("canvas");
+
+  mask.width = w;
+  mask.height = h;
+
+  const maskCtx =
+    mask.getContext("2d");
+
+  const faceX =
+    w * 0.50;
+
+  const faceY =
+    h * 0.47;
+
+  const faceW =
+    w * 0.43;
+
+  const faceH =
+    h * 0.52;
+
+
+  /*
+   * Soft elliptical face mask.
+   */
+
+  const gradient =
+    maskCtx.createRadialGradient(
+      faceX,
+      faceY,
+      faceW * 0.18,
+      faceX,
+      faceY,
+      faceW
+    );
+
+  gradient.addColorStop(
+    0,
+    "rgba(255,255,255,1)"
+  );
+
+  gradient.addColorStop(
+    0.55,
+    "rgba(255,255,255,0.92)"
+  );
+
+  gradient.addColorStop(
+    0.82,
+    "rgba(255,255,255,0.55)"
+  );
+
+  gradient.addColorStop(
+    1,
+    "rgba(255,255,255,0)"
+  );
+
+
+  maskCtx.fillStyle =
+    gradient;
+
+  maskCtx.beginPath();
+
+  maskCtx.ellipse(
+    faceX,
+    faceY,
+    faceW,
+    faceH,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  maskCtx.fill();
+
+
+  /*
+   * Preserve eyes.
+   */
+
+  maskCtx.globalCompositeOperation =
+    "destination-out";
+
+  function cutEllipse(
+    x,
+    y,
+    rx,
+    ry
+  ) {
+
+    maskCtx.beginPath();
+
+    maskCtx.ellipse(
+      x,
+      y,
+      rx,
+      ry,
+      0,
+      0,
+      Math.PI * 2
+    );
+
+    maskCtx.fill();
+
+  }
+
+
+  const eyeY =
+    h * 0.40;
+
+  const eyeRX =
+    w * 0.075;
+
+  const eyeRY =
+    h * 0.028;
+
+
+  cutEllipse(
+    w * 0.405,
+    eyeY,
+    eyeRX,
+    eyeRY
+  );
+
+  cutEllipse(
+    w * 0.595,
+    eyeY,
+    eyeRX,
+    eyeRY
+  );
+
+
+  /*
+   * Preserve eyebrows.
+   */
+
+  cutEllipse(
+    w * 0.405,
+    h * 0.355,
+    w * 0.085,
+    h * 0.018
+  );
+
+  cutEllipse(
+    w * 0.595,
+    h * 0.355,
+    w * 0.085,
+    h * 0.018
+  );
+
+
+  /*
+   * Preserve mouth.
+   */
+
+  cutEllipse(
+    w * 0.50,
+    h * 0.625,
+    w * 0.105,
+    h * 0.035
+  );
+
+
+  /*
+   * Preserve nose center/edges.
+   */
+
+  cutEllipse(
+    w * 0.50,
+    h * 0.51,
+    w * 0.055,
+    h * 0.115
+  );
+
+
+  /*
+   * Restore normal drawing.
+   */
+
+  maskCtx.globalCompositeOperation =
+    "source-over";
+
+
+  /*
+   * Draw the blurred skin over the
+   * original image.
+   */
+
+  const maskData =
+    maskCtx.getImageData(
+      0,
+      0,
+      w,
+      h
+    ).data;
+
+  const blurredData =
+    blurredCtx.getImageData(
+      0,
+      0,
+      w,
+      h
+    ).data;
+
+
+  const result =
+    ctx.createImageData(
+      w,
+      h
+    );
+
+  const src =
+    original.data;
+
+  const blur =
+    blurredData;
+
+  const dst =
+    result.data;
+
+
+  /*
+   * Strong but controlled skin smoothing.
+   *
+   * The mask controls where smoothing happens.
+   * High-contrast facial details are protected.
+   */
+
+  for (
+    let i = 0;
+    i < src.length;
+    i += 4
+  ) {
+
+    const maskValue =
+      maskData[i + 3] / 255;
+
+    if (maskValue <= 0) {
+
+      dst[i] =
+        src[i];
+
+      dst[i + 1] =
+        src[i + 1];
+
+      dst[i + 2] =
+        src[i + 2];
+
+      dst[i + 3] =
+        255;
+
+      continue;
+
+    }
+
+
+    const r =
+      src[i];
+
+    const g =
+      src[i + 1];
+
+    const b =
+      src[i + 2];
+
+
+    const br =
+      blur[i];
+
+    const bg =
+      blur[i + 1];
+
+    const bb =
+      blur[i + 2];
+
+
     /*
-      TOOL SELECT
-    */
+     * Detect strong local edges.
+     *
+     * When the original and blurred pixels
+     * differ greatly, it is probably a
+     * facial feature rather than skin texture.
+     */
 
-    tools.forEach(
-      function (tool) {
+    const difference =
+      Math.abs(r - br) +
+      Math.abs(g - bg) +
+      Math.abs(b - bb);
 
-        tool.addEventListener(
-          "click",
-          function () {
 
-            tools.forEach(
-              function (item) {
+    let strength =
+      0.78 * maskValue;
 
+
+    /*
+     * Protect strong details.
+     */
+
+    if (difference > 70) {
+
+      strength *= 0.18;
+
+    }
+
+    else if (difference > 45) {
+
+      strength *= 0.38;
+
+    }
+
+    else if (difference > 28) {
+
+      strength *= 0.62;
+
+    }
+
+
+    dst[i] =
+      Math.round(
+        r * (1 - strength) +
+        br * strength
+      );
+
+    dst[i + 1] =
+      Math.round(
+        g * (1 - strength) +
+        bg * strength
+      );
+
+    dst[i + 2] =
+      Math.round(
+        b * (1 - strength) +
+        bb * strength
+      );
+
+    dst[i + 3] =
+      255;
+
+  }
+
+
+  ctx.putImageData(
+    result,
+    0,
+    0
+  );
+
+
+  /*
+   * JPEG output.
+   */
+
+  return await new Promise(
+    (resolve) => {
+
+      canvas.toBlob(
+        (blob) => {
+
+          resolve(blob);
+
+        },
+        "image/jpeg",
+        0.94
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   SHOW RESULT
+========================================================= */
+
+function showResult(blob) {
+
+  editedBlob =
+    blob;
+
+  const url =
+    URL.createObjectURL(blob);
+
+  preview.src =
+    url;
+
+  preview.style.display =
+    "block";
+
+  placeholder.style.display =
+    "none";
+
+  downloadButton.style.display =
+    "block";
+
+}
+
+
+/* =========================================================
+   DOWNLOAD
+========================================================= */
+
+downloadButton.addEventListener(
+  "click",
+  () => {
+
+    if (!editedBlob) {
+      return;
+    }
+
+    const url =
+      URL.createObjectURL(
+        editedBlob
+      );
+
+    const a =
+      document.createElement("a");
+
+    a.href =
+      url;
+
+    a.download =
+      "AI-Edited-Photo.jpg";
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    setTimeout(
+      () => {
+        URL.revokeObjectURL(url);
+      },
+      1000
+    );
+
+  }
+);
+
+
+/* =========================================================
+   TOOL BUTTONS
+========================================================= */
+
+document
+  .querySelectorAll(".tool")
+  .forEach(
+    (tool) => {
+
+      tool.addEventListener(
+        "click",
+        async () => {
+
+          if (!selectedFile) {
+
+            alert(
+              "Please select a photo first."
+            );
+
+            return;
+
+          }
+
+
+          const type =
+            tool.dataset.tool;
+
+
+          document
+            .querySelectorAll(".tool")
+            .forEach(
+              (item) => {
                 item.classList.remove(
                   "active"
                 );
-
               }
             );
 
-            tool.classList.add(
-              "active"
-            );
-
-            selectedTool =
-              tool.dataset.tool;
-
-            status.textContent =
-              "";
-
-          }
-        );
-
-      }
-    );
+          tool.classList.add(
+            "active"
+          );
 
 
-    /*
-      HOCKMAN X2
-    */
-
-    async function runHockmanX2(
-      file
-    ) {
-
-      status.textContent =
-        "Connecting to AI...";
-
-      const app =
-        await Client.connect(
-          HOCKMAN_SPACE
-        );
+          downloadButton.style.display =
+            "none";
 
 
-      status.textContent =
-        "Uploading photo...";
+          try {
+
+            /* =========================
+               ENHANCE
+            ========================= */
+
+            if (type === "enhance") {
+
+              showStatus(
+                "Connecting to Enhance AI..."
+              );
+
+              const blob =
+                await runHockmanX2(
+                  selectedFile
+                );
+
+              showResult(
+                blob
+              );
+
+              showStatus(
+                "AI Enhance complete! ✨"
+              );
+
+            }
 
 
-      const image =
-        handle_file(file);
+            /* =========================
+               SMOOTH SKIN
+            ========================= */
+
+            else if (type === "smooth") {
+
+              showStatus(
+                "Smoothing skin texture..."
+              );
+
+              /*
+               * Small delay lets the status
+               * message render before CPU work.
+               */
+
+              await new Promise(
+                (resolve) =>
+                  setTimeout(
+                    resolve,
+                    80
+                  )
+              );
 
 
-      status.textContent =
-        "Starting X2 enhancement...";
+              const blob =
+                await smoothSkin(
+                  selectedFile
+                );
+
+              showResult(
+                blob
+              );
+
+              showStatus(
+                "Smooth Skin complete! ✨"
+              );
+
+            }
 
 
-      const job =
-        app.submit(
-          "/process_and_get_output",
-          {
-            img: image
-          }
-        );
+            /* =========================
+               HAIR
+            ========================= */
 
+            else if (type === "hair") {
 
-      let finalData = null;
+              showStatus(
+                "Hair AI is coming next."
+              );
 
-
-      for await (
-        const message of job
-      ) {
-
-        console.log(
-          "HOCKMAN MESSAGE:",
-          message
-        );
-
-
-        if (
-          message.type ===
-          "status"
-        ) {
-
-          const stage =
-            message.stage;
-
-
-          if (
-            stage === "pending"
-          ) {
-
-            if (
-              message.position !==
-              undefined
-            ) {
-
-              status.textContent =
-                "Waiting in AI queue...";
-
-            } else {
-
-              status.textContent =
-                "Waiting for AI...";
+              downloadButton.style.display =
+                "none";
 
             }
 
           }
 
+          catch (error) {
 
-          else if (
-            stage === "generating"
-          ) {
+            console.error(
+              error
+            );
 
-            status.textContent =
-              "X2 enhancement processing...";
-
-          }
-
-
-          else if (
-            stage === "complete"
-          ) {
-
-            status.textContent =
-              "AI processing complete...";
-
-          }
-
-
-          else if (
-            stage === "error"
-          ) {
-
-            throw new Error(
-              message.message ||
-              "Hockman processing failed."
+            showStatus(
+              "Something went wrong. Please try again."
             );
 
           }
 
         }
-
-
-        if (
-          message.type ===
-          "data"
-        ) {
-
-          console.log(
-            "HOCKMAN DATA:",
-            message.data
-          );
-
-          finalData =
-            message.data;
-
-        }
-
-      }
-
-
-      if (
-        !finalData ||
-        !finalData[0]
-      ) {
-
-        throw new Error(
-          "Hockman did not return an image."
-        );
-
-      }
-
-
-      const output =
-        finalData[0];
-
-
-      console.log(
-        "HOCKMAN OUTPUT:",
-        output
       );
-
-
-      let outputURL =
-        output.url;
-
-
-      if (
-        !outputURL &&
-        output.path
-      ) {
-
-        outputURL =
-          "https://hockman-real-esrgan-upscaler.hf.space/file=" +
-          encodeURIComponent(
-            output.path
-          );
-
-      }
-
-
-      if (!outputURL) {
-
-        throw new Error(
-          "Hockman output image URL not found."
-        );
-
-      }
-
-
-      status.textContent =
-        "Downloading X2 result...";
-
-
-      const response =
-        await fetch(
-          outputURL
-        );
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          "Could not download X2 result."
-        );
-
-      }
-
-
-      const blob =
-        await response.blob();
-
-
-      return blob;
 
     }
+  );
 
-
-    /*
-      SMOOTH SKIN
-      LOCAL BROWSER PROCESSING
-    */
-
-    async function smoothSkin(
-      file
-    ) {
-
-      status.textContent =
-        "Loading photo...";
-
-
-      const image =
-        new Image();
-
-
-      const imageURL =
-        URL.createObjectURL(file);
-
-
-      image.src =
-        imageURL;
-
-
-      await new Promise(
-        function (resolve, reject) {
-
-          image.onload =
-            resolve;
-
-          image.onerror =
-            reject;
-
-        }
-      );
-
-
-      /*
-        We use a canvas at the original
-        image resolution.
-      */
-
-      const canvas =
-        document.createElement(
-          "canvas"
-        );
-
-      const ctx =
-        canvas.getContext(
-          "2d",
-          {
-            willReadFrequently: true
-          }
-        );
-
-
-      canvas.width =
-        image.naturalWidth;
-
-      canvas.height =
-        image.naturalHeight;
-
-
-      /*
-        Draw original image.
-      */
-
-      ctx.drawImage(
-        image,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-
-      /*
-        Moderate skin smoothing.
-        We intentionally keep this
-        relatively low to protect
-        facial identity and details.
-      */
-
-      status.textContent =
-        "Smoothing skin...";
-
-
-      const tempCanvas =
-        document.createElement(
-          "canvas"
-        );
-
-      tempCanvas.width =
-        canvas.width;
-
-      tempCanvas.height =
-        canvas.height;
-
-
-      const tempCtx =
-        tempCanvas.getContext(
-          "2d"
-        );
-
-
-      /*
-        Slight blur.
-        This is NOT face regeneration.
-      */
-
-      tempCtx.filter =
-        "blur(4px)";
-
-      tempCtx.drawImage(
-        canvas,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-
-      /*
-        Face area approximation.
-
-        Instead of changing the complete
-        image, we use several soft
-        elliptical regions around the
-        central face.
-
-        This keeps hair/background
-        mostly untouched.
-      */
-
-      const w =
-        canvas.width;
-
-      const h =
-        canvas.height;
-
-
-      /*
-        Estimate a portrait face area
-        from the visible image.
-
-        These values intentionally cover
-        a moderate central region.
-      */
-
-      const faceX =
-        w * 0.50;
-
-      const faceY =
-        h * 0.47;
-
-      const faceW =
-        w * 0.40;
-
-      const faceH =
-        h * 0.48;
-
-
-      /*
-        Soft mask.
-      */
-
-      const maskCanvas =
-        document.createElement(
-          "canvas"
-        );
-
-      maskCanvas.width =
-        w;
-
-      maskCanvas.height =
-        h;
-
-
-      const maskCtx =
-        maskCanvas.getContext(
-          "2d"
-        );
-
-
-      const gradient =
-        maskCtx.createRadialGradient(
-          faceX,
-          faceY,
-          faceW * 0.15,
-          faceX,
-          faceY,
-          faceW * 0.72
-        );
-
-
-      gradient.addColorStop(
-        0,
-        "rgba(255,255,255,0.72)"
-      );
-
-      gradient.addColorStop(
-        0.55,
-        "rgba(255,255,255,0.52)"
-      );
-
-      gradient.addColorStop(
-        1,
-        "rgba(255,255,255,0)"
-      );
-
-
-      maskCtx.fillStyle =
-        gradient;
-
-
-      maskCtx.beginPath();
-
-      maskCtx.ellipse(
-        faceX,
-        faceY,
-        faceW / 2,
-        faceH / 2,
-        0,
-        0,
-        Math.PI * 2
-      );
-
-      maskCtx.fill();
-
-
-      /*
-        Remove eye areas.
-      */
-
-      maskCtx.globalCompositeOperation =
-        "destination-out";
-
-
-      function cutEllipse(
-        x,
-        y,
-        rx,
-        ry
-      ) {
-
-        maskCtx.beginPath();
-
-        maskCtx.ellipse(
-          x,
-          y,
-          rx,
-          ry,
-          0,
-          0,
-          Math.PI * 2
-        );
-
-        maskCtx.fill();
-
-      }
-
-
-      cutEllipse(
-        w * 0.42,
-        h * 0.40,
-        w * 0.075,
-        h * 0.035
-      );
-
-
-      cutEllipse(
-        w * 0.58,
-        h * 0.40,
-        w * 0.075,
-        h * 0.035
-      );
-
-
-      /*
-        Remove mouth area.
-      */
-
-      cutEllipse(
-        w * 0.50,
-        h * 0.59,
-        w * 0.10,
-        h * 0.045
-      );
-
-
-      /*
-        Remove nose center slightly.
-        This protects facial structure.
-      */
-
-      cutEllipse(
-        w * 0.50,
-        h * 0.49,
-        w * 0.045,
-        h * 0.075
-      );
-
-
-      /*
-        Apply blurred image with mask.
-      */
-
-      ctx.save();
-
-      ctx.globalCompositeOperation =
-        "source-over";
-
-
-      const oldImage =
-        document.createElement(
-          "canvas"
-        );
-
-      oldImage.width =
-        w;
-
-      oldImage.height =
-        h;
-
-
-      oldImage
-        .getContext("2d")
-        .drawImage(
-          canvas,
-          0,
-          0
-        );
-
-
-      /*
-        Put blurred image into
-        a separate layer.
-      */
-
-      const smoothLayer =
-        document.createElement(
-          "canvas"
-        );
-
-      smoothLayer.width =
-        w;
-
-      smoothLayer.height =
-        h;
-
-
-      const smoothCtx =
-        smoothLayer.getContext(
-          "2d"
-        );
-
-
-      smoothCtx.drawImage(
-        tempCanvas,
-        0,
-        0
-      );
-
-
-      /*
-        Apply mask to smooth layer.
-      */
-
-      smoothCtx.globalCompositeOperation =
-        "destination-in";
-
-
-      smoothCtx.drawImage(
-        maskCanvas,
-        0,
-        0
-      );
-
-
-      /*
-        Blend smooth layer over
-        original image.
-      */
-
-      ctx.globalAlpha =
-        0.72;
-
-
-      ctx.drawImage(
-        smoothLayer,
-        0,
-        0
-      );
-
-
-      ctx.restore();
-
-
-      /*
-        Convert result to JPEG.
-      */
-
-      status.textContent =
-        "Preparing result...";
-
-
-      const blob =
-        await new Promise(
-          function (resolve) {
-
-            canvas.toBlob(
-              resolve,
-              "image/jpeg",
-              0.94
-            );
-
-          }
-        );
-
-
-      URL.revokeObjectURL(
-        imageURL
-      );
-
-
-      if (!blob) {
-
-        throw new Error(
-          "Smooth Skin result could not be created."
-        );
-
-      }
-
-
-      return blob;
-
-    }
-
-
-    /*
-      AI EDIT
-    */
-
-    applyBtn.addEventListener(
-      "click",
-      async function () {
-
-        if (!selectedFile) {
-
-          status.textContent =
-            "Please select a photo first.";
-
-          return;
-
-        }
-
-
-        applyBtn.disabled =
-          true;
-
-        downloadBtn.style.display =
-          "none";
-
-
-        try {
-
-
-          /*
-            ENHANCE
-          */
-
-          if (
-            selectedTool ===
-            "enhance"
-          ) {
-
-            const resultBlob =
-              await runHockmanX2(
-                selectedFile
-              );
-
-
-            resultURL =
-              URL.createObjectURL(
-                resultBlob
-              );
-
-
-            preview.src =
-              resultURL;
-
-            preview.style.display =
-              "block";
-
-            emptyPhoto.style.display =
-              "none";
-
-
-            status.textContent =
-              "AI Edit complete!";
-
-
-            downloadBtn.style.display =
-              "block";
-
-          }
-
-
-          /*
-            SMOOTH SKIN
-          */
-
-          else if (
-            selectedTool ===
-            "smooth"
-          ) {
-
-            const resultBlob =
-              await smoothSkin(
-                selectedFile
-              );
-
-
-            resultURL =
-              URL.createObjectURL(
-                resultBlob
-              );
-
-
-            preview.src =
-              resultURL;
-
-            preview.style.display =
-              "block";
-
-            emptyPhoto.style.display =
-              "none";
-
-
-            status.textContent =
-              "Smooth Skin complete!";
-
-
-            downloadBtn.style.display =
-              "block";
-
-          }
-
-
-          /*
-            HAIR
-          */
-
-          else if (
-            selectedTool ===
-            "hair"
-          ) {
-
-            status.textContent =
-              "Hair AI is coming next.";
-
-          }
-
-
-        }
-
-
-        catch (error) {
-
-          console.error(
-            "AI EDIT ERROR:",
-            error
-          );
-
-
-          status.textContent =
-            error.message ||
-            "AI edit failed.";
-
-
-          downloadBtn.style.display =
-            "none";
-
-        }
-
-
-        finally {
-
-          applyBtn.disabled =
-            false;
-
-        }
-
-      }
-    );
-
-
-    /*
-      DOWNLOAD
-    */
-
-    downloadBtn.addEventListener(
-      "click",
-      function () {
-
-        if (!resultURL) {
-          return;
-        }
-
-
-        const link =
-          document.createElement(
-            "a"
-          );
-
-
-        link.href =
-          resultURL;
-
-
-        link.download =
-          "AI-Edited-Photo.jpg";
-
-
-        document.body.appendChild(
-          link
-        );
-
-
-        link.click();
-
-
-        document.body.removeChild(
-          link
-        );
-
-      }
-    );
-
-  </script>
+</script>
 
 </body>
 </html>
