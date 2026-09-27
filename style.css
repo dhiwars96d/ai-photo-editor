@@ -1,0 +1,25 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f6f8fb;color:#111827}
+.app{max-width:760px;margin:auto;padding:22px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:30px}
+.logo{font-size:21px;font-weight:700}.badge{background:#eef2ff;color:#4f46e5;padding:7px 12px;border-radius:20px;font-size:12px;font-weight:700}
+h1{font-size:34px;line-height:1.12;margin:0 0 12px;letter-spacing:-1px}.subtitle{color:#6b7280;font-size:15px;line-height:1.5;margin-bottom:24px}
+.photoCard{background:#fff;border-radius:22px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,.06);margin-bottom:20px}
+.previewBox{width:100%;min-height:280px;background:#f1f3f7;border-radius:17px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#preview{display:none;width:100%;height:auto;max-height:560px;object-fit:contain;border-radius:17px}
+.placeholder{text-align:center;color:#9ca3af;padding:40px 20px}.placeholderIcon{font-size:42px;margin-bottom:10px}
+.addButton{width:100%;border:0;background:#111827;color:#fff;padding:14px;border-radius:14px;margin-top:12px;font-size:15px;font-weight:700;cursor:pointer}
+#fileInput{display:none}.sectionTitle{font-size:16px;font-weight:700;margin:24px 0 12px}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;width:100%}
+.tool{min-width:0;background:#fff;border:1px solid #e5e7eb;border-radius:17px;padding:12px 5px;cursor:pointer;text-align:center}.tool.active{border-color:#6366f1;background:#f5f3ff}
+.toolIcon{width:45px;height:45px;object-fit:contain;display:block;margin:0 auto 8px}.tool[data-tool="hair"] .toolIcon{width:53px;height:53px;margin-top:-4px;margin-bottom:4px}
+.toolName{font-size:12px;font-weight:700;color:#111827;white-space:nowrap}
+.smoothControl{display:none;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:17px;padding:14px 15px;margin-top:14px;box-shadow:0 5px 18px rgba(0,0,0,.04)}.smoothControl.show{display:block}
+.smoothTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.smoothLabel{font-size:14px;font-weight:700}
+#smoothValue{min-width:38px;text-align:center;background:#eef2ff;color:#4338ca;border-radius:10px;padding:5px 8px;font-size:13px;font-weight:700}
+#smoothSlider{width:100%;margin:0;accent-color:#6366f1}.smoothScale{display:flex;justify-content:space-between;margin-top:5px;color:#9ca3af;font-size:10px}
+.adjustmentsToggle{width:100%;margin-top:16px;border:1px solid #e5e7eb;background:#fff;color:#111827;border-radius:17px;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700}
+.adjustmentsToggle.open{border-color:#6366f1;background:#f8f7ff;color:#4338ca}.adjustmentsChevron{font-size:20px}.adjustmentsPanel{display:none;width:100%;margin-top:12px}.adjustmentsPanel.open{display:block}
+.adjustmentsFrame{width:100%;height:790px;border:0;border-radius:20px;display:block}.status{display:none;background:#eef2ff;color:#4338ca;border-radius:13px;padding:13px;margin-top:18px;text-align:center;font-size:13px;font-weight:600}
+.downloadButton{display:none;width:100%;border:0;background:#16a34a;color:#fff;padding:14px;border-radius:14px;margin-top:12px;font-size:15px;font-weight:700}.smallNote{color:#9ca3af;font-size:11px;text-align:center;margin-top:14px;line-height:1.5}
+@media(max-width:380px){.app{padding-left:12px;padding-right:12px}.tools{gap:6px}.tool{padding:11px 3px;border-radius:15px}.toolIcon{width:40px;height:40px}.tool[data-tool="hair"] .toolIcon{width:47px;height:47px}.toolName{font-size:10.5px}.adjustmentsFrame{height:820px}}
