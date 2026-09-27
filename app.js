@@ -1,4 +1,5 @@
-import{Client,handle_file}from"https://cdn.jsdelivr.net/npm/@gradio/client@2.7.0/+esm";
+let Client=null;
+let handle_file=null;
 const fileInput=document.getElementById("fileInput"),addPhoto=document.getElementById("addPhoto"),preview=document.getElementById("preview"),placeholder=document.getElementById("placeholder"),statusBox=document.getElementById("status"),downloadButton=document.getElementById("downloadButton"),adjustmentsToggle=document.getElementById("adjustmentsToggle"),adjustmentsPanel=document.getElementById("adjustmentsPanel"),adjustmentsChevron=document.getElementById("adjustmentsChevron"),adjustmentsFrame=document.getElementById("adjustmentsFrame"),smoothControl=document.getElementById("smoothControl"),smoothSlider=document.getElementById("smoothSlider"),smoothValue=document.getElementById("smoothValue");
 let selectedFile=null,editedBlob=null,adjustmentBaseBlob=null,adjustmentTimer=null,smoothTimer=null;
 const adjustmentIds=["brightness","contrast","warmth","saturation","sharpness","temperature","vibrance","tint","shadows","clarity"],adjustmentValues={};adjustmentIds.forEach(id=>adjustmentValues[id]=0);
@@ -14,22 +15,41 @@ let hockmanAppPromise=null;
 
 async function getHockmanApp(){
   if(!hockmanAppPromise){
-    hockmanAppPromise=Client.connect(HOCKMAN_SPACE,{
-      events:["data","status"],
-      status_callback:(s)=>{
-        if(!s)return;
-        if(s.status==="sleeping")showStatus("Waking Enhance AI...");
-        else if(s.status==="building")showStatus("Enhance AI is starting...");
-        else if(s.status==="running")showStatus("Enhance AI is ready...");
-        else if(s.status==="error" || s.status==="space_error"){
-          showStatus("Enhance AI Space error. Please try again.");
+    hockmanAppPromise=(async()=>{
+      showStatus("Loading Enhance AI...");
+
+      const gradio=await import(
+        "https://cdn.jsdelivr.net/npm/@gradio/client@2.7.0/+esm"
+      );
+
+      Client=gradio.Client;
+      handle_file=gradio.handle_file;
+
+      return await Client.connect(HOCKMAN_SPACE,{
+        events:["data","status"],
+        status_callback:(s)=>{
+          if(!s)return;
+
+          if(s.status==="sleeping"){
+            showStatus("Waking Enhance AI...");
+          }
+          else if(s.status==="building"){
+            showStatus("Enhance AI is starting...");
+          }
+          else if(s.status==="running"){
+            showStatus("Enhance AI is ready...");
+          }
+          else if(s.status==="error" || s.status==="space_error"){
+            showStatus("Enhance AI Space error. Please try again.");
+          }
         }
-      }
-    }).catch(err=>{
+      });
+    })().catch(err=>{
       hockmanAppPromise=null;
       throw err;
     });
   }
+
   return await hockmanAppPromise;
 }
 
