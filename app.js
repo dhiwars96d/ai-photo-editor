@@ -340,3 +340,102 @@ ctx.putImageData(id,0,0);
 if(sharpness!==0||clarity!==0){
 const oc=document.createElement("canvas");
 oc.width=w;oc.height=h;
+const ocx=oc.getContext("2d");
+
+ocx.drawImage(canvas,0,0);
+
+if(sharpness!==0){
+const amount=Math.max(-1,Math.min(1,sharpness/100));
+
+ocx.filter=amount>0
+?`contrast(${100+amount*25}%)`
+:`brightness(${100+amount*8}%)`;
+
+ocx.drawImage(canvas,0,0);
+}
+
+if(clarity!==0){
+const amount=Math.max(-1,Math.min(1,clarity/100));
+
+ocx.filter=amount>0
+?`contrast(${100+amount*18}%)`
+:`brightness(${100+amount*5}%)`;
+
+ocx.globalAlpha=Math.abs(amount)*0.35;
+ocx.drawImage(canvas,0,0);
+ocx.globalAlpha=1;
+}
+
+ctx.clearRect(0,0,w,h);
+ctx.drawImage(oc,0,0,w,h);
+}
+
+editedBlob=await new Promise(resolve=>{
+canvas.toBlob(resolve,"image/jpeg",.94);
+});
+
+preview.src=URL.createObjectURL(editedBlob);
+preview.style.display="block";
+placeholder.style.display="none";
+downloadButton.style.display="block";
+}
+
+function resetAdjustmentValues(){
+adjustmentIds.forEach(id=>{
+adjustmentValues[id]=0;
+});
+
+if(adjustmentsFrame&&adjustmentsFrame.contentWindow){
+adjustmentsFrame.contentWindow.postMessage(
+{
+type:"setValues",
+values:{...adjustmentValues}
+},
+window.location.origin
+);
+}
+}
+
+document.querySelectorAll(".tool").forEach(tool=>{
+tool.addEventListener("click",async()=>{
+if(!selectedFile){
+showStatus("Please select a photo first.");
+return;
+}
+
+const type=tool.dataset.tool;
+
+if(type==="smooth"){
+showSmoothControl();
+return;
+}
+
+hideSmoothControl();
+
+if(type==="enhance"){
+try{
+showStatus("Starting Enhance AI...");
+const b=await runHockmanX2(selectedFile);
+showResult(b);
+showStatus("AI Enhance complete ✓");
+}catch(e){
+console.error(e);
+showStatus("Enhance failed: "+(e.message||"Please try again."));
+}
+return;
+}
+
+if(type==="hair"){
+showStatus("Hair tool is coming soon.");
+return;
+}
+
+if(type==="retouch"){
+showStatus("Retouch tool is coming soon.");
+return;
+}
+});
+});
+
+showSmoothControl();
+hideSmoothControl();
