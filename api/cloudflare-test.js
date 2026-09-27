@@ -18,19 +18,15 @@ export default async function handler(req, res) {
 
   try {
 
-    // -----------------------------
-    // 1. Read uploaded image
-    // -----------------------------
+    // 1. Upload image read karo
     const form = formidable({
       multiples: false,
       keepExtensions: true,
     });
 
-    const [fields, files] =
-      await form.parse(req);
+    const [fields, files] = await form.parse(req);
 
-    const uploadedFile =
-      files.image?.[0];
+    const uploadedFile = files.image?.[0];
 
     if (!uploadedFile) {
       return res.status(400).json({
@@ -38,43 +34,27 @@ export default async function handler(req, res) {
       });
     }
 
+    // 2. Original image read karo
+    const originalBuffer = fs.readFileSync(
+      uploadedFile.filepath
+    );
 
-    // -----------------------------
-    // 2. Read original image
-    // -----------------------------
-    const originalBuffer =
-      fs.readFileSync(
-        uploadedFile.filepath
-      );
+    // 3. Cloudflare ke liye image ko 511x511 se chhota rakho
+    const imageBuffer = await sharp(originalBuffer)
+      .resize({
+        width: 511,
+        height: 511,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({
+        quality: 90,
+      })
+      .toBuffer();
 
-
-    // -----------------------------
-    // 3. Resize image
-    // Cloudflare requires input
-    // smaller than 512x512
-    // -----------------------------
-    const imageBuffer =
-      await sharp(originalBuffer)
-        .resize({
-          width: 511,
-          height: 511,
-          fit: "inside",
-          withoutEnlargement: true,
-        })
-        .jpeg({
-          quality: 90,
-        })
-        .toBuffer();
-
-
-    // -----------------------------
     // 4. Cloudflare credentials
-    // -----------------------------
-    const accountId =
-      process.env.CF_ACCOUNT_ID;
-
-    const apiToken =
-      process.env.CF_API_TOKEN;
+    const accountId = process.env.CF_ACCOUNT_ID;
+    const apiToken = process.env.CF_API_TOKEN;
 
     if (!accountId || !apiToken) {
       return res.status(500).json({
@@ -83,31 +63,23 @@ export default async function handler(req, res) {
       });
     }
 
-
-    // -----------------------------
-    // 5. Cloudflare endpoint
-    // -----------------------------
+    // 5. Cloudflare model
     const apiURL =
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-2-klein-4b`;
 
-
-    // -----------------------------
     // 6. Multipart form
-    // -----------------------------
-    const cloudflareForm =
-      new FormData();
-
+    const cloudflareForm = new FormData();
 
     cloudflareForm.append(
       "input_image_0",
-      new Blob([
-        imageBuffer
-      ], {
-        type: "image/jpeg",
-      }),
+      new Blob(
+        [imageBuffer],
+        {
+          type: "image/jpeg",
+        }
+      ),
       "input.jpg"
     );
-
 
     cloudflareForm.append(
       "prompt",
@@ -141,60 +113,90 @@ Do not make the skin plastic or artificial.
 `
     );
 
+    // 7. Cloudflare AI call
+    const aiResponse = await fetch(
+      apiURL,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+        },
+        body: cloudflareForm,
+      }
+    );
 
-    // -----------------------------
-    // 7. Call Cloudflare
-    // -----------------------------
-    const aiResponse =
-      await fetch(
-        apiURL,
-        {
-          method: "POST",
+    // 8. Response ko TEXT ke roop me sirf ek baar read karo
+    const responseText = await aiResponse.text();
 
-          headers: {
-            "Authorization":
-              `Bearer ${apiToken}`,
-          },
-
-          body: cloudflareForm,
-        }
-      );
-
-
-    // -----------------------------
-    // 8. Read response ONLY ONCE
-    // -----------------------------
-    const responseBuffer =
-      Buffer.from(
-        await aiResponse.arrayBuffer()
-      );
-
-
-    // -----------------------------
-    // 9. Handle Cloudflare error
-    // -----------------------------
+    // 9. Cloudflare error
     if (!aiResponse.ok) {
-
-      const errorText =
-        responseBuffer.toString(
-          "utf8"
-        );
 
       console.error(
         "CLOUDFLARE AI ERROR:",
-        errorText
+        responseText
       );
 
       return res.status(500).json({
         error:
-          `Cloudflare AI failed: ${errorText}`,
+          `Cloudflare AI failed: ${responseText}`,
       });
     }
 
+    // 10. JSON parse karo
+    let data;
 
-    // -----------------------------
-    // 10. Return generated image
-    // -----------------------------
+    try {
+      data = JSON.parse(responseText);
+    } catch (error) {
+
+      console.error(
+        "CLOUDFLARE INVALID JSON:",
+        responseText
+      );
+
+      return res.status(500).json({
+        error:
+          "Cloudflare returned an invalid response.",
+      });
+    }
+
+    // 11. Base64 image nikalo
+    const base64Image =
+      data?.result?.image;
+
+    if (!base64Image) {
+
+      console.error(
+        "CLOUDFLARE RESPONSE:",
+        data
+      );
+
+      return res.status(500).json({
+        error:
+          "Cloudflare response me image nahi mili.",
+      });
+    }
+
+    // 12. Agar data:image prefix ho to hatao
+    const cleanBase64 =
+      base64Image.includes(",")
+        ? base64Image.split(",").pop()
+        : base64Image;
+
+    // 13. Base64 ko actual image buffer me convert karo
+    const outputBuffer = Buffer.from(
+      cleanBase64,
+      "base64"
+    );
+
+    if (!outputBuffer || outputBuffer.length === 0) {
+      return res.status(500).json({
+        error:
+          "Generated image decode nahi ho payi.",
+      });
+    }
+
+    // 14. Actual PNG return karo
     res.setHeader(
       "Content-Type",
       "image/png"
@@ -207,11 +209,9 @@ Do not make the skin plastic or artificial.
 
     return res
       .status(200)
-      .send(responseBuffer);
+      .send(outputBuffer);
 
-  }
-
-  catch (error) {
+  } catch (error) {
 
     console.error(
       "CLOUDFLARE TEST ERROR:",
