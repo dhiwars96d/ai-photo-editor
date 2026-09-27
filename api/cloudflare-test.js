@@ -1,5 +1,6 @@
 import formidable from "formidable";
 import fs from "fs";
+import sharp from "sharp";
 
 export const config = {
   api: {
@@ -8,6 +9,7 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed",
@@ -15,6 +17,7 @@ export default async function handler(req, res) {
   }
 
   try {
+
     // -----------------------------
     // 1. Read uploaded image
     // -----------------------------
@@ -35,16 +38,37 @@ export default async function handler(req, res) {
       });
     }
 
+
     // -----------------------------
-    // 2. Read image file
+    // 2. Read original image
     // -----------------------------
-    const imageBuffer =
+    const originalBuffer =
       fs.readFileSync(
         uploadedFile.filepath
       );
 
+
     // -----------------------------
-    // 3. Cloudflare credentials
+    // 3. Resize image
+    // Cloudflare requires input
+    // smaller than 512x512
+    // -----------------------------
+    const imageBuffer =
+      await sharp(originalBuffer)
+        .resize({
+          width: 511,
+          height: 511,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .jpeg({
+          quality: 90,
+        })
+        .toBuffer();
+
+
+    // -----------------------------
+    // 4. Cloudflare credentials
     // -----------------------------
     const accountId =
       process.env.CF_ACCOUNT_ID;
@@ -59,34 +83,67 @@ export default async function handler(req, res) {
       });
     }
 
+
     // -----------------------------
-    // 4. Cloudflare model endpoint
+    // 5. Cloudflare endpoint
     // -----------------------------
     const apiURL =
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-2-klein-4b`;
 
+
     // -----------------------------
-    // 5. Multipart request
+    // 6. Multipart form
     // -----------------------------
-    const formData =
+    const cloudflareForm =
       new FormData();
 
-    formData.append(
+
+    cloudflareForm.append(
       "input_image_0",
       new Blob([
         imageBuffer
-      ]),
-      uploadedFile.originalFilename ||
-        "image.jpg"
+      ], {
+        type: "image/jpeg",
+      }),
+      "input.jpg"
     );
 
-    formData.append(
+
+    cloudflareForm.append(
       "prompt",
-      "Improve this photo naturally. Keep the exact same person, identity, face shape, facial features, hairstyle and expression unchanged. Make only a subtle improvement to natural skin appearance and overall photo quality. Do not redesign or change the person's face."
+      `
+Improve this photo naturally.
+
+Keep the exact same person.
+Preserve identity completely.
+
+Keep the original:
+face shape,
+facial proportions,
+eyes,
+eyebrows,
+nose,
+lips,
+mouth,
+jawline,
+hair,
+hairstyle,
+facial expression,
+skin color.
+
+Only make a subtle natural improvement
+to the skin appearance.
+
+Do not change the person's identity.
+Do not redesign the face.
+Do not create a different person.
+Do not make the skin plastic or artificial.
+`
     );
+
 
     // -----------------------------
-    // 6. Call Cloudflare
+    // 7. Call Cloudflare
     // -----------------------------
     const aiResponse =
       await fetch(
@@ -99,20 +156,32 @@ export default async function handler(req, res) {
               `Bearer ${apiToken}`,
           },
 
-          body: formData,
+          body: cloudflareForm,
         }
       );
 
+
     // -----------------------------
-    // 7. Check response
+    // 8. Read response ONLY ONCE
+    // -----------------------------
+    const responseBuffer =
+      Buffer.from(
+        await aiResponse.arrayBuffer()
+      );
+
+
+    // -----------------------------
+    // 9. Handle Cloudflare error
     // -----------------------------
     if (!aiResponse.ok) {
 
       const errorText =
-        await aiResponse.text();
+        responseBuffer.toString(
+          "utf8"
+        );
 
       console.error(
-        "CLOUDFLARE TEST ERROR:",
+        "CLOUDFLARE AI ERROR:",
         errorText
       );
 
@@ -122,16 +191,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // -----------------------------
-    // 8. Get image output
-    // -----------------------------
-    const outputBuffer =
-      Buffer.from(
-        await aiResponse.arrayBuffer()
-      );
 
     // -----------------------------
-    // 9. Return image
+    // 10. Return generated image
     // -----------------------------
     res.setHeader(
       "Content-Type",
@@ -145,9 +207,11 @@ export default async function handler(req, res) {
 
     return res
       .status(200)
-      .send(outputBuffer);
+      .send(responseBuffer);
 
-  } catch (error) {
+  }
+
+  catch (error) {
 
     console.error(
       "CLOUDFLARE TEST ERROR:",
@@ -160,4 +224,4 @@ export default async function handler(req, res) {
         "Cloudflare AI test failed",
     });
   }
-}￼Enter
+}
