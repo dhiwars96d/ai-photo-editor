@@ -7,7 +7,9 @@ function showSmoothControl(){smoothControl.classList.add("show")}function hideSm
 adjustmentsToggle.addEventListener("click",()=>{const o=adjustmentsPanel.classList.toggle("open");adjustmentsToggle.classList.toggle("open",o);adjustmentsChevron.textContent=o?"⌄":"›"});
 function sendAdjustmentState(){if(adjustmentsFrame.contentWindow)adjustmentsFrame.contentWindow.postMessage({type:"setValues",values:{...adjustmentValues}},window.location.origin)}
 window.addEventListener("message",async e=>{if(e.source!==adjustmentsFrame.contentWindow)return;const d=e.data||{};if(d.type==="adjustmentReady"){sendAdjustmentState();return}if(d.type==="adjustmentChange"){if(!adjustmentIds.includes(d.id))return;adjustmentValues[d.id]=Number(d.value)||0;if(!adjustmentBaseBlob)return;clearTimeout(adjustmentTimer);adjustmentTimer=setTimeout(async()=>{try{showStatus("Applying adjustment...");await applyAdjustments()}catch(x){console.error(x);showStatus("Adjustment failed. Please try again.")}},120);return}if(d.type==="resetAdjustments"){resetAdjustmentValues();if(!adjustmentBaseBlob)return;editedBlob=adjustmentBaseBlob;preview.src=URL.createObjectURL(adjustmentBaseBlob);preview.style.display="block";placeholder.style.display="none";downloadButton.style.display="block";showStatus("Adjustments reset ✓")}});
-addPhoto.addEventListener("click",()=>fileInput.click());
+addPhoto.addEventListener("click",function(){
+  fileInput.click();
+});
 fileInput.addEventListener("change",()=>{const f=fileInput.files&&fileInput.files[0];if(!f)return;if(!f.type.startsWith("image/")){showStatus("Please select an image file.");return}selectedFile=f;editedBlob=null;adjustmentBaseBlob=f;preview.src=URL.createObjectURL(f);preview.style.display="block";placeholder.style.display="none";downloadButton.style.display="none";statusBox.style.display="none";hideSmoothControl();resetSmoothSlider();resetAdjustmentValues()});
 function showStatus(t){statusBox.textContent=t;statusBox.style.display="block"}
 const HOCKMAN_SPACE="Hockman/real-esrgan-upscaler";
