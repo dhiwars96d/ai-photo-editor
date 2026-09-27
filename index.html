@@ -54,7 +54,7 @@ h1{font-size:34px;line-height:1.12;margin:0 0 12px;letter-spacing:-1px}.subtitle
 <div class="smallNote">Your photo is processed only when you select an editing tool or change an adjustment.</div>
 </div>
 <script type="module">
-import{Client,handle_file}from"https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+import{Client,handle_file}from"https://cdn.jsdelivr.net/npm/@gradio/client@2.7.0/+esm";
 const fileInput=document.getElementById("fileInput"),addPhoto=document.getElementById("addPhoto"),preview=document.getElementById("preview"),placeholder=document.getElementById("placeholder"),statusBox=document.getElementById("status"),downloadButton=document.getElementById("downloadButton"),adjustmentsToggle=document.getElementById("adjustmentsToggle"),adjustmentsPanel=document.getElementById("adjustmentsPanel"),adjustmentsChevron=document.getElementById("adjustmentsChevron"),adjustmentsFrame=document.getElementById("adjustmentsFrame"),smoothControl=document.getElementById("smoothControl"),smoothSlider=document.getElementById("smoothSlider"),smoothValue=document.getElementById("smoothValue");
 let selectedFile=null,editedBlob=null,adjustmentBaseBlob=null,adjustmentTimer=null,smoothTimer=null;
 const adjustmentIds=["brightness","contrast","warmth","saturation","sharpness","temperature","vibrance","tint","shadows","clarity"],adjustmentValues={};adjustmentIds.forEach(id=>adjustmentValues[id]=0);
@@ -66,7 +66,86 @@ addPhoto.addEventListener("click",()=>fileInput.click());
 fileInput.addEventListener("change",()=>{const f=fileInput.files&&fileInput.files[0];if(!f)return;if(!f.type.startsWith("image/")){showStatus("Please select an image file.");return}selectedFile=f;editedBlob=null;adjustmentBaseBlob=f;preview.src=URL.createObjectURL(f);preview.style.display="block";placeholder.style.display="none";downloadButton.style.display="none";statusBox.style.display="none";hideSmoothControl();resetSmoothSlider();resetAdjustmentValues()});
 function showStatus(t){statusBox.textContent=t;statusBox.style.display="block"}
 const HOCKMAN_SPACE="Hockman/real-esrgan-upscaler";
-async function runHockmanX2(file){const app=await Client.connect(HOCKMAN_SPACE),image=handle_file(file),job=app.submit("/process_and_get_output",{img:image});let finalData=null;for await(const m of job){if(m.type==="status"&&m.status){if(m.status==="pending")showStatus("Enhance AI is waiting...");else if(m.status==="generating")showStatus("AI is enhancing your photo...");else if(m.status==="processing")showStatus("Enhancing photo...")}if(m.type==="data")finalData=m.data}if(!finalData||!finalData[0])throw new Error("No image returned from AI");const o=finalData[0];let u=o.url;if(!u&&o.path)u="https://hockman-real-esrgan-upscaler.hf.space/file="+encodeURIComponent(o.path);if(!u)throw new Error("Output image URL missing");const r=await fetch(u);if(!r.ok)throw new Error("Could not download AI result");return await r.blob()}
+let hockmanAppPromise=null;
+
+async function getHockmanApp(){
+  if(!hockmanAppPromise){
+    hockmanAppPromise=Client.connect(HOCKMAN_SPACE,{
+      events:["data","status"],
+      status_callback:(s)=>{
+        if(!s)return;
+        if(s.status==="sleeping")showStatus("Waking Enhance AI...");
+        else if(s.status==="building")showStatus("Enhance AI is starting...");
+        else if(s.status==="running")showStatus("Enhance AI is ready...");
+        else if(s.status==="error" || s.status==="space_error"){
+          showStatus("Enhance AI Space error. Please try again.");
+        }
+      }
+    }).catch(err=>{
+      hockmanAppPromise=null;
+      throw err;
+    });
+  }
+  return await hockmanAppPromise;
+}
+
+async function runHockmanX2(file){
+  showStatus("Connecting to Enhance AI...");
+  const app=await getHockmanApp();
+
+  showStatus("Uploading photo to Enhance AI...");
+  const image=handle_file(file);
+
+  showStatus("Enhancing photo...");
+  const job=app.submit("/process_and_get_output",{img:image});
+
+  let finalData=null;
+
+  for await(const m of job){
+    if(m.type==="status"){
+      const s=m.status||{};
+      if(s.stage==="pending"){
+        const pos=Number.isFinite(s.position)?` (${s.position} in queue)`:"";
+        showStatus("Enhance AI is waiting"+pos+"...");
+      }else if(s.stage==="generating"){
+        showStatus("AI is enhancing your photo...");
+      }else if(s.stage==="error"){
+        throw new Error(s.message||"Enhance AI processing failed");
+      }
+    }
+
+    if(m.type==="data" && m.data){
+      finalData=m.data;
+    }
+  }
+
+  if(!finalData || !finalData[0]){
+    throw new Error("No image returned from Enhance AI");
+  }
+
+  const output=finalData[0];
+  let outputURL=output?.url||output?.path||output;
+
+  if(typeof outputURL!=="string"){
+    throw new Error("Enhance AI returned an invalid image result");
+  }
+
+  if(outputURL.startsWith("/")){
+    outputURL="https://hockman-real-esrgan-upscaler.hf.space"+outputURL;
+  }
+
+  if(outputURL.startsWith("http://")){
+    outputURL="https://"+outputURL.slice(7);
+  }
+
+  const response=await fetch(outputURL);
+  if(!response.ok){
+    throw new Error("Could not download Enhance AI result");
+  }
+
+  return await response.blob();
+}
+
 function loadImage(file){return new Promise((resolve,reject)=>{const i=new Image(),u=URL.createObjectURL(file);i.onload=()=>{URL.revokeObjectURL(u);resolve(i)};i.onerror=()=>{URL.revokeObjectURL(u);reject(new Error("Could not load image"))};i.src=u})}
 
 /* Stronger local Smooth Skin */
@@ -206,7 +285,7 @@ function rgbToHsv(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math
 function hsvToRgb(h,s,v){let r,g,b;const i=Math.floor(h*6),f=h*6-i,p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);switch(i%6){case 0:r=v;g=t;b=p;break;case 1:r=q;g=v;b=p;break;case 2:r=p;g=v;b=t;break;case 3:r=p;g=q;b=v;break;case 4:r=t;g=p;b=v;break;default:r=v;g=p;b=q}return{r:r*255,g:g*255,b:b*255}}
 async function applyAdjustments(){if(!adjustmentBaseBlob)return;const img=await loadImage(adjustmentBaseBlob),mw=1400,scale=Math.min(1,mw/img.naturalWidth),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale)),canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(img,0,0,w,h);const id=ctx.getImageData(0,0,w,h),d=id.data,brightness=+adjustmentValues.brightness,contrast=+adjustmentValues.contrast,warmth=+adjustmentValues.warmth,saturation=+adjustmentValues.saturation,temperature=+adjustmentValues.temperature,vibrance=+adjustmentValues.vibrance,tint=+adjustmentValues.tint,shadows=+adjustmentValues.shadows,sharpness=+adjustmentValues.sharpness,clarity=+adjustmentValues.clarity,cf=(259*(contrast+255))/(255*(259-contrast));for(let i=0;i<d.length;i+=4){let r=d[i],g=d[i+1],b=d[i+2],ba=brightness*2.55;r+=ba;g+=ba;b+=ba;r=cf*(r-128)+128;g=cf*(g-128)+128;b=cf*(b-128)+128;const wa=warmth*.65;r+=wa;b-=wa;g+=wa*.1;const ta=temperature*.55;r+=ta*.75;g+=ta*.08;b-=ta*.9;const tia=tint*.6;r+=tia;b+=tia;g-=tia;const lum=.2126*r+.7152*g+.0722*b,sf=Math.max(0,Math.min(1,(145-lum)/145)),sha=shadows*1.25*sf;r+=sha;g+=sha;b+=sha;let hsv=rgbToHsv(clamp(r),clamp(g),clamp(b));hsv.s=Math.max(0,Math.min(1,hsv.s*(saturation>=0?1+saturation/100:1+saturation/120)));const va=vibrance/100;if(va>0)hsv.s=Math.min(1,hsv.s+va*(1-hsv.s)*.75);else hsv.s=Math.max(0,hsv.s+va*.35);const rgb=hsvToRgb(hsv.h,hsv.s,hsv.v);d[i]=clamp(rgb.r);d[i+1]=clamp(rgb.g);d[i+2]=clamp(rgb.b)}ctx.putImageData(id,0,0);if(sharpness!==0||clarity!==0){const oc=document.createElement("canvas");oc.width=w;oc.height=h;const ox=oc.getContext("2d",{willReadFrequently:true});ox.drawImage(canvas,0,0);const bl=document.createElement("canvas");bl.width=w;bl.height=h;const bx=bl.getContext("2d");bx.filter="blur("+(clarity<0?7:4)+"px)";bx.drawImage(oc,0,0);const od=ox.getImageData(0,0,w,h).data,bd=bx.getImageData(0,0,w,h).data,total=sharpness/100*.85+clarity/100*.55,out=ox.createImageData(w,h).data;for(let i=0;i<od.length;i+=4){out[i]=clamp(od[i]+(od[i]-bd[i])*total);out[i+1]=clamp(od[i+1]+(od[i+1]-bd[i+1])*total);out[i+2]=clamp(od[i+2]+(od[i+2]-bd[i+2])*total);out[i+3]=255}const fd=ox.createImageData(w,h);fd.data.set(out);ox.putImageData(fd,0,0);ctx.clearRect(0,0,w,h);ctx.drawImage(oc,0,0)}const blob=await new Promise(r=>canvas.toBlob(r,"image/jpeg",.94));if(!blob)return;editedBlob=blob;preview.src=URL.createObjectURL(blob);preview.style.display="block";placeholder.style.display="none";downloadButton.style.display="block";showStatus("Photo adjustment applied ✓")}
 function resetAdjustmentValues(){adjustmentIds.forEach(id=>adjustmentValues[id]=0);sendAdjustmentState()}
-document.querySelectorAll(".tool").forEach(tool=>{tool.addEventListener("click",async()=>{if(!selectedFile){alert("Please select a photo first.");return}const type=tool.dataset.tool;document.querySelectorAll(".tool").forEach(x=>x.classList.remove("active"));tool.classList.add("active");downloadButton.style.display="none";if(type==="smooth")showSmoothControl();else hideSmoothControl();try{if(type==="enhance"){showStatus("Connecting to Enhance AI...");showResult(await runHockmanX2(selectedFile));showStatus("AI Enhance complete! ✨")}else if(type==="smooth"){resetSmoothSlider();showStatus("Applying Skin Smooth 50%...");await new Promise(r=>setTimeout(r,50));showSmoothResult(await smoothSkin(selectedFile,50))}else if(type==="hair"){showStatus("Hair AI is coming next.")}else if(type==="retouch"){showStatus("Retouch AI is coming next.")}}catch(e){console.error(e);showStatus("Something went wrong. Please try again.")}})});
+document.querySelectorAll(".tool").forEach(tool=>{tool.addEventListener("click",async()=>{if(!selectedFile){alert("Please select a photo first.");return}const type=tool.dataset.tool;document.querySelectorAll(".tool").forEach(x=>x.classList.remove("active"));tool.classList.add("active");downloadButton.style.display="none";if(type==="smooth")showSmoothControl();else hideSmoothControl();try{if(type==="enhance"){showStatus("Connecting to Enhance AI...");showResult(await runHockmanX2(selectedFile));showStatus("AI Enhance complete! ✨")}else if(type==="smooth"){resetSmoothSlider();showStatus("Applying Skin Smooth 50%...");await new Promise(r=>setTimeout(r,50));showSmoothResult(await smoothSkin(selectedFile,50))}else if(type==="hair"){showStatus("Hair AI is coming next.")}else if(type==="retouch"){showStatus("Retouch AI is coming next.")}}catch(e){console.error(e);showStatus("Enhance failed: "+(e?.message||"Unknown error"))}})});
 hideSmoothControl();resetSmoothSlider();resetAdjustmentValues();
 </script>
 </body>
