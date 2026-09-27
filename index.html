@@ -6,7 +6,9 @@
 <title>AI Photo Editor</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -122,7 +124,10 @@ h1{
   margin:24px 0 12px;
 }
 
-/* AI TOOLS */
+
+/* =========================================================
+   AI TOOLS
+========================================================= */
 
 .tools{
   display:grid;
@@ -178,7 +183,69 @@ h1{
   white-space:nowrap;
 }
 
-/* ADJUSTMENTS */
+
+/* =========================================================
+   SMOOTH SKIN CONTROL
+========================================================= */
+
+.smoothControl{
+  display:none;
+  width:100%;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:17px;
+  padding:14px 15px;
+  margin-top:14px;
+  box-shadow:0 5px 18px rgba(0,0,0,.04);
+}
+
+.smoothControl.show{
+  display:block;
+}
+
+.smoothTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+
+.smoothLabel{
+  font-size:14px;
+  font-weight:700;
+  color:#111827;
+}
+
+#smoothValue{
+  min-width:38px;
+  text-align:center;
+  background:#eef2ff;
+  color:#4338ca;
+  border-radius:10px;
+  padding:5px 8px;
+  font-size:13px;
+  font-weight:700;
+}
+
+#smoothSlider{
+  width:100%;
+  margin:0;
+  accent-color:#6366f1;
+  cursor:pointer;
+}
+
+.smoothScale{
+  display:flex;
+  justify-content:space-between;
+  margin-top:5px;
+  color:#9ca3af;
+  font-size:10px;
+}
+
+
+/* =========================================================
+   ADJUSTMENTS
+========================================================= */
 
 .adjustmentsToggle{
   width:100%;
@@ -232,7 +299,10 @@ h1{
   background:transparent;
 }
 
-/* STATUS */
+
+/* =========================================================
+   STATUS
+========================================================= */
 
 .status{
   display:none;
@@ -271,6 +341,11 @@ h1{
   margin-top:14px;
   line-height:1.5;
 }
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media(max-width:380px){
 
@@ -324,7 +399,10 @@ h1{
   Enhance your photos and improve skin appearance with simple AI-powered tools.
 </div>
 
-<!-- PHOTO CARD -->
+
+<!-- =====================================================
+     PHOTO CARD
+===================================================== -->
 
 <div class="photoCard">
 
@@ -347,11 +425,13 @@ h1{
 
   </div>
 
+
   <input
     type="file"
     id="fileInput"
     accept="image/*"
   >
+
 
   <button
     class="addButton"
@@ -363,11 +443,15 @@ h1{
 
 </div>
 
-<!-- AI TOOLS -->
+
+<!-- =====================================================
+     AI TOOLS
+===================================================== -->
 
 <div class="sectionTitle">
   AI Tools
 </div>
+
 
 <div class="tools">
 
@@ -375,68 +459,131 @@ h1{
     class="tool"
     data-tool="enhance"
   >
+
     <img
       class="toolIcon"
       src="enhance-icon.png"
       alt="Enhance"
     >
+
     <div class="toolName">
       Enhance
     </div>
+
   </div>
+
 
   <div
     class="tool"
     data-tool="smooth"
   >
+
     <img
       class="toolIcon"
       src="smooth-icon.png"
       alt="Smooth Skin"
     >
+
     <div class="toolName">
       Smooth Skin
     </div>
+
   </div>
+
 
   <div
     class="tool"
     data-tool="hair"
   >
+
     <img
       class="toolIcon"
       src="hair-icon.png"
       alt="Hair"
     >
+
     <div class="toolName">
       Hair
     </div>
+
   </div>
+
 
   <div
     class="tool"
     data-tool="retouch"
   >
+
     <img
       class="toolIcon"
       src="retouch-icon.png"
       alt="Retouch"
     >
+
     <div class="toolName">
       Retouch
     </div>
+
   </div>
 
 </div>
 
-<!-- ADJUSTMENTS BUTTON -->
+
+<!-- =====================================================
+     SMOOTH SKIN 1-100 CONTROL
+===================================================== -->
+
+<div
+  class="smoothControl"
+  id="smoothControl"
+>
+
+  <div class="smoothTop">
+
+    <span class="smoothLabel">
+      Skin Smooth
+    </span>
+
+    <span id="smoothValue">
+      50
+    </span>
+
+  </div>
+
+
+  <input
+    type="range"
+    id="smoothSlider"
+    min="1"
+    max="100"
+    value="50"
+  >
+
+
+  <div class="smoothScale">
+
+    <span>Natural</span>
+
+    <span>Strong</span>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     ADJUSTMENTS BUTTON
+===================================================== -->
 
 <button
   class="adjustmentsToggle"
   id="adjustmentsToggle"
   type="button"
 >
-  <span>⚙ Adjustments</span>
+
+  <span>
+    ⚙ Adjustments
+  </span>
 
   <span
     class="adjustmentsChevron"
@@ -444,9 +591,13 @@ h1{
   >
     ›
   </span>
+
 </button>
 
-<!-- SEPARATE ADJUSTMENTS FILE -->
+
+<!-- =====================================================
+     ADJUSTMENTS FILE
+===================================================== -->
 
 <div
   class="adjustmentsPanel"
@@ -462,10 +613,12 @@ h1{
 
 </div>
 
+
 <div
   class="status"
   id="status"
 ></div>
+
 
 <button
   class="downloadButton"
@@ -475,11 +628,13 @@ h1{
   Download Edited Photo
 </button>
 
+
 <div class="smallNote">
   Your photo is processed only when you select an editing tool or change an adjustment.
 </div>
 
 </div>
+
 
 <script type="module">
 
@@ -524,6 +679,24 @@ const adjustmentsFrame =
   document.getElementById("adjustmentsFrame");
 
 
+/* =========================================================
+   SMOOTH ELEMENTS
+========================================================= */
+
+const smoothControl =
+  document.getElementById("smoothControl");
+
+const smoothSlider =
+  document.getElementById("smoothSlider");
+
+const smoothValue =
+  document.getElementById("smoothValue");
+
+
+/* =========================================================
+   VARIABLES
+========================================================= */
+
 let selectedFile = null;
 
 let editedBlob = null;
@@ -531,6 +704,8 @@ let editedBlob = null;
 let adjustmentBaseBlob = null;
 
 let adjustmentTimer = null;
+
+let smoothTimer = null;
 
 
 /* =========================================================
@@ -555,6 +730,33 @@ const adjustmentValues = {};
 adjustmentIds.forEach(
   id => adjustmentValues[id] = 0
 );
+
+
+/* =========================================================
+   SMOOTH CONTROL HELPERS
+========================================================= */
+
+function showSmoothControl(){
+
+  smoothControl.classList.add("show");
+
+}
+
+
+function hideSmoothControl(){
+
+  smoothControl.classList.remove("show");
+
+}
+
+
+function resetSmoothSlider(){
+
+  smoothSlider.value = 50;
+
+  smoothValue.textContent = "50";
+
+}
 
 
 /* =========================================================
@@ -801,6 +1003,10 @@ fileInput.addEventListener(
       "none";
 
 
+    hideSmoothControl();
+
+    resetSmoothSlider();
+
     resetAdjustmentValues();
 
   }
@@ -1027,13 +1233,17 @@ function loadImage(file){
 
 
 /* =========================================================
-   SMOOTH SKIN
+   SMOOTH SKIN 1-100
 ========================================================= */
 
-async function smoothSkin(file){
+async function smoothSkin(
+  file,
+  intensity = 50
+){
 
   const img =
     await loadImage(file);
+
 
   const w =
     img.naturalWidth;
@@ -1080,6 +1290,8 @@ async function smoothSkin(file){
       h
     );
 
+
+  /* WORKING SIZE */
 
   const maxWorkWidth =
     900;
@@ -1135,6 +1347,8 @@ async function smoothSkin(file){
   );
 
 
+  /* FIRST BLUR */
+
   const smoothCanvas =
     document.createElement(
       "canvas"
@@ -1156,12 +1370,15 @@ async function smoothSkin(file){
   smoothCtx.filter =
     "blur(3.2px)";
 
+
   smoothCtx.drawImage(
     work,
     0,
     0
   );
 
+
+  /* SECOND BLUR */
 
   const pass2 =
     document.createElement(
@@ -1184,12 +1401,15 @@ async function smoothSkin(file){
   pass2Ctx.filter =
     "blur(1.8px)";
 
+
   pass2Ctx.drawImage(
     smoothCanvas,
     0,
     0
   );
 
+
+  /* RETURN TO ORIGINAL SIZE */
 
   const blurred =
     document.createElement(
@@ -1220,6 +1440,10 @@ async function smoothSkin(file){
     h
   );
 
+
+  /* =====================================================
+     FACE MASK
+  ===================================================== */
 
   const mask =
     document.createElement(
@@ -1287,7 +1511,9 @@ async function smoothSkin(file){
   maskCtx.fillStyle =
     gradient;
 
+
   maskCtx.beginPath();
+
 
   maskCtx.ellipse(
     faceX,
@@ -1299,8 +1525,13 @@ async function smoothSkin(file){
     Math.PI * 2
   );
 
+
   maskCtx.fill();
 
+
+  /* =====================================================
+     PROTECT EYES / EYEBROWS / NOSE / MOUTH
+  ===================================================== */
 
   maskCtx.globalCompositeOperation =
     "destination-out";
@@ -1333,19 +1564,26 @@ async function smoothSkin(file){
   const eyeY =
     h * .40;
 
+
   const eyeRX =
     w * .075;
+
 
   const eyeRY =
     h * .028;
 
 
+  /* LEFT EYE */
+
   cutEllipse(
     w * .405,
     eyeY,
     eyeRX,
     eyeRY
   );
+
+
+  /* RIGHT EYE */
 
   cutEllipse(
     w * .595,
@@ -1354,6 +1592,9 @@ async function smoothSkin(file){
     eyeRY
   );
 
+
+  /* LEFT EYEBROW */
+
   cutEllipse(
     w * .405,
     h * .355,
@@ -1361,12 +1602,18 @@ async function smoothSkin(file){
     h * .018
   );
 
+
+  /* RIGHT EYEBROW */
+
   cutEllipse(
     w * .595,
     h * .355,
     w * .085,
     h * .018
   );
+
+
+  /* MOUTH */
 
   cutEllipse(
     w * .50,
@@ -1374,6 +1621,9 @@ async function smoothSkin(file){
     w * .105,
     h * .035
   );
+
+
+  /* NOSE */
 
   cutEllipse(
     w * .50,
@@ -1415,9 +1665,36 @@ async function smoothSkin(file){
   const src =
     original.data;
 
+
   const dst =
     result.data;
 
+
+  /* =====================================================
+     INTENSITY
+  ===================================================== */
+
+  const safeIntensity =
+    Math.max(
+      1,
+      Math.min(
+        100,
+        Number(intensity) || 50
+      )
+    );
+
+
+  const intensityFactor =
+    safeIntensity / 100;
+
+
+  const baseStrength =
+    .78 * intensityFactor;
+
+
+  /* =====================================================
+     PIXEL BLENDING
+  ===================================================== */
 
   for(
     let i=0;
@@ -1459,6 +1736,7 @@ async function smoothSkin(file){
     const b =
       src[i+2];
 
+
     const br =
       blurredData[i];
 
@@ -1476,8 +1754,14 @@ async function smoothSkin(file){
 
 
     let strength =
-      .78 * maskValue;
+      baseStrength *
+      maskValue;
 
+
+    /*
+      Strong edges/details are protected.
+      This helps keep skin from looking plastic.
+    */
 
     if(
       difference > 70
@@ -1510,17 +1794,20 @@ async function smoothSkin(file){
         br * strength
       );
 
+
     dst[i+1] =
       Math.round(
         g * (1-strength) +
         bg * strength
       );
 
+
     dst[i+2] =
       Math.round(
         b * (1-strength) +
         bb * strength
       );
+
 
     dst[i+3] =
       255;
@@ -1549,6 +1836,126 @@ async function smoothSkin(file){
 
 
 /* =========================================================
+   APPLY SMOOTH RESULT
+========================================================= */
+
+function showSmoothResult(blob){
+
+  if(!blob){
+    return;
+  }
+
+
+  editedBlob =
+    blob;
+
+
+  /*
+    Smooth result becomes the current
+    edited image.
+  */
+
+  preview.src =
+    URL.createObjectURL(
+      blob
+    );
+
+
+  preview.style.display =
+    "block";
+
+
+  placeholder.style.display =
+    "none";
+
+
+  downloadButton.style.display =
+    "block";
+
+
+  showStatus(
+    "Smooth Skin applied ✓"
+  );
+
+}
+
+
+/* =========================================================
+   SMOOTH SLIDER
+========================================================= */
+
+smoothSlider.addEventListener(
+  "input",
+  () => {
+
+    if(!selectedFile){
+      return;
+    }
+
+
+    const value =
+      Number(
+        smoothSlider.value
+      );
+
+
+    smoothValue.textContent =
+      value;
+
+
+    clearTimeout(
+      smoothTimer
+    );
+
+
+    smoothTimer =
+      setTimeout(
+        async () => {
+
+          try{
+
+            showStatus(
+              "Applying Skin Smooth " +
+              value +
+              "%..."
+            );
+
+
+            const blob =
+              await smoothSkin(
+                selectedFile,
+                value
+              );
+
+
+            showSmoothResult(
+              blob
+            );
+
+          }
+
+          catch(error){
+
+            console.error(
+              error
+            );
+
+
+            showStatus(
+              "Smooth Skin failed. Please try again."
+            );
+
+          }
+
+        },
+        120
+      );
+
+  }
+);
+
+
+/* =========================================================
    SHOW RESULT
 ========================================================= */
 
@@ -1566,11 +1973,14 @@ function showResult(blob){
       blob
     );
 
+
   preview.style.display =
     "block";
 
+
   placeholder.style.display =
     "none";
+
 
   downloadButton.style.display =
     "block";
@@ -1605,8 +2015,10 @@ downloadButton.addEventListener(
         "a"
       );
 
+
     a.href =
       url;
+
 
     a.download =
       "AI-Edited-Photo.jpg";
@@ -1616,7 +2028,9 @@ downloadButton.addEventListener(
       a
     );
 
+
     a.click();
+
 
     a.remove();
 
@@ -1671,6 +2085,7 @@ function rgbToHsv(
       b
     );
 
+
   const min =
     Math.min(
       r,
@@ -1685,6 +2100,7 @@ function rgbToHsv(
 
   const v =
     max;
+
 
   const d =
     max - min;
@@ -1732,6 +2148,7 @@ function rgbToHsv(
 
     }
 
+
     h /= 6;
 
   }
@@ -1762,14 +2179,18 @@ function hsvToRgb(
       h * 6
     );
 
+
   const f =
     h * 6 - i;
+
 
   const p =
     v * (1-s);
 
+
   const q =
     v * (1-f*s);
+
 
   const t =
     v * (1-(1-f)*s);
@@ -1924,45 +2345,54 @@ async function applyAdjustments(){
       adjustmentValues.brightness
     );
 
+
   const contrast =
     Number(
       adjustmentValues.contrast
     );
+
 
   const warmth =
     Number(
       adjustmentValues.warmth
     );
 
+
   const saturation =
     Number(
       adjustmentValues.saturation
     );
+
 
   const temperature =
     Number(
       adjustmentValues.temperature
     );
 
+
   const vibrance =
     Number(
       adjustmentValues.vibrance
     );
+
 
   const tint =
     Number(
       adjustmentValues.tint
     );
 
+
   const shadows =
     Number(
       adjustmentValues.shadows
     );
 
+
   const sharpness =
     Number(
       adjustmentValues.sharpness
     );
+
 
   const clarity =
     Number(
@@ -1984,8 +2414,10 @@ async function applyAdjustments(){
     let r =
       data[i];
 
+
     let g =
       data[i+1];
+
 
     let b =
       data[i+2];
@@ -1996,11 +2428,14 @@ async function applyAdjustments(){
     const brightnessAmount =
       brightness * 2.55;
 
+
     r +=
       brightnessAmount;
 
+
     g +=
       brightnessAmount;
+
 
     b +=
       brightnessAmount;
@@ -2013,10 +2448,12 @@ async function applyAdjustments(){
       (r-128) +
       128;
 
+
     g =
       contrastFactor *
       (g-128) +
       128;
+
 
     b =
       contrastFactor *
@@ -2029,11 +2466,14 @@ async function applyAdjustments(){
     const warmthAmount =
       warmth * .65;
 
+
     r +=
       warmthAmount;
 
+
     b -=
       warmthAmount;
+
 
     g +=
       warmthAmount * .10;
@@ -2044,11 +2484,14 @@ async function applyAdjustments(){
     const tempAmount =
       temperature * .55;
 
+
     r +=
       tempAmount * .75;
 
+
     g +=
       tempAmount * .08;
+
 
     b -=
       tempAmount * .90;
@@ -2059,11 +2502,14 @@ async function applyAdjustments(){
     const tintAmount =
       tint * .60;
 
+
     r +=
       tintAmount;
 
+
     b +=
       tintAmount;
+
 
     g -=
       tintAmount;
@@ -2096,8 +2542,10 @@ async function applyAdjustments(){
     r +=
       shadowAmount;
 
+
     g +=
       shadowAmount;
+
 
     b +=
       shadowAmount;
@@ -2193,8 +2641,10 @@ async function applyAdjustments(){
     r =
       rgb.r;
 
+
     g =
       rgb.g;
+
 
     b =
       rgb.b;
@@ -2203,8 +2653,10 @@ async function applyAdjustments(){
     data[i] =
       clamp(r);
 
+
     data[i+1] =
       clamp(g);
+
 
     data[i+2] =
       clamp(b);
@@ -2231,8 +2683,10 @@ async function applyAdjustments(){
         "canvas"
       );
 
+
     originalCanvas.width =
       w;
+
 
     originalCanvas.height =
       h;
@@ -2259,8 +2713,10 @@ async function applyAdjustments(){
         "canvas"
       );
 
+
     blurCanvas.width =
       w;
+
 
     blurCanvas.height =
       h;
@@ -2346,17 +2802,22 @@ async function applyAdjustments(){
       const r =
         originalData[i];
 
+
       const g =
         originalData[i+1];
+
 
       const b =
         originalData[i+2];
 
+
       const br =
         blurData[i];
 
+
       const bg =
         blurData[i+1];
+
 
       const bb =
         blurData[i+2];
@@ -2365,8 +2826,10 @@ async function applyAdjustments(){
       const detailR =
         r-br;
 
+
       const detailG =
         g-bg;
+
 
       const detailB =
         b-bb;
@@ -2379,6 +2842,7 @@ async function applyAdjustments(){
           totalLocal
         );
 
+
       out[i+1] =
         clamp(
           g +
@@ -2386,12 +2850,14 @@ async function applyAdjustments(){
           totalLocal
         );
 
+
       out[i+2] =
         clamp(
           b +
           detailB *
           totalLocal
         );
+
 
       out[i+3] =
         255;
@@ -2449,11 +2915,14 @@ async function applyAdjustments(){
       blob
     );
 
+
   preview.style.display =
     "block";
 
+
   placeholder.style.display =
     "none";
+
 
   downloadButton.style.display =
     "block";
@@ -2467,7 +2936,7 @@ async function applyAdjustments(){
 
 
 /* =========================================================
-   RESET
+   RESET ADJUSTMENTS
 ========================================================= */
 
 function resetAdjustmentValues(){
@@ -2476,6 +2945,7 @@ function resetAdjustmentValues(){
     id =>
       adjustmentValues[id] = 0
   );
+
 
   sendAdjustmentState();
 
@@ -2529,9 +2999,31 @@ document
             "none";
 
 
+          /*
+            Smooth control:
+            sirf Smooth Skin par dikhega.
+          */
+
+          if(
+            type === "smooth"
+          ){
+
+            showSmoothControl();
+
+          }
+
+          else{
+
+            hideSmoothControl();
+
+          }
+
+
           try{
 
-            /* ENHANCE */
+            /* =================================================
+               ENHANCE
+            ================================================= */
 
             if(
               type ===
@@ -2561,15 +3053,20 @@ document
             }
 
 
-            /* SMOOTH SKIN */
+            /* =================================================
+               SMOOTH SKIN
+            ================================================= */
 
             else if(
               type ===
               "smooth"
             ){
 
+              resetSmoothSlider();
+
+
               showStatus(
-                "Smoothing skin texture..."
+                "Applying Skin Smooth 50%..."
               );
 
 
@@ -2577,30 +3074,29 @@ document
                 resolve =>
                   setTimeout(
                     resolve,
-                    80
+                    50
                   )
               );
 
 
               const blob =
                 await smoothSkin(
-                  selectedFile
+                  selectedFile,
+                  50
                 );
 
 
-              showResult(
+              showSmoothResult(
                 blob
               );
 
 
-              showStatus(
-                "Smooth Skin complete! ✨"
-              );
-
             }
 
 
-            /* HAIR */
+            /* =================================================
+               HAIR
+            ================================================= */
 
             else if(
               type ===
@@ -2618,7 +3114,9 @@ document
             }
 
 
-            /* RETOUCH */
+            /* =================================================
+               RETOUCH
+            ================================================= */
 
             else if(
               type ===
@@ -2660,6 +3158,10 @@ document
 /* =========================================================
    INITIAL
 ========================================================= */
+
+hideSmoothControl();
+
+resetSmoothSlider();
 
 resetAdjustmentValues();
 
