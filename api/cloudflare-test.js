@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
   try {
 
-    // 1. Upload image read karo
+    // 1. Upload image
     const form = formidable({
       multiples: false,
       keepExtensions: true,
@@ -34,12 +34,12 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Original image read karo
+    // 2. Original image
     const originalBuffer = fs.readFileSync(
       uploadedFile.filepath
     );
 
-    // 3. Cloudflare ke liye image ko 511x511 se chhota rakho
+    // 3. Resize for Cloudflare
     const imageBuffer = await sharp(originalBuffer)
       .resize({
         width: 511,
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
         withoutEnlargement: true,
       })
       .jpeg({
-        quality: 90,
+        quality: 92,
       })
       .toBuffer();
 
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
     const apiURL =
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-2-klein-4b`;
 
-    // 6. Multipart form
+    // 6. Multipart request
     const cloudflareForm = new FormData();
 
     cloudflareForm.append(
@@ -81,39 +81,89 @@ export default async function handler(req, res) {
       "input.jpg"
     );
 
+    // 7. STRONG IDENTITY PRESERVATION PROMPT
     cloudflareForm.append(
       "prompt",
       `
-Improve this photo naturally.
+EDIT THE EXISTING PHOTO.
 
-Keep the exact same person.
-Preserve identity completely.
+IDENTITY PRESERVATION IS THE HIGHEST PRIORITY.
 
-Keep the original:
-face shape,
-facial proportions,
-eyes,
-eyebrows,
-nose,
-lips,
-mouth,
-jawline,
-hair,
-hairstyle,
-facial expression,
-skin color.
+Keep EXACTLY the same person.
 
-Only make a subtle natural improvement
-to the skin appearance.
+Do NOT regenerate, redesign, beautify, reconstruct,
+or replace the face.
 
-Do not change the person's identity.
-Do not redesign the face.
-Do not create a different person.
-Do not make the skin plastic or artificial.
+PRESERVE EXACTLY:
+- both eyes
+- iris shape and position
+- pupils
+- eyelids
+- eyebrows
+- nose shape
+- nostrils
+- lips
+- mouth shape
+- teeth if visible
+- cheeks
+- cheekbones
+- jawline
+- chin
+- forehead
+- face width
+- face height
+- facial proportions
+- skin tone
+- hair
+- hairstyle
+- earrings
+- facial expression
+- head position
+
+Do NOT change the person's identity.
+
+Do NOT change eye shape.
+Do NOT change eye position.
+Do NOT change the nose.
+Do NOT change the lips.
+Do NOT change the jaw.
+Do NOT change facial proportions.
+
+ONLY improve the natural appearance of the skin.
+
+Reduce minor skin imperfections subtly.
+Preserve natural pores and skin texture.
+Keep realistic skin detail.
+
+The result must look like the SAME ORIGINAL PHOTO
+of the SAME PERSON after a very subtle skin improvement.
+
+If changing the face is necessary, DO NOT change it.
+Preserve the original face instead.
+
+No beauty filter.
+No face reconstruction.
+No face enhancement.
+No facial redesign.
+No artificial skin.
+No plastic skin.
+No makeup changes.
 `
     );
 
-    // 7. Cloudflare AI call
+    // 8. Fixed seed for repeatable testing
+    cloudflareForm.append(
+      "seed",
+      "24681357"
+    );
+
+    // 9. Lower guidance
+    cloudflareForm.append(
+      "guidance",
+      "1.5"
+    );
+
+    // 10. Cloudflare AI
     const aiResponse = await fetch(
       apiURL,
       {
@@ -125,10 +175,10 @@ Do not make the skin plastic or artificial.
       }
     );
 
-    // 8. Response ko TEXT ke roop me sirf ek baar read karo
+    // 11. Read response once
     const responseText = await aiResponse.text();
 
-    // 9. Cloudflare error
+    // 12. Cloudflare error
     if (!aiResponse.ok) {
 
       console.error(
@@ -142,7 +192,7 @@ Do not make the skin plastic or artificial.
       });
     }
 
-    // 10. JSON parse karo
+    // 13. JSON parse
     let data;
 
     try {
@@ -150,17 +200,17 @@ Do not make the skin plastic or artificial.
     } catch (error) {
 
       console.error(
-        "CLOUDFLARE INVALID JSON:",
+        "INVALID CLOUDFLARE JSON:",
         responseText
       );
 
       return res.status(500).json({
         error:
-          "Cloudflare returned an invalid response.",
+          "Cloudflare returned invalid JSON.",
       });
     }
 
-    // 11. Base64 image nikalo
+    // 14. Base64 image
     const base64Image =
       data?.result?.image;
 
@@ -177,26 +227,29 @@ Do not make the skin plastic or artificial.
       });
     }
 
-    // 12. Agar data:image prefix ho to hatao
+    // 15. Remove data URL prefix if present
     const cleanBase64 =
       base64Image.includes(",")
         ? base64Image.split(",").pop()
         : base64Image;
 
-    // 13. Base64 ko actual image buffer me convert karo
+    // 16. Decode Base64
     const outputBuffer = Buffer.from(
       cleanBase64,
       "base64"
     );
 
-    if (!outputBuffer || outputBuffer.length === 0) {
+    if (
+      !outputBuffer ||
+      outputBuffer.length === 0
+    ) {
       return res.status(500).json({
         error:
           "Generated image decode nahi ho payi.",
       });
     }
 
-    // 14. Actual PNG return karo
+    // 17. Return PNG
     res.setHeader(
       "Content-Type",
       "image/png"
