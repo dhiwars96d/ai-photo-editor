@@ -96,7 +96,34 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
 
 </div>
 
-<!-- Adjustments -->
+     <!-- Hair Color Panel -->
+<div class="hairColorPanel" id="hairColorPanel" style="display:none;">
+
+  <div class="hairColorTitle">Hair Color</div>
+
+  <div class="hairColors">
+    <button class="hairColorOption" data-color="#111111">Black</button>
+    <button class="hairColorOption" data-color="#5b321b">Brown</button>
+    <button class="hairColorOption" data-color="#d6b36a">Blonde</button>
+    <button class="hairColorOption" data-color="#8b2f1f">Red</button>
+  </div>
+
+  <div class="hairIntensityTop">
+    <span>Intensity</span>
+    <span id="hairIntensityValue">50</span>
+  </div>
+
+  <input
+    type="range"
+    id="hairIntensitySlider"
+    min="1"
+    max="100"
+    value="50"
+  >
+
+</div>
+
+     <!-- Adjustments -->
 <button
   class="adjustmentsToggle"
   id="adjustmentsToggle"
