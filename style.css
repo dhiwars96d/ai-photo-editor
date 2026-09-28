@@ -60,3 +60,69 @@ h1{font-size:34px;line-height:1.12;margin:0 0 12px;letter-spacing:-1px}.subtitle
 .hairOptionIcon{
   font-size:20px;
 }
+
+/* Hair Color Panel */
+.hairColorPanel{
+  display:none;
+  width:100%;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:17px;
+  padding:15px;
+  margin-top:14px;
+  box-shadow:0 5px 18px rgba(0,0,0,.04);
+}
+
+.hairColorTitle{
+  font-size:14px;
+  font-weight:700;
+  margin-bottom:12px;
+}
+
+.hairColors{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.hairColorOption{
+  border:1px solid #e5e7eb;
+  background:#fff;
+  color:#111827;
+  border-radius:12px;
+  padding:10px 5px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.hairColorOption:active{
+  border-color:#6366f1;
+  background:#f5f3ff;
+}
+
+.hairIntensityTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:16px;
+  margin-bottom:8px;
+  font-size:13px;
+  font-weight:700;
+}
+
+#hairIntensityValue{
+  min-width:38px;
+  text-align:center;
+  background:#eef2ff;
+  color:#4338ca;
+  border-radius:10px;
+  padding:5px 8px;
+  font-size:12px;
+}
+
+#hairIntensitySlider{
+  width:100%;
+  margin:0;
+  accent-color:#6366f1;
+}
