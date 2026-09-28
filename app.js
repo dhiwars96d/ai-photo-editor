@@ -5,6 +5,7 @@ let selectedFile=null,editedBlob=null,adjustmentBaseBlob=null,adjustmentTimer=nu
 const hairMenu=document.getElementById("hairMenu");
 const hairGrow=document.getElementById("hairGrow");
 const hairColor=document.getElementById("hairColor");
+const hairColorPanel=document.getElementById("hairColorPanel");
 const adjustmentIds=["brightness","contrast","warmth","saturation","sharpness","temperature","vibrance","tint","shadows","clarity"],adjustmentValues={};adjustmentIds.forEach(id=>adjustmentValues[id]=0);
 function showSmoothControl(){smoothControl.classList.add("show")}function hideSmoothControl(){smoothControl.classList.remove("show")}function resetSmoothSlider(){smoothSlider.value=50;smoothValue.textContent="50"}
 adjustmentsToggle.addEventListener("click",()=>{const o=adjustmentsPanel.classList.toggle("open");adjustmentsToggle.classList.toggle("open",o);adjustmentsChevron.textContent=o?"⌄":"›"});
@@ -448,6 +449,8 @@ showStatus("Hair Grow selected.");
 });
 
 hairColor.addEventListener("click",()=>{
+hairMenu.style.display="none";
+hairColorPanel.style.display="block";
 showStatus("Hair Color selected.");
 });
 showSmoothControl();
