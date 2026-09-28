@@ -2,6 +2,9 @@ let Client=null;
 let handle_file=null;
 const fileInput=document.getElementById("fileInput"),addPhoto=document.getElementById("addPhoto"),preview=document.getElementById("preview"),placeholder=document.getElementById("placeholder"),statusBox=document.getElementById("status"),downloadButton=document.getElementById("downloadButton"),adjustmentsToggle=document.getElementById("adjustmentsToggle"),adjustmentsPanel=document.getElementById("adjustmentsPanel"),adjustmentsChevron=document.getElementById("adjustmentsChevron"),adjustmentsFrame=document.getElementById("adjustmentsFrame"),smoothControl=document.getElementById("smoothControl"),smoothSlider=document.getElementById("smoothSlider"),smoothValue=document.getElementById("smoothValue");
 let selectedFile=null,editedBlob=null,adjustmentBaseBlob=null,adjustmentTimer=null,smoothTimer=null;
+const hairMenu=document.getElementById("hairMenu");
+const hairGrow=document.getElementById("hairGrow");
+const hairColor=document.getElementById("hairColor");
 const adjustmentIds=["brightness","contrast","warmth","saturation","sharpness","temperature","vibrance","tint","shadows","clarity"],adjustmentValues={};adjustmentIds.forEach(id=>adjustmentValues[id]=0);
 function showSmoothControl(){smoothControl.classList.add("show")}function hideSmoothControl(){smoothControl.classList.remove("show")}function resetSmoothSlider(){smoothSlider.value=50;smoothValue.textContent="50"}
 adjustmentsToggle.addEventListener("click",()=>{const o=adjustmentsPanel.classList.toggle("open");adjustmentsToggle.classList.toggle("open",o);adjustmentsChevron.textContent=o?"⌄":"›"});
@@ -405,6 +408,7 @@ return;
 const type=tool.dataset.tool;
 
 if(type==="smooth"){
+hairMenu.style.display="none";
 showSmoothControl();
 return;
 }
@@ -412,6 +416,7 @@ return;
 hideSmoothControl();
 
 if(type==="enhance"){
+hairMenu.style.display="none";
 try{
 showStatus("Starting Enhance AI...");
 const b=await runHockmanX2(selectedFile);
@@ -425,16 +430,25 @@ return;
 }
 
 if(type==="hair"){
-showStatus("Hair tool is coming soon.");
+hideSmoothControl();
+hairMenu.style.display="flex";
+showStatus("Hair menu opened.");
 return;
 }
 
 if(type==="retouch"){
+hairMenu.style.display="none";
 showStatus("Retouch tool is coming soon.");
 return;
 }
 });
 });
+hairGrow.addEventListener("click",()=>{
+showStatus("Hair Grow selected.");
+});
 
+hairColor.addEventListener("click",()=>{
+showStatus("Hair Color selected.");
+});
 showSmoothControl();
 hideSmoothControl();
