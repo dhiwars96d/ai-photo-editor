@@ -458,7 +458,6 @@ let selectedHairColor="#111111";
 let selectedHairIntensity=50;
 
 function applyHairColorLocal(){
-
   if(!selectedFile)return;
 
   loadImage(selectedFile).then(async img=>{
@@ -471,114 +470,381 @@ function applyHairColorLocal(){
     ctx.drawImage(img,0,0);
 
     const imageData=ctx.getImageData(
-      0,0,canvas.width,canvas.height
+      0,
+      0,
+      canvas.width,
+      canvas.height
     );
 
     const data=imageData.data;
+    const w=canvas.width;
+    const h=canvas.height;
 
+    /* Selected color */
     const hex=selectedHairColor.replace("#","");
+
     const cr=parseInt(hex.substring(0,2),16);
     const cg=parseInt(hex.substring(2,4),16);
     const cb=parseInt(hex.substring(4,6),16);
 
-    const intensity=selectedHairIntensity/100;
+    const intensity=Math.max(
+      0,
+      Math.min(1,selectedHairIntensity/100)
+    );
 
-    const cx=canvas.width*.50;
-    const cy=canvas.height*.25;
+    /*
+      Smooth mask helper.
+      यह hard circular boundary को avoid करता है.
+    */
+    function smoothstep(a,b,v){
+      const t=Math.max(
+        0,
+        Math.min(1,(v-a)/(b-a))
+      );
 
-    const rx=canvas.width*.34;
-    const ry=canvas.height*.24;
+      return t*t*(3-2*t);
+    }
 
-    const faceX=canvas.width*.50;
-    const faceY=canvas.height*.48;
+    /*
+      Face protection area.
+      Face के अंदर hair color नहीं लगाया जाएगा.
+    */
+    const faceX=w*0.50;
+    const faceY=h*0.43;
 
-    const faceRX=canvas.width*.22;
-    const faceRY=canvas.height*.27;
+    const faceRX=w*0.205;
+    const faceRY=h*0.245;
 
-    for(let y=0;y<canvas.height;y++){
+    /*
+      Selected color की brightness.
+      इससे original hair brightness preserve करने में मदद मिलेगी.
+    */
+    const targetLum=
+      (.2126*cr)+
+      (.7152*cg)+
+      (.0722*cb) || 1;
 
-      for(let x=0;x<canvas.width;x++){
 
-        const dx=(x-cx)/rx;
-        const dy=(y-cy)/ry;
+    for(let y=0;y<h;y++){
 
-        const headArea=dx*dx+dy*dy;
+      const ny=y/h;
 
-        if(headArea>1)continue;
+      for(let x=0;x<w;x++){
 
-        /*
-          Face protection.
-          Hair color should not cover the main face area.
-        */
-        const fdx=(x-faceX)/faceRX;
-        const fdy=(y-faceY)/faceRY;
-        const faceArea=fdx*fdx+fdy*fdy;
+        const nx=x/w;
 
-        if(faceArea<.82)continue;
-
-        const i=(y*canvas.width+x)*4;
+        const i=(y*w+x)*4;
 
         const r=data[i];
         const g=data[i+1];
         const b=data[i+2];
 
-        /*
-          Avoid bright skin/face-like pixels.
-          Darker hair pixels receive stronger color.
-        */
-        const brightness=(r+g+b)/3;
-
-        if(brightness>210)continue;
-
-        const darkness=1-(brightness/210);
-
-        let mask=darkness;
 
         /*
-          Feather the outer edge so there is no hard
-          black/colored oval around the head.
+          Pixel brightness / saturation
         */
-        const edge=Math.max(0,Math.min(1,(1-headArea)*5));
-        mask*=edge;
+        const maxC=Math.max(r,g,b);
+        const minC=Math.min(r,g,b);
 
-        mask*=intensity;
+        const brightness=
+          (r+g+b)/3;
 
-        if(mask<.02)continue;
+        const saturation=
+          maxC===0
+            ? 0
+            : (maxC-minC)/maxC;
+
 
         /*
-          Preserve original hair brightness.
-          Only tint the existing pixels.
+          IMPORTANT:
+          यह अब पूरा ellipse color नहीं करेगा.
+
+          यह सिर्फ hair खोजने के लिए
+          search region है.
         */
-        data[i]=Math.round(r*(1-mask)+cr*mask);
-        data[i+1]=Math.round(g*(1-mask)+cg*mask);
-        data[i+2]=Math.round(b*(1-mask)+cb*mask);
+
+        /* Top hair region */
+        const dx=(nx-0.5)/0.34;
+        const dy=(ny-0.27)/0.34;
+
+        const cap=
+          1-(dx*dx+dy*dy);
+
+        const capMask=
+          smoothstep(
+            -0.16,
+            0.12,
+            cap
+          );
+
+
+        /*
+          Left / right falling hair.
+        */
+        const sideY=
+          smoothstep(0.28,0.42,ny) *
+          (1-smoothstep(0.78,0.90,ny));
+
+
+        const leftSide=
+          (1-smoothstep(0.28,0.43,nx)) *
+          smoothstep(0.10,0.23,nx) *
+          sideY;
+
+
+        const rightSide=
+          smoothstep(0.57,0.72,nx) *
+          (1-smoothstep(0.77,0.90,nx)) *
+          sideY;
+
+
+        /*
+          केवल search boundary.
+        */
+        const spatialMask=
+          Math.max(
+            capMask,
+            leftSide,
+            rightSide
+          );
+
+
+        if(spatialMask<0.015){
+          continue;
+        }
+
+
+        /*
+          FACE PROTECTION
+        */
+        const fdx=
+          (nx-0.5)/0.205;
+
+        const fdy=
+          (ny-0.43)/0.245;
+
+        const faceCore=
+          fdx*fdx+
+          fdy*fdy;
+
+
+        if(faceCore<1.0){
+          continue;
+        }
+
+
+        /*
+          SKIN DETECTION
+
+          Skin-like warm pixels को hair नहीं मानेंगे.
+        */
+        const skinHue=
+          (r>g*1.035) &&
+          (g>b*1.025) &&
+          (r-g>7) &&
+          (g-b>3);
+
+
+        const skinBrightness=
+          smoothstep(
+            28,
+            105,
+            brightness
+          );
+
+
+        const skinPenalty=
+          skinHue
+            ? 0.88*skinBrightness
+            : 0;
+
+
+        /*
+          Background protection.
+
+          बहुत ज्यादा saturated pixels को
+          hair मानने से रोकता है.
+        */
+        const colorfulBackground=
+          smoothstep(
+            0.22,
+            0.55,
+            saturation
+          ) *
+          smoothstep(
+            45,
+            115,
+            brightness
+          );
+
+
+        /*
+          HAIR CONFIDENCE
+
+          Dark pixels को ज्यादा weight.
+          लेकिन search area अकेले पर्याप्त नहीं है.
+        */
+        const darkHair=
+          smoothstep(
+            205,
+            92,
+            brightness
+          );
+
+
+        const neutralHair=
+          1-
+          0.82*colorfulBackground;
+
+
+        let mask=
+          spatialMask *
+          darkHair *
+          neutralHair *
+          (1-skinPenalty) *
+          intensity;
+
+
+        /*
+          बहुत weak pixels को छोड़ दें.
+        */
+        if(mask<0.025){
+          continue;
+        }
+
+
+        /*
+          Original hair brightness preserve करें.
+          इससे flat paint जैसा result नहीं आएगा.
+        */
+        const sourceLum=
+          (.2126*r)+
+          (.7152*g)+
+          (.0722*b) || 1;
+
+
+        const lumRatio=
+          Math.max(
+            0.42,
+            Math.min(
+              1.35,
+              sourceLum/targetLum
+            )
+          );
+
+
+        const tr=
+          Math.max(
+            0,
+            Math.min(
+              255,
+              cr*lumRatio
+            )
+          );
+
+
+        const tg=
+          Math.max(
+            0,
+            Math.min(
+              255,
+              cg*lumRatio
+            )
+          );
+
+
+        const tb=
+          Math.max(
+            0,
+            Math.min(
+              255,
+              cb*lumRatio
+            )
+          );
+
+
+        /*
+          Blend selected color with
+          original hair pixel.
+        */
+        data[i]=Math.round(
+          r*(1-mask)+
+          tr*mask
+        );
+
+        data[i+1]=Math.round(
+          g*(1-mask)+
+          tg*mask
+        );
+
+        data[i+2]=Math.round(
+          b*(1-mask)+
+          tb*mask
+        );
+
       }
     }
 
-    ctx.putImageData(imageData,0,0);
 
-    const blob=await new Promise(resolve=>{
-      canvas.toBlob(
-        resolve,
-        "image/jpeg",
-        .94
+    ctx.putImageData(
+      imageData,
+      0,
+      0
+    );
+
+
+    const blob=
+      await new Promise(resolve=>{
+
+        canvas.toBlob(
+          resolve,
+          "image/jpeg",
+          0.94
+        );
+
+      });
+
+
+    if(!blob){
+      throw new Error(
+        "Could not create the edited image."
       );
-    });
+    }
+
 
     editedBlob=blob;
 
-    preview.src=URL.createObjectURL(blob);
+    /*
+      आगे Adjustments लगाने के लिए
+      colored result को base बनाएं.
+    */
+    adjustmentBaseBlob=blob;
+
+
+    preview.src=
+      URL.createObjectURL(blob);
+
     preview.style.display="block";
+
     placeholder.style.display="none";
+
     downloadButton.style.display="block";
 
-    showStatus("Hair Color applied ✓");
+    showStatus(
+      "Hair Color applied ✓"
+    );
+
 
   }).catch(e=>{
+
     console.error(e);
-    showStatus("Hair Color failed. Please try again.");
+
+    showStatus(
+      "Hair Color failed. Please try again."
+    );
+
   });
-}
+                               }
 
 
 document.querySelectorAll(".hairColorOption").forEach(option=>{
