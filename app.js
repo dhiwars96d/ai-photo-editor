@@ -621,64 +621,6 @@ hairIntensitySlider.addEventListener("input",()=>{
   }
 
 });
-    try{
-      const img=await loadImage(selectedFile);
-
-      const canvas=document.createElement("canvas");
-      canvas.width=img.naturalWidth;
-      canvas.height=img.naturalHeight;
-
-      const ctx=canvas.getContext("2d");
-      ctx.drawImage(img,0,0);
-
-      /*
-        Temporary hair-area color test.
-        Only a soft upper-head area is affected.
-      */
-
-      const x=canvas.width*0.50;
-      const y=canvas.height*0.27;
-      const rx=canvas.width*0.27;
-      const ry=canvas.height*0.20;
-
-      ctx.save();
-
-      ctx.beginPath();
-      ctx.ellipse(
-        x,y,rx,ry,
-        0,0,Math.PI*2
-      );
-      ctx.clip();
-
-      ctx.globalAlpha=Math.min(0.75,intensity/100);
-
-      ctx.fillStyle=color;
-      ctx.fillRect(
-        x-rx,
-        y-ry,
-        rx*2,
-        ry*2
-      );
-
-      ctx.restore();
-
-      const blob=await new Promise(resolve=>{
-        canvas.toBlob(resolve,"image/jpeg",.94);
-      });
-
-      editedBlob=blob;
-      preview.src=URL.createObjectURL(blob);
-      preview.style.display="block";
-      placeholder.style.display="none";
-      downloadButton.style.display="block";
-
-      showStatus("Hair Color applied ✓");
-
-    }catch(e){
-      console.error(e);
-      showStatus("Hair Color failed. Please try again.");
-    }
-  });
-});
+    
 showSmoothControl();
 hideSmoothControl();
