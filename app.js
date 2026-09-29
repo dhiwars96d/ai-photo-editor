@@ -6,6 +6,52 @@ const hairMenu=document.getElementById("hairMenu");
 const hairGrow=document.getElementById("hairGrow");
 const hairColor=document.getElementById("hairColor");
 const hairColorPanel=document.getElementById("hairColorPanel");
+let hairSegmenterPromise=null;
+
+async function getHairSegmenter(){
+
+  if(!hairSegmenterPromise){
+
+    hairSegmenterPromise=(async()=>{
+
+      showStatus("Loading Hair AI...");
+
+      const vision=await import(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs"
+      );
+
+      const fileset=await vision.FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
+      );
+
+      const segmenter=
+        await vision.ImageSegmenter.createFromOptions(
+          fileset,
+          {
+            baseOptions:{
+              modelAssetPath:
+                "https://storage.googleapis.com/mediapipe-models/image_segmenter/hair_segmenter/float32/1/hair_segmenter.tflite",
+              delegate:"CPU"
+            },
+            runningMode:"IMAGE",
+            outputCategoryMask:true,
+            outputConfidenceMasks:false
+          }
+        );
+
+      showStatus("Hair AI ready ✓");
+
+      return segmenter;
+
+    })().catch(error=>{
+      hairSegmenterPromise=null;
+      console.error("Hair Segmenter Error:",error);
+      throw error;
+    });
+  }
+
+  return await hairSegmenterPromise;
+}
 const adjustmentIds=["brightness","contrast","warmth","saturation","sharpness","temperature","vibrance","tint","shadows","clarity"],adjustmentValues={};adjustmentIds.forEach(id=>adjustmentValues[id]=0);
 function showSmoothControl(){smoothControl.classList.add("show")}function hideSmoothControl(){smoothControl.classList.remove("show")}function resetSmoothSlider(){smoothSlider.value=50;smoothValue.textContent="50"}
 adjustmentsToggle.addEventListener("click",()=>{const o=adjustmentsPanel.classList.toggle("open");adjustmentsToggle.classList.toggle("open",o);adjustmentsChevron.textContent=o?"⌄":"›"});
@@ -448,10 +494,15 @@ hairGrow.addEventListener("click",()=>{
 showStatus("Hair Grow selected.");
 });
 
-hairColor.addEventListener("click",()=>{
+hairColor.addEventListener("click",async()=>{
 hairMenu.style.display="none";
 hairColorPanel.style.display="block";
-showStatus("Hair Color selected.");
+
+try{
+  await getHairSegmenter();
+}catch(e){
+  showStatus("Hair AI loading failed. Please try again.");
+}
 });
 let selectedHairColor="#111111";
 let selectedHairIntensity=50;
