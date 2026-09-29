@@ -453,19 +453,172 @@ hairMenu.style.display="none";
 hairColorPanel.style.display="block";
 showStatus("Hair Color selected.");
 });
+let selectedHairColor="#111111";
+let selectedHairIntensity=50;
+
+function applyHairColorLocal(){
+
+  if(!selectedFile)return;
+
+  loadImage(selectedFile).then(async img=>{
+
+    const canvas=document.createElement("canvas");
+    canvas.width=img.naturalWidth;
+    canvas.height=img.naturalHeight;
+
+    const ctx=canvas.getContext("2d",{willReadFrequently:true});
+    ctx.drawImage(img,0,0);
+
+    const imageData=ctx.getImageData(
+      0,0,canvas.width,canvas.height
+    );
+
+    const data=imageData.data;
+
+    const hex=selectedHairColor.replace("#","");
+    const cr=parseInt(hex.substring(0,2),16);
+    const cg=parseInt(hex.substring(2,4),16);
+    const cb=parseInt(hex.substring(4,6),16);
+
+    const intensity=selectedHairIntensity/100;
+
+    const cx=canvas.width*.50;
+    const cy=canvas.height*.25;
+
+    const rx=canvas.width*.34;
+    const ry=canvas.height*.24;
+
+    const faceX=canvas.width*.50;
+    const faceY=canvas.height*.48;
+
+    const faceRX=canvas.width*.22;
+    const faceRY=canvas.height*.27;
+
+    for(let y=0;y<canvas.height;y++){
+
+      for(let x=0;x<canvas.width;x++){
+
+        const dx=(x-cx)/rx;
+        const dy=(y-cy)/ry;
+
+        const headArea=dx*dx+dy*dy;
+
+        if(headArea>1)continue;
+
+        /*
+          Face protection.
+          Hair color should not cover the main face area.
+        */
+        const fdx=(x-faceX)/faceRX;
+        const fdy=(y-faceY)/faceRY;
+        const faceArea=fdx*fdx+fdy*fdy;
+
+        if(faceArea<.82)continue;
+
+        const i=(y*canvas.width+x)*4;
+
+        const r=data[i];
+        const g=data[i+1];
+        const b=data[i+2];
+
+        /*
+          Avoid bright skin/face-like pixels.
+          Darker hair pixels receive stronger color.
+        */
+        const brightness=(r+g+b)/3;
+
+        if(brightness>210)continue;
+
+        const darkness=1-(brightness/210);
+
+        let mask=darkness;
+
+        /*
+          Feather the outer edge so there is no hard
+          black/colored oval around the head.
+        */
+        const edge=Math.max(0,Math.min(1,(1-headArea)*5));
+        mask*=edge;
+
+        mask*=intensity;
+
+        if(mask<.02)continue;
+
+        /*
+          Preserve original hair brightness.
+          Only tint the existing pixels.
+        */
+        data[i]=Math.round(r*(1-mask)+cr*mask);
+        data[i+1]=Math.round(g*(1-mask)+cg*mask);
+        data[i+2]=Math.round(b*(1-mask)+cb*mask);
+      }
+    }
+
+    ctx.putImageData(imageData,0,0);
+
+    const blob=await new Promise(resolve=>{
+      canvas.toBlob(
+        resolve,
+        "image/jpeg",
+        .94
+      );
+    });
+
+    editedBlob=blob;
+
+    preview.src=URL.createObjectURL(blob);
+    preview.style.display="block";
+    placeholder.style.display="none";
+    downloadButton.style.display="block";
+
+    showStatus("Hair Color applied ✓");
+
+  }).catch(e=>{
+    console.error(e);
+    showStatus("Hair Color failed. Please try again.");
+  });
+}
+
+
 document.querySelectorAll(".hairColorOption").forEach(option=>{
-  option.addEventListener("click",async()=>{
-    if(!selectedFile)return;
 
-    const color=option.dataset.color;
-    const intensitySlider=document.getElementById("hairIntensitySlider");
-    const intensityValue=document.getElementById("hairIntensityValue");
+  option.addEventListener("click",()=>{
 
-    const intensity=Number(intensitySlider.value);
-    intensityValue.textContent=intensity;
+    selectedHairColor=option.dataset.color;
 
-    showStatus("Applying Hair Color...");
+    const slider=document.getElementById(
+      "hairIntensitySlider"
+    );
 
+    selectedHairIntensity=Number(slider.value);
+
+    applyHairColorLocal();
+
+  });
+
+});
+
+
+const hairIntensitySlider=
+  document.getElementById("hairIntensitySlider");
+
+const hairIntensityValue=
+  document.getElementById("hairIntensityValue");
+
+
+hairIntensitySlider.addEventListener("input",()=>{
+
+  selectedHairIntensity=
+    Number(hairIntensitySlider.value);
+
+  hairIntensityValue.textContent=
+    selectedHairIntensity;
+
+  if(selectedHairColor){
+    applyHairColorLocal();
+  }
+
+});
     try{
       const img=await loadImage(selectedFile);
 
