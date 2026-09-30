@@ -457,334 +457,604 @@ showStatus("Hair Color selected.");
 let selectedHairColor="#111111";
 let selectedHairIntensity=50;
 
-function applyHairColorLocal(){
+let hairSegmenter=null;
+let hairSegmenterPromise=null;
+
+async function getHairSegmenter(){
+
+  if(!hairSegmenterPromise){
+
+    hairSegmenterPromise=(async()=>{
+
+      showStatus("Loading Hair AI...");
+
+      const vision=await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+      );
+
+      const segmenter=await ImageSegmenter.createFromOptions(
+        vision,
+        {
+          baseOptions:{
+            modelAssetPath:"./hair_segmenter.tflite"
+          },
+
+          runningMode:"IMAGE",
+
+          outputCategoryMask:true,
+          outputConfidenceMasks:true
+        }
+      );
+
+      const labels=segmenter.getLabels();
+
+      console.log("Hair Segmenter labels:",labels);
+
+      return segmenter;
+
+    })().catch(error=>{
+
+      hairSegmenterPromise=null;
+      throw error;
+
+    });
+
+  }
+
+  hairSegmenter=await hairSegmenterPromise;
+
+  return hairSegmenter;
+}
+
+
+/* RGB -> HSL */
+
+function rgbToHsl(r,g,b){
+
+  r/=255;
+  g/=255;
+  b/=255;
+
+  const max=Math.max(r,g,b);
+  const min=Math.min(r,g,b);
+
+  let h=0;
+  let s=0;
+
+  const l=(max+min)/2;
+
+  if(max!==min){
+
+    const d=max-min;
+
+    s=l>0.5
+      ?d/(2-max-min)
+      :d/(max+min);
+
+    switch(max){
+
+      case r:
+        h=(g-b)/d+(g<b?6:0);
+        break;
+
+      case g:
+        h=(b-r)/d+2;
+        break;
+
+      case b:
+        h=(r-g)/d+4;
+        break;
+    }
+
+    h/=6;
+  }
+
+  return {h,s,l};
+}
+
+
+function hueToRgb(p,q,t){
+
+  if(t<0)t+=1;
+  if(t>1)t-=1;
+
+  if(t<1/6)return p+(q-p)*6*t;
+  if(t<1/2)return q;
+  if(t<2/3)return p+(q-p)*(2/3-t)*6;
+
+  return p;
+}
+
+
+function hslToRgb(h,s,l){
+
+  let r,g,b;
+
+  if(s===0){
+
+    r=l;
+    g=l;
+    b=l;
+
+  }else{
+
+    const q=l<0.5
+      ?l*(1+s)
+      :l+s-l*s;
+
+    const p=2*l-q;
+
+    r=hueToRgb(p,q,h+1/3);
+    g=hueToRgb(p,q,h);
+    b=hueToRgb(p,q,h-1/3);
+  }
+
+  return {
+    r:r*255,
+    g:g*255,
+    b:b*255
+  };
+}
+
+
+/*
+  Natural Hair Color
+
+  AI segmentation decides WHERE hair is.
+  HSL processing decides HOW the new color looks.
+*/
+
+async function applyHairColorLocal(){
+
   if(!selectedFile)return;
 
-  loadImage(selectedFile).then(async img=>{
+  try{
+
+    showStatus("Detecting hair...");
+
+    const segmenter=await getHairSegmenter();
+
+    const img=await loadImage(selectedFile);
 
     const canvas=document.createElement("canvas");
+
     canvas.width=img.naturalWidth;
     canvas.height=img.naturalHeight;
 
-    const ctx=canvas.getContext("2d",{willReadFrequently:true});
-    ctx.drawImage(img,0,0);
+    const ctx=canvas.getContext(
+      "2d",
+      {willReadFrequently:true}
+    );
 
-    const imageData=ctx.getImageData(
+    ctx.drawImage(
+      img,
       0,
       0,
       canvas.width,
       canvas.height
     );
 
-    const data=imageData.data;
-    const w=canvas.width;
-    const h=canvas.height;
+    /*
+      Run actual AI hair segmentation.
+    */
 
-    /* Selected color */
-    const hex=selectedHairColor.replace("#","");
+    const result=segmenter.segment(img);
 
-    const cr=parseInt(hex.substring(0,2),16);
-    const cg=parseInt(hex.substring(2,4),16);
-    const cb=parseInt(hex.substring(4,6),16);
-
-    const intensity=Math.max(
-      0,
-      Math.min(1,selectedHairIntensity/100)
-    );
+    let hairMask=null;
+    let maskWidth=0;
+    let maskHeight=0;
 
     /*
-      Smooth mask helper.
-      यह hard circular boundary को avoid करता है.
+      Prefer confidence mask.
+      Hair is category 1.
     */
-    function smoothstep(a,b,v){
-      const t=Math.max(
-        0,
-        Math.min(1,(v-a)/(b-a))
-      );
 
-      return t*t*(3-2*t);
+    if(
+      result.confidenceMasks &&
+      result.confidenceMasks.length>1
+    ){
+
+      hairMask=result.confidenceMasks[1];
+
+      maskWidth=hairMask.width;
+      maskHeight=hairMask.height;
+
     }
 
     /*
-      Face protection area.
-      Face के अंदर hair color नहीं लगाया जाएगा.
+      Fallback to category mask.
     */
-    const faceX=w*0.50;
-    const faceY=h*0.43;
 
-    const faceRX=w*0.205;
-    const faceRY=h*0.245;
+    let categoryData=null;
+
+    if(!hairMask && result.categoryMask){
+
+      categoryData=
+        result.categoryMask.getAsUint8Array();
+
+      maskWidth=result.categoryMask.width;
+      maskHeight=result.categoryMask.height;
+
+    }
+
+    if(!hairMask && !categoryData){
+
+      result.close();
+
+      throw new Error(
+        "Hair mask was not returned."
+      );
+    }
+
+    let confidenceData=null;
+
+    if(hairMask){
+
+      confidenceData=
+        hairMask.getAsFloat32Array();
+    }
 
     /*
-      Selected color की brightness.
-      इससे original hair brightness preserve करने में मदद मिलेगी.
+      Create a canvas containing the AI mask.
     */
-    const targetLum=
-      (.2126*cr)+
-      (.7152*cg)+
-      (.0722*cb) || 1;
 
+    const maskCanvas=
+      document.createElement("canvas");
 
-    for(let y=0;y<h;y++){
+    maskCanvas.width=maskWidth;
+    maskCanvas.height=maskHeight;
 
-      const ny=y/h;
+    const maskCtx=
+      maskCanvas.getContext(
+        "2d",
+        {willReadFrequently:true}
+      );
 
-      for(let x=0;x<w;x++){
+    const maskImage=
+      maskCtx.createImageData(
+        maskWidth,
+        maskHeight
+      );
 
-        const nx=x/w;
+    const md=maskImage.data;
 
-        const i=(y*w+x)*4;
+    for(let i=0;i<maskWidth*maskHeight;i++){
+
+      let value=0;
+
+      if(confidenceData){
+
+        value=Math.max(
+          0,
+          Math.min(
+            1,
+            confidenceData[i]
+          )
+        );
+
+      }else{
+
+        value=
+          categoryData[i]===1
+            ?1
+            :0;
+      }
+
+      /*
+        Ignore extremely weak hair predictions.
+      */
+
+      if(value<0.18){
+        value=0;
+      }
+
+      md[i]=255;
+      md[i+1]=255;
+      md[i+2]=255;
+      md[i+3]=Math.round(value*255);
+    }
+
+    maskCtx.putImageData(
+      maskImage,
+      0,
+      0
+    );
+
+    /*
+      Resize AI mask to original image.
+    */
+
+    const fullMask=
+      document.createElement("canvas");
+
+    fullMask.width=canvas.width;
+    fullMask.height=canvas.height;
+
+    const fullMaskCtx=
+      fullMask.getContext(
+        "2d",
+        {willReadFrequently:true}
+      );
+
+    /*
+      Slight interpolation + feathering.
+      This removes hard AI edges.
+    */
+
+    fullMaskCtx.filter="blur(1.4px)";
+
+    fullMaskCtx.drawImage(
+      maskCanvas,
+      0,
+      0,
+      fullMask.width,
+      fullMask.height
+    );
+
+    const finalMask=
+      fullMaskCtx.getImageData(
+        0,
+        0,
+        fullMask.width,
+        fullMask.height
+      ).data;
+
+    /*
+      Original photo pixels.
+    */
+
+    const imageData=
+      ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+    const data=imageData.data;
+
+    /*
+      Selected target color.
+    */
+
+    const hex=
+      selectedHairColor
+        .replace("#","");
+
+    const tr=
+      parseInt(
+        hex.substring(0,2),
+        16
+      );
+
+    const tg=
+      parseInt(
+        hex.substring(2,4),
+        16
+      );
+
+    const tb=
+      parseInt(
+        hex.substring(4,6),
+        16
+      );
+
+    const targetHsl=
+      rgbToHsl(
+        tr,
+        tg,
+        tb
+      );
+
+    const intensity=
+      selectedHairIntensity/100;
+
+    /*
+      Hair color presets.
+    */
+
+    let targetSaturation=
+      targetHsl.s;
+
+    let lightBoost=0;
+
+    /*
+      Black
+    */
+
+    if(selectedHairColor==="#111111"){
+
+      targetSaturation=0;
+      lightBoost=-0.12;
+
+    }
+
+    /*
+      Brown
+    */
+
+    else if(selectedHairColor==="#5b321b"){
+
+      targetSaturation=
+        Math.min(
+          1,
+          targetHsl.s*1.05
+        );
+
+      lightBoost=-0.02;
+
+    }
+
+    /*
+      Blonde
+    */
+
+    else if(selectedHairColor==="#d6b36a"){
+
+      targetSaturation=
+        Math.min(
+          1,
+          targetHsl.s*0.85
+        );
+
+      lightBoost=0.10;
+
+    }
+
+    /*
+      Red
+    */
+
+    else if(selectedHairColor==="#8b2f1f"){
+
+      targetSaturation=
+        Math.min(
+          1,
+          targetHsl.s*1.05
+        );
+
+      lightBoost=0.01;
+
+    }
+
+    /*
+      Apply only to AI hair mask.
+    */
+
+    for(
+      let y=0;
+      y<canvas.height;
+      y++
+    ){
+
+      for(
+        let x=0;
+        x<canvas.width;
+        x++
+      ){
+
+        const i=
+          (y*canvas.width+x)*4;
+
+        const maskIndex=
+          (
+            Math.floor(
+              y*maskHeight/canvas.height
+            )*maskWidth
+            +
+            Math.floor(
+              x*maskWidth/canvas.width
+            )
+          );
+
+        const alpha=
+          finalMask[
+            maskIndex*4+3
+          ]/255;
+
+        if(alpha<0.015)continue;
 
         const r=data[i];
         const g=data[i+1];
         const b=data[i+2];
 
-
-        /*
-          Pixel brightness / saturation
-        */
-        const maxC=Math.max(r,g,b);
-        const minC=Math.min(r,g,b);
-
-        const brightness=
-          (r+g+b)/3;
-
-        const saturation=
-          maxC===0
-            ? 0
-            : (maxC-minC)/maxC;
-
-
-        /*
-          IMPORTANT:
-          यह अब पूरा ellipse color नहीं करेगा.
-
-          यह सिर्फ hair खोजने के लिए
-          search region है.
-        */
-
-        /* Top hair region */
-        const dx=(nx-0.5)/0.34;
-        const dy=(ny-0.27)/0.34;
-
-        const cap=
-          1-(dx*dx+dy*dy);
-
-        const capMask=
-          smoothstep(
-            -0.16,
-            0.12,
-            cap
+        const originalHsl=
+          rgbToHsl(
+            r,
+            g,
+            b
           );
 
+        /*
+          Preserve original hair light/dark
+          texture instead of painting a flat color.
+        */
+
+        let newLightness=
+          originalHsl.l;
 
         /*
-          Left / right falling hair.
+          Blonde needs some controlled
+          lightening to actually look blonde.
         */
-        const sideY=
-          smoothstep(0.28,0.42,ny) *
-          (1-smoothstep(0.78,0.90,ny));
 
+        if(lightBoost>0){
 
-        const leftSide=
-          (1-smoothstep(0.28,0.43,nx)) *
-          smoothstep(0.10,0.23,nx) *
-          sideY;
+          newLightness=
+            Math.min(
+              0.88,
+              Math.max(
+                newLightness,
+                0.42
+              )+
+              lightBoost*
+              intensity
+            );
 
-
-        const rightSide=
-          smoothstep(0.57,0.72,nx) *
-          (1-smoothstep(0.77,0.90,nx)) *
-          sideY;
-
-
-        /*
-          केवल search boundary.
-        */
-        const spatialMask=
-          Math.max(
-            capMask,
-            leftSide,
-            rightSide
-          );
-
-
-        if(spatialMask<0.015){
-          continue;
         }
 
-
         /*
-          FACE PROTECTION
+          Black needs controlled darkening.
         */
-        const fdx=
-          (nx-0.5)/0.205;
 
-        const fdy=
-          (ny-0.43)/0.245;
+        if(lightBoost<0){
 
-        const faceCore=
-          fdx*fdx+
-          fdy*fdy;
-
-
-        if(faceCore<1.0){
-          continue;
+          newLightness=
+            Math.max(
+              0.06,
+              newLightness+
+              lightBoost*
+              intensity
+            );
         }
 
+        /*
+          Keep some of the original
+          saturation so highlights stay natural.
+        */
+
+        const finalSaturation=
+          Math.min(
+            1,
+            originalHsl.s*0.35+
+            targetSaturation*0.65
+          );
+
+        const recolored=
+          hslToRgb(
+            targetHsl.h,
+            finalSaturation,
+            newLightness
+          );
 
         /*
-          SKIN DETECTION
-
-          Skin-like warm pixels को hair नहीं मानेंगे.
+          Intensity controls blend strength.
         */
-        const skinHue=
-          (r>g*1.035) &&
-          (g>b*1.025) &&
-          (r-g>7) &&
-          (g-b>3);
 
-
-        const skinBrightness=
-          smoothstep(
-            28,
-            105,
-            brightness
+        const strength=
+          Math.min(
+            1,
+            alpha*
+            (0.15+
+            intensity*0.85)
           );
 
-
-        const skinPenalty=
-          skinHue
-            ? 0.88*skinBrightness
-            : 0;
-
-
-        /*
-          Background protection.
-
-          बहुत ज्यादा saturated pixels को
-          hair मानने से रोकता है.
-        */
-        const colorfulBackground=
-          smoothstep(
-            0.22,
-            0.55,
-            saturation
-          ) *
-          smoothstep(
-            45,
-            115,
-            brightness
-          );
-
-
-        /*
-          HAIR CONFIDENCE
-
-          Dark pixels को ज्यादा weight.
-          लेकिन search area अकेले पर्याप्त नहीं है.
-        */
-        const darkHair=
-          smoothstep(
-            205,
-            92,
-            brightness
-          );
-
-
-        const neutralHair=
-          1-
-          0.82*colorfulBackground;
-
-
-        let mask=
-          spatialMask *
-          darkHair *
-          neutralHair *
-          (1-skinPenalty) *
-          intensity;
-
-
-        /*
-          बहुत weak pixels को छोड़ दें.
-        */
-        if(mask<0.025){
-          continue;
-        }
-
-
-        /*
-          Original hair brightness preserve करें.
-          इससे flat paint जैसा result नहीं आएगा.
-        */
-        const sourceLum=
-          (.2126*r)+
-          (.7152*g)+
-          (.0722*b) || 1;
-
-
-        const lumRatio=
-          Math.max(
-            0.42,
-            Math.min(
-              1.35,
-              sourceLum/targetLum
-            )
-          );
-
-
-        const tr=
-          Math.max(
-            0,
-            Math.min(
-              255,
-              cr*lumRatio
-            )
-          );
-
-
-        const tg=
-          Math.max(
-            0,
-            Math.min(
-              255,
-              cg*lumRatio
-            )
-          );
-
-
-        const tb=
-          Math.max(
-            0,
-            Math.min(
-              255,
-              cb*lumRatio
-            )
-          );
-
-
-        /*
-          Blend selected color with
-          original hair pixel.
-        */
         data[i]=Math.round(
-          r*(1-mask)+
-          tr*mask
+          r*(1-strength)+
+          recolored.r*strength
         );
 
         data[i+1]=Math.round(
-          g*(1-mask)+
-          tg*mask
+          g*(1-strength)+
+          recolored.g*strength
         );
 
         data[i+2]=Math.round(
-          b*(1-mask)+
-          tb*mask
+          b*(1-strength)+
+          recolored.b*strength
         );
-
       }
     }
-
 
     ctx.putImageData(
       imageData,
@@ -792,6 +1062,11 @@ function applyHairColorLocal(){
       0
     );
 
+    /*
+      Release MediaPipe result.
+    */
+
+    result.close();
 
     const blob=
       await new Promise(resolve=>{
@@ -804,22 +1079,7 @@ function applyHairColorLocal(){
 
       });
 
-
-    if(!blob){
-      throw new Error(
-        "Could not create the edited image."
-      );
-    }
-
-
     editedBlob=blob;
-
-    /*
-      आगे Adjustments लगाने के लिए
-      colored result को base बनाएं.
-    */
-    adjustmentBaseBlob=blob;
-
 
     preview.src=
       URL.createObjectURL(blob);
@@ -834,17 +1094,17 @@ function applyHairColorLocal(){
       "Hair Color applied ✓"
     );
 
-
-  }).catch(e=>{
+  }catch(e){
 
     console.error(e);
 
     showStatus(
-      "Hair Color failed. Please try again."
+      "Hair Color failed: "+
+      (e.message||
+      "Please try again.")
     );
-
-  });
-                               }
+  }
+  }
 
 
 document.querySelectorAll(".hairColorOption").forEach(option=>{
