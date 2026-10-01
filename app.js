@@ -952,12 +952,26 @@ async function applyHairColorLocal(){
             )
           );
 
-        const alpha=
-          finalMask[
-            maskIndex*4+3
-          ]/255;
+        const rawAlpha=
+  finalMask[
+    maskIndex*4+3
+  ]/255;
 
-        if(alpha<0.015)continue;
+/*
+  Keep only stronger AI hair confidence.
+  This removes weak mask spill around
+  forehead and hairline.
+*/
+if(rawAlpha<0.35)continue;
+
+const alpha=
+  Math.min(
+    1,
+    Math.max(
+      0,
+      (rawAlpha-0.35)/0.65
+    )
+  );
 
         const r=data[i];
         const g=data[i+1];
