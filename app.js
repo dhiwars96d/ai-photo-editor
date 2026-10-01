@@ -952,18 +952,74 @@ async function applyHairColorLocal(){
             )
           );
 
-        const rawAlpha=
+    const maskX=Math.floor(
+  x*maskWidth/canvas.width
+);
+
+const maskY=Math.floor(
+  y*maskHeight/canvas.height
+);
+
+const maskIndex=
+  maskY*maskWidth+maskX;
+
+const rawAlpha=
   finalMask[
     maskIndex*4+3
   ]/255;
 
+
 /*
-  Keep only stronger AI hair confidence.
-  This removes weak mask spill around
-  forehead and hairline.
+  Hair mask cleanup.
+
+  Require nearby strong hair pixels.
+  This removes isolated mask spill
+  around forehead and face.
 */
 if(rawAlpha<0.35)continue;
 
+let strongNeighbors=0;
+
+for(let dy=-1;dy<=1;dy++){
+
+  for(let dx=-1;dx<=1;dx++){
+
+    if(dx===0 && dy===0)continue;
+
+    const nx=maskX+dx;
+    const ny=maskY+dy;
+
+    if(
+      nx<0 ||
+      ny<0 ||
+      nx>=maskWidth ||
+      ny>=maskHeight
+    ){
+      continue;
+    }
+
+    const neighborIndex=
+      (ny*maskWidth+nx)*4+3;
+
+    const neighborAlpha=
+      finalMask[neighborIndex]/255;
+
+    if(neighborAlpha>=0.35){
+      strongNeighbors++;
+    }
+  }
+}
+
+
+/*
+  Remove isolated/weak mask pixels.
+*/
+if(strongNeighbors<4)continue;
+
+
+/*
+  Keep a soft natural hair edge.
+*/
 const alpha=
   Math.min(
     1,
