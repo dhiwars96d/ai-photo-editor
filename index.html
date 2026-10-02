@@ -36,6 +36,39 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
   </button>
 </div>
 
+ <script>
+(function () {
+  const btn = document.getElementById("addPhoto");
+  const input = document.getElementById("fileInput");
+  const preview = document.getElementById("preview");
+  const placeholder = document.getElementById("placeholder");
+
+  if (!btn || !input) return;
+
+  btn.onclick = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    input.click();
+  };
+
+  input.onchange = function () {
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) return;
+
+    if (preview) {
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    }
+
+    if (placeholder) {
+      placeholder.style.display = "none";
+    }
+  };
+})();
+ </script>
+
 <div class="sectionTitle">AI Tools</div>
 
 <div class="tools">
