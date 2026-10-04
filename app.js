@@ -3099,18 +3099,24 @@ async function applyHairColorLocal() {
 
 
         const originalHsl =
-          rgbToHsl(
-            r,
-            g,
-            b
-          );
+  rgbToHsl(
+    r,
+    g,
+    b
+  );
 
+/*
+  Preserve original hair light/dark
+  texture.
+*/
+let newLightness =
+  originalHsl.l;
 
-        let lightness =
-          originalHsl.l;
-
-
-        if(lightBoost>0){
+/*
+  Blonde needs controlled
+  lightening.
+*/
+if(lightBoost > 0){
 
   newLightness =
     Math.min(
@@ -3119,20 +3125,22 @@ async function applyHairColorLocal() {
       lightBoost * intensity
     );
 
-        }
+}
 
+/*
+  Black needs controlled
+  darkening.
+*/
+if(lightBoost < 0){
 
-        if (lightBoost < 0) {
+  newLightness =
+    Math.max(
+      0.06,
+      newLightness +
+      lightBoost * intensity
+    );
 
-          lightness =
-            Math.max(
-              0.06,
-              lightness +
-              lightBoost *
-              intensity
-            );
-
-        }
+}
 
 
         const saturation =
