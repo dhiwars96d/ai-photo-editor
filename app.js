@@ -168,21 +168,9 @@ if (fileInput) {
     }
 
 
-    /*
-      THIS is the important part.
-
-      All editing tools use this same variable.
-    */
-
     selectedFile = file;
 
-
-    /*
-      Keep compatibility with any old code.
-    */
-
     window.__selectedPhotoFile = file;
-
 
     editedBlob = null;
 
@@ -680,10 +668,6 @@ async function smoothSkin(
     );
 
 
-  /*
-    Work at reduced size for speed.
-  */
-
   const scale =
     Math.min(
       1,
@@ -841,10 +825,6 @@ async function smoothSkin(
   );
 
 
-  /*
-    Approximate face area.
-  */
-
   const mask =
     document.createElement(
       "canvas"
@@ -934,10 +914,6 @@ async function smoothSkin(
 
   mc.fill();
 
-
-  /*
-    Protect eyes, brows, nose and mouth.
-  */
 
   mc.globalCompositeOperation =
     "destination-out";
@@ -2252,12 +2228,6 @@ async function getHairSegmenter() {
         );
 
 
-        /*
-          IMPORTANT:
-          MediaPipe is loaded only here.
-          Therefore it cannot break Add Photo.
-        */
-
         const mp =
           await import(
             "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.mjs"
@@ -2630,10 +2600,6 @@ async function applyHairColorLocal() {
     );
 
 
-    /*
-      Run AI segmentation.
-    */
-
     const result =
       segmenter.segment(
         img
@@ -2652,10 +2618,6 @@ async function applyHairColorLocal() {
     let maskHeight =
       0;
 
-
-    /*
-      Hair is label/category 1.
-    */
 
     if (
       result.confidenceMasks &&
@@ -2679,10 +2641,6 @@ async function applyHairColorLocal() {
 
     }
 
-
-    /*
-      Fallback category mask.
-    */
 
     if (
       !confidenceData &&
@@ -2724,10 +2682,6 @@ async function applyHairColorLocal() {
 
     }
 
-
-    /*
-      Build mask.
-    */
 
     const maskCanvas =
       document.createElement(
@@ -2794,11 +2748,6 @@ async function applyHairColorLocal() {
       }
 
 
-      /*
-        Higher threshold reduces
-        forehead/skin spill.
-      */
-
       if (value < 0.50) {
 
         value = 0;
@@ -2829,10 +2778,6 @@ async function applyHairColorLocal() {
       0
     );
 
-
-    /*
-      Resize + slight feather.
-    */
 
     const fullMask =
       document.createElement(
@@ -2890,10 +2835,6 @@ async function applyHairColorLocal() {
     const data =
       imageData.data;
 
-
-    /*
-      Selected color.
-    */
 
     const hex =
       selectedHairColor
@@ -3005,10 +2946,6 @@ async function applyHairColorLocal() {
     }
 
 
-    /*
-      Apply mask.
-    */
-
     for (
       let y = 0;
       y < height;
@@ -3099,48 +3036,45 @@ async function applyHairColorLocal() {
 
 
         const originalHsl =
-  rgbToHsl(
-    r,
-    g,
-    b
-  );
+          rgbToHsl(
+            r,
+            g,
+            b
+          );
 
-/*
-  Preserve original hair light/dark
-  texture.
-*/
-let newLightness =
-  originalHsl.l;
 
-/*
-  Blonde needs controlled
-  lightening.
-*/
-if(lightBoost > 0){
+        let newLightness =
+          originalHsl.l;
 
-  newLightness =
-    Math.min(
-      0.88,
-      newLightness +
-      lightBoost * intensity
-    );
 
-}
+        if (
+          lightBoost > 0
+        ) {
 
-/*
-  Black needs controlled
-  darkening.
-*/
-if(lightBoost < 0){
+          newLightness =
+            Math.min(
+              0.88,
+              newLightness +
+              lightBoost *
+              intensity
+            );
 
-  newLightness =
-    Math.max(
-      0.06,
-      newLightness +
-      lightBoost * intensity
-    );
+        }
 
-}
+
+        if (
+          lightBoost < 0
+        ) {
+
+          newLightness =
+            Math.max(
+              0.06,
+              newLightness +
+              lightBoost *
+              intensity
+            );
+
+        }
 
 
         const saturation =
@@ -3157,7 +3091,7 @@ if(lightBoost < 0){
           hslToRgb(
             targetHsl.h,
             saturation,
-            lightness
+            newLightness
           );
 
 
@@ -3399,10 +3333,6 @@ document
         "click",
         async function () {
 
-          /*
-            ONE source of truth.
-          */
-
           if (!selectedFile) {
 
             showStatus(
@@ -3417,10 +3347,6 @@ document
           const type =
             tool.dataset.tool;
 
-
-          /* -----------------------------------------
-             SMOOTH
-          ----------------------------------------- */
 
           if (
             type === "smooth"
@@ -3457,10 +3383,6 @@ document
 
           hideSmoothControl();
 
-
-          /* -----------------------------------------
-             ENHANCE
-          ----------------------------------------- */
 
           if (
             type === "enhance"
@@ -3529,10 +3451,6 @@ document
           }
 
 
-          /* -----------------------------------------
-             HAIR
-          ----------------------------------------- */
-
           if (
             type === "hair"
           ) {
@@ -3565,10 +3483,6 @@ document
 
           }
 
-
-          /* -----------------------------------------
-             RETOUCH
-          ----------------------------------------- */
 
           if (
             type === "retouch"
