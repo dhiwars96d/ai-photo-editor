@@ -1,757 +1,366 @@
 <!DOCTYPE html>
-<!-- The user's current index.html with the Smooth Skin strength increased.
-     Paste the full HTML supplied in the previous message into this file if needed. -->
 <html lang="en">
 <head>
-<link rel="stylesheet" href="style.css">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Photo Editor</title>
-
-
+  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Photo Editor</title>
 </head>
+
 <body>
+
 <div class="app">
-<header><div class="logo">AI Photo Editor</div><div class="badge">AI Powered</div></header>
 
-<h1>Make your photos better.</h1>
+  <header>
+    <div class="logo">AI Photo Editor</div>
+    <div class="badge">AI Powered</div>
+  </header>
 
-<div class="subtitle">
-Enhance your photos and improve skin appearance with simple AI-powered tools.
-</div>
+  <h1>Make your photos better.</h1>
 
-<div class="photoCard">
-  <div class="previewBox">
-    <div class="placeholder" id="placeholder">
-      <div class="placeholderIcon">📷</div>
-      <div>Select a photo to get started</div>
+  <div class="subtitle">
+    Enhance your photos and improve skin appearance with simple AI-powered tools.
+  </div>
+
+
+  <!-- PHOTO -->
+
+  <div class="photoCard">
+
+    <div class="previewBox">
+
+      <div class="placeholder" id="placeholder">
+        <div class="placeholderIcon">📷</div>
+        <div>Select a photo to get started</div>
+      </div>
+
+      <img id="preview" alt="Photo Preview">
+
     </div>
-    <img id="preview" alt="Photo Preview">
+
+
+    <input
+      type="file"
+      id="fileInput"
+      accept="image/*"
+    >
+
+
+    <button
+      class="addButton"
+      id="addPhoto"
+      type="button"
+    >
+      Add Photo
+    </button>
+
   </div>
 
-  <input type="file" id="fileInput" accept="image/*">
 
-  <button class="addButton" id="addPhoto" type="button">
-    Add Photo
-  </button>
-</div>
+  <!-- AI TOOLS -->
 
-<script>
-(function () {
-
-  const btn = document.getElementById("addPhoto");
-  const input = document.getElementById("fileInput");
-  const preview = document.getElementById("preview");
-  const placeholder = document.getElementById("placeholder");
-
-  if (!btn || !input) return;
-
-  btn.onclick = function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    input.click();
-  };
-
-  input.onchange = function () {
-
-    const file = input.files && input.files[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) return;
-
-    window.__selectedPhotoFile = file;
-
-    if (preview) {
-      preview.src = URL.createObjectURL(file);
-      preview.style.display = "block";
-    }
-
-    if (placeholder) {
-      placeholder.style.display = "none";
-    }
-
-  };
-
-})();
-</script>
-     
-<script>
-(function () {
-
-  const fileInput = document.getElementById("fileInput");
-  const preview = document.getElementById("preview");
-  const placeholder = document.getElementById("placeholder");
-
-  const tools = document.querySelectorAll(".tool");
-
-  const smoothControl = document.getElementById("smoothControl");
-  const smoothSlider = document.getElementById("smoothSlider");
-  const smoothValue = document.getElementById("smoothValue");
-
-  const hairMenu = document.getElementById("hairMenu");
-  const hairColorPanel = document.getElementById("hairColorPanel");
-
-  const hairGrow = document.getElementById("hairGrow");
-  const hairColor = document.getElementById("hairColor");
-
-  const statusBox = document.getElementById("status");
-
-  const adjustmentsButton = document.getElementById("adjustmentsToggle");
-  const adjustmentsPanel = document.getElementById("adjustmentsPanel");
-  const adjustmentsChevron = document.getElementById("adjustmentsChevron");
-
-  let currentPhoto = null;
-
-  function status(text) {
-    if (statusBox) {
-      statusBox.textContent = text;
-      statusBox.style.display = "block";
-    }
-  }
-
-  /*
-    Keep our own reference to the selected photo.
-    This fixes the Enhance "Please select a photo first" problem.
-  */
-  if (fileInput) {
-
-    fileInput.addEventListener("change", function () {
-
-      const file = fileInput.files && fileInput.files[0];
-
-      if (!file) return;
-
-      if (!file.type.startsWith("image/")) return;
-
-      currentPhoto = file;
-
-      window.__selectedPhotoFile = file;
-
-    });
-
-  }
-
-  /*
-    AI TOOL BUTTONS
-  */
-  tools.forEach(function (tool) {
-
-    tool.onclick = function (e) {
-
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      const type = tool.dataset.tool;
-
-      /*
-        SMOOTH SKIN
-      */
-      if (type === "smooth") {
-
-        if (!currentPhoto) {
-          status("Please select a photo first.");
-          return;
-        }
-
-        if (hairMenu) {
-          hairMenu.style.display = "none";
-        }
-
-        if (hairColorPanel) {
-          hairColorPanel.style.display = "none";
-        }
-
-        if (smoothControl) {
-          smoothControl.classList.add("show");
-        }
-
-        status("Skin Smooth selected.");
-
-        return;
-      }
-
-      /*
-        ENHANCE
-      */
-      if (type === "enhance") {
-
-        if (!currentPhoto) {
-          status("Please select a photo first.");
-          return;
-        }
-
-        if (hairMenu) {
-          hairMenu.style.display = "none";
-        }
-
-        if (hairColorPanel) {
-          hairColorPanel.style.display = "none";
-        }
-
-        if (smoothControl) {
-          smoothControl.classList.remove("show");
-        }
-
-        if (typeof runHockmanX2 !== "function") {
-          status("Enhance engine is not loaded.");
-          return;
-        }
-
-        status("Starting Enhance AI...");
-
-        runHockmanX2(currentPhoto)
-          .then(function (blob) {
-
-            if (typeof showResult === "function") {
-              showResult(blob);
-            } else {
-
-              if (preview) {
-                preview.src = URL.createObjectURL(blob);
-                preview.style.display = "block";
-              }
-
-              if (placeholder) {
-                placeholder.style.display = "none";
-              }
-
-              const downloadButton =
-                document.getElementById("downloadButton");
-
-              if (downloadButton) {
-                downloadButton.style.display = "block";
-              }
-
-            }
-
-            status("AI Enhance complete ✓");
-
-          })
-          .catch(function (error) {
-
-            console.error(error);
-
-            status(
-              "Enhance failed: " +
-              (error.message || "Please try again.")
-            );
-
-          });
-
-        return;
-      }
-
-      /*
-        HAIR
-      */
-      if (type === "hair") {
-
-        if (!currentPhoto) {
-          status("Please select a photo first.");
-          return;
-        }
-
-        if (smoothControl) {
-          smoothControl.classList.remove("show");
-        }
-
-        if (hairColorPanel) {
-          hairColorPanel.style.display = "none";
-        }
-
-        if (hairMenu) {
-          hairMenu.style.display = "flex";
-        }
-
-        status("Hair menu opened.");
-
-        return;
-      }
-
-      /*
-        RETOUCH
-      */
-      if (type === "retouch") {
-
-        if (!currentPhoto) {
-          status("Please select a photo first.");
-          return;
-        }
-
-        if (smoothControl) {
-          smoothControl.classList.remove("show");
-        }
-
-        if (hairMenu) {
-          hairMenu.style.display = "none";
-        }
-
-        if (hairColorPanel) {
-          hairColorPanel.style.display = "none";
-        }
-
-        status("Retouch tool selected.");
-
-        return;
-      }
-
-    };
-
-  });
-
-
-  /*
-    HAIR GROW
-  */
-  if (hairGrow) {
-
-    hairGrow.onclick = function (e) {
-
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      if (!currentPhoto) {
-        status("Please select a photo first.");
-        return;
-      }
-
-      status("Hair Grow selected.");
-
-    };
-
-  }
-
-
-  /*
-    HAIR COLOR
-  */
-  if (hairColor) {
-
-    hairColor.onclick = function (e) {
-
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      if (!currentPhoto) {
-        status("Please select a photo first.");
-        return;
-      }
-
-      if (hairMenu) {
-        hairMenu.style.display = "none";
-      }
-
-      if (hairColorPanel) {
-        hairColorPanel.style.display = "block";
-      }
-
-      status("Hair Color selected.");
-
-    };
-
-  }
-
-
-  /*
-    ADJUSTMENTS
-  */
-  if (adjustmentsButton) {
-
-    adjustmentsButton.onclick = function (e) {
-
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      if (!adjustmentsPanel) return;
-
-      const opened =
-        adjustmentsPanel.classList.toggle("open");
-
-      adjustmentsButton.classList.toggle("open", opened);
-
-      if (adjustmentsChevron) {
-        adjustmentsChevron.textContent =
-          opened ? "⌄" : "›";
-      }
-
-      status(
-        opened
-          ? "Adjustments opened."
-          : "Adjustments closed."
-      );
-
-    };
-
-  }
-
-
-  /*
-    SMOOTH SLIDER
-    Use app.js smooth processing if available.
-  */
-  if (smoothSlider) {
-
-    smoothSlider.addEventListener("input", function () {
-
-      const value = Number(smoothSlider.value);
-
-      if (smoothValue) {
-        smoothValue.textContent = value;
-      }
-
-      /*
-        app.js already owns the actual Smooth Skin engine.
-        We only make sure the UI remains active here.
-      */
-
-    });
-
-  }
-
-})();
-         </script>
-
-<div class="sectionTitle">AI Tools</div>
-
-<div class="tools">
-
-  <div class="tool" data-tool="enhance">
-    <img class="toolIcon" src="enhance-icon.png" alt="Enhance">
-    <div class="toolName">Enhance</div>
+  <div class="sectionTitle">
+    AI Tools
   </div>
 
-  <div class="tool" data-tool="smooth">
-    <img class="toolIcon" src="smooth-icon.png" alt="Smooth Skin">
-    <div class="toolName">Smooth Skin</div>
+
+  <div class="tools">
+
+    <div
+      class="tool"
+      data-tool="enhance"
+    >
+      <img
+        class="toolIcon"
+        src="enhance-icon.png"
+        alt="Enhance"
+      >
+
+      <div class="toolName">
+        Enhance
+      </div>
+    </div>
+
+
+    <div
+      class="tool"
+      data-tool="smooth"
+    >
+      <img
+        class="toolIcon"
+        src="smooth-icon.png"
+        alt="Smooth Skin"
+      >
+
+      <div class="toolName">
+        Smooth Skin
+      </div>
+    </div>
+
+
+    <div
+      class="tool"
+      data-tool="hair"
+    >
+      <img
+        class="toolIcon"
+        src="hair-icon.png"
+        alt="Hair"
+      >
+
+      <div class="toolName">
+        Hair
+      </div>
+    </div>
+
+
+    <div
+      class="tool"
+      data-tool="retouch"
+    >
+      <img
+        class="toolIcon"
+        src="retouch-icon.png"
+        alt="Retouch"
+      >
+
+      <div class="toolName">
+        Retouch
+      </div>
+    </div>
+
   </div>
 
-  <div class="tool" data-tool="hair">
-    <img class="toolIcon" src="hair-icon.png" alt="Hair">
-    <div class="toolName">Hair</div>
-  </div>
 
-  <div class="tool" data-tool="retouch">
-    <img class="toolIcon" src="retouch-icon.png" alt="Retouch">
-    <div class="toolName">Retouch</div>
-  </div>
+  <!-- SMOOTH SKIN -->
 
-</div>
-
-<!-- Smooth Skin -->
-<div class="smoothControl" id="smoothControl">
-  <div class="smoothTop">
-    <span class="smoothLabel">Skin Smooth</span>
-    <span id="smoothValue">50</span>
-  </div>
-
-  <input
-    type="range"
-    id="smoothSlider"
-    min="1"
-    max="100"
-    value="50"
+  <div
+    class="smoothControl"
+    id="smoothControl"
   >
 
-  <div class="smoothScale">
-    <span>Natural</span>
-    <span>Strong</span>
-  </div>
-</div>
+    <div class="smoothTop">
 
-<!-- Hair Menu -->
-<div class="hairMenu" id="hairMenu" style="display:none;">
+      <span class="smoothLabel">
+        Skin Smooth
+      </span>
 
-  <button class="hairOption" id="hairGrow" type="button">
-    <span class="hairOptionIcon">💇</span>
-    <span>Grow</span>
-  </button>
+      <span id="smoothValue">
+        50
+      </span>
 
-  <button class="hairOption" id="hairColor" type="button">
-    <span class="hairOptionIcon">🎨</span>
-    <span>Color</span>
-  </button>
+    </div>
 
-</div>
 
-     <!-- Hair Color Panel -->
-<div class="hairColorPanel" id="hairColorPanel" style="display:none;">
+    <input
+      type="range"
+      id="smoothSlider"
+      min="1"
+      max="100"
+      value="50"
+    >
 
-  <div class="hairColorTitle">Hair Color</div>
 
-  <div class="hairColors">
-    <button class="hairColorOption" data-color="#111111">Black</button>
-    <button class="hairColorOption" data-color="#5b321b">Brown</button>
-    <button class="hairColorOption" data-color="#d6b36a">Blonde</button>
-    <button class="hairColorOption" data-color="#8b2f1f">Red</button>
-  </div>
+    <div class="smoothScale">
 
-  <div class="hairIntensityTop">
-    <span>Intensity</span>
-    <span id="hairIntensityValue">50</span>
+      <span>
+        Natural
+      </span>
+
+      <span>
+        Strong
+      </span>
+
+    </div>
+
   </div>
 
-  <input
-    type="range"
-    id="hairIntensitySlider"
-    min="1"
-    max="100"
-    value="50"
+
+  <!-- HAIR MENU -->
+
+  <div
+    class="hairMenu"
+    id="hairMenu"
+    style="display:none;"
   >
 
+    <button
+      class="hairOption"
+      id="hairGrow"
+      type="button"
+    >
+      <span class="hairOptionIcon">
+        💇
+      </span>
+
+      <span>
+        Grow
+      </span>
+    </button>
+
+
+    <button
+      class="hairOption"
+      id="hairColor"
+      type="button"
+    >
+      <span class="hairOptionIcon">
+        🎨
+      </span>
+
+      <span>
+        Color
+      </span>
+    </button>
+
+  </div>
+
+
+  <!-- HAIR COLOR -->
+
+  <div
+    class="hairColorPanel"
+    id="hairColorPanel"
+    style="display:none;"
+  >
+
+    <div class="hairColorTitle">
+      Hair Color
+    </div>
+
+
+    <div class="hairColors">
+
+      <button
+        class="hairColorOption"
+        data-color="#111111"
+        type="button"
+      >
+        Black
+      </button>
+
+
+      <button
+        class="hairColorOption"
+        data-color="#5b321b"
+        type="button"
+      >
+        Brown
+      </button>
+
+
+      <button
+        class="hairColorOption"
+        data-color="#d6b36a"
+        type="button"
+      >
+        Blonde
+      </button>
+
+
+      <button
+        class="hairColorOption"
+        data-color="#8b2f1f"
+        type="button"
+      >
+        Red
+      </button>
+
+    </div>
+
+
+    <div class="hairIntensityTop">
+
+      <span>
+        Intensity
+      </span>
+
+      <span id="hairIntensityValue">
+        50
+      </span>
+
+    </div>
+
+
+    <input
+      type="range"
+      id="hairIntensitySlider"
+      min="1"
+      max="100"
+      value="50"
+    >
+
+  </div>
+
+
+  <!-- ADJUSTMENTS -->
+
+  <button
+    class="adjustmentsToggle"
+    id="adjustmentsToggle"
+    type="button"
+  >
+
+    <span>
+      ⚙ Adjustments
+    </span>
+
+    <span
+      class="adjustmentsChevron"
+      id="adjustmentsChevron"
+    >
+      ›
+    </span>
+
+  </button>
+
+
+  <div
+    class="adjustmentsPanel"
+    id="adjustmentsPanel"
+  >
+
+    <iframe
+      class="adjustmentsFrame"
+      id="adjustmentsFrame"
+      src="adjustments.html"
+      title="Photo Adjustments"
+    >
+    </iframe>
+
+  </div>
+
+
+  <!-- STATUS -->
+
+  <div
+    class="status"
+    id="status"
+  >
+  </div>
+
+
+  <!-- DOWNLOAD -->
+
+  <button
+    class="downloadButton"
+    id="downloadButton"
+    type="button"
+  >
+    Download Edited Photo
+  </button>
+
+
+  <div class="smallNote">
+    Your photo is processed only when you select an editing tool or change an adjustment.
+  </div>
+
 </div>
 
-     <!-- Adjustments -->
-<button
-  class="adjustmentsToggle"
-  id="adjustmentsToggle"
-  type="button"
->
-  <span>⚙ Adjustments</span>
-  <span class="adjustmentsChevron" id="adjustmentsChevron">›</span>
-</button>
 
-<div class="adjustmentsPanel" id="adjustmentsPanel">
-  <iframe
-    class="adjustmentsFrame"
-    id="adjustmentsFrame"
-    src="adjustments.html"
-    title="Photo Adjustments"
-  ></iframe>
-</div>
-
-<div class="status" id="status"></div>
-
-<button
-  class="downloadButton"
-  id="downloadButton"
-  type="button"
->
-  Download Edited Photo
-</button>
-
-<div class="smallNote">
-Your photo is processed only when you select an editing tool or change an adjustment.
-</div>
-
-</div>
+<!-- ONLY ONE SCRIPT -->
 
 <script src="./app.js"></script>
-
- <script>
-(function () {
-
-  const tools = document.querySelectorAll(".tool");
-
-  const smoothControl = document.getElementById("smoothControl");
-  const hairMenu = document.getElementById("hairMenu");
-  const hairColorPanel = document.getElementById("hairColorPanel");
-  const statusBox = document.getElementById("status");
-
-  function status(text) {
-    if (statusBox) {
-      statusBox.textContent = text;
-      statusBox.style.display = "block";
-    }
-  }
-
-  tools.forEach(function (tool) {
-
-    tool.onclick = function (e) {
-
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      const type = tool.dataset.tool;
-
-      /* Smooth Skin */
-      if (type === "smooth") {
-
-        if (hairMenu) {
-          hairMenu.style.display = "none";
-        }
-
-        if (hairColorPanel) {
-          hairColorPanel.style.display = "none";
-        }
-
-        if (smoothControl) {
-          smoothControl.classList.add("show");
-        }
-
-        status("Skin Smooth selected.");
-
-        return;
-      }
-
-
-      /* Enhance */
-      if (type === "enhance") {
-
-        if (hairMenu) {
-          hairMenu.style.display = "none";
-        }
-
-        if (hairColorPanel) {
-          hairColorPanel.style.display = "none";
-        }
-
-        if (smoothControl) {
-          smoothControl.classList.remove("show");
-        }
-
-        if (typeof selectedFile === "undefined" || !selectedFile) {
-          status("Please select a photo first.");
-          return;
-        }
-
-        if (typeof runHockmanX2 !== "function") {
-          status("Enhance engine is not loaded.");
-          return;
-        }
-
-        status("Starting Enhance AI...");
-
-        runHockmanX2(selectedFile)
-          .then(function (blob) {
-
-            if (typeof showResult === "function") {
-              showResult(blob);
-            } else {
-              window.editedBlob = blob;
-
-              const preview =
-                document.getElementById("preview");
-
-              const placeholder =
-                document.getElementById("placeholder");
-
-              const downloadButton =
-                document.getElementById("downloadButton");
-
-              if (preview) {
-                preview.src = URL.createObjectURL(blob);
-                preview.style.display = "block";
-              }
-
-              if (placeholder) {
-                placeholder.style.display = "none";
-              }
-
-              if (downloadButton) {
-                downloadButton.style.display = "block";
-              }
-            }
-
-            status("AI Enhance complete ✓");
-
-          })
-          .catch(function (error) {
-
-            console.error(error);
-
-            status(
-              "Enhance failed: " +
-              (error.message || "Please try again.")
-            );
-
-          });
-
-        return;
-      }
-
-
-      /* Hair */
-      if (type === "hair") {
-
-        if (smoothControl) {
-          smoothControl.classList.remove("show");
-        }
-
-        if (hairColorPanel) {
-          hairColorPanel.style.display = "none";
-        }
-
-        if (hairMenu) {
-          hairMenu.style.display = "flex";
-        }
-
-        status("Hair menu opened.");
-
-        return;
-      }
-
-
-      /* Retouch */
-      if (type === "retouch") {
-
-        if (smoothControl) {
-          smoothControl.classList.remove("show");
-        }
-
-        if (hairMenu) {
-          hairMenu.style.display = "none";
-        }
-
-        if (hairColorPanel) {
-          hairColorPanel.style.display = "none";
-        }
-
-        status("Retouch tool selected.");
-
-        return;
-      }
-
-    };
-
-  });
-
-
-  /* Adjustments button */
-  const adjustmentsButton =
-    document.getElementById("adjustmentsToggle");
-
-  const adjustmentsPanel =
-    document.getElementById("adjustmentsPanel");
-
-  const adjustmentsChevron =
-    document.getElementById("adjustmentsChevron");
-
-
-  if (adjustmentsButton) {
-
-    adjustmentsButton.onclick = function (e) {
-
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      if (!adjustmentsPanel) return;
-
-      const opened =
-        adjustmentsPanel.classList.toggle("open");
-
-      adjustmentsButton.classList.toggle(
-        "open",
-        opened
-      );
-
-      if (adjustmentsChevron) {
-        adjustmentsChevron.textContent =
-          opened ? "⌄" : "›";
-      }
-
-      status(
-        opened
-          ? "Adjustments opened."
-          : "Adjustments closed."
-      );
-
-    };
-
-  }
-
-})();
- </script>
 
 </body>
 </html>
