@@ -1,364 +1,204 @@
 <!DOCTYPE html>
+<!-- The user's current index.html with the Smooth Skin strength increased.
+     Paste the full HTML supplied in the previous message into this file if needed. -->
 <html lang="en">
 <head>
-  <link rel="stylesheet" href="style.css">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Photo Editor</title>
+<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Photo Editor</title>
+
+
 </head>
-
 <body>
-
 <div class="app">
+<header><div class="logo">AI Photo Editor</div><div class="badge">AI Powered</div></header>
 
-  <header>
-    <div class="logo">AI Photo Editor</div>
-    <div class="badge">AI Powered</div>
-  </header>
+<h1>Make your photos better.</h1>
 
-  <h1>Make your photos better.</h1>
+<div class="subtitle">
+Enhance your photos and improve skin appearance with simple AI-powered tools.
+</div>
 
-  <div class="subtitle">
-    Enhance your photos and improve skin appearance with simple AI-powered tools.
+<div class="photoCard">
+  <div class="previewBox">
+    <div class="placeholder" id="placeholder">
+      <div class="placeholderIcon">📷</div>
+      <div>Select a photo to get started</div>
+    </div>
+    <img id="preview" alt="Photo Preview">
   </div>
 
+  <input type="file" id="fileInput" accept="image/*">
 
-  <!-- PHOTO -->
-
-  <div class="photoCard">
-
-    <div class="previewBox">
-
-      <div class="placeholder" id="placeholder">
-        <div class="placeholderIcon">📷</div>
-        <div>Select a photo to get started</div>
-      </div>
-
-      <img id="preview" alt="Photo Preview">
-
-    </div>
-
-
-    <input
-      type="file"
-      id="fileInput"
-      accept="image/*"
-    >
-
-
-    <button
-      class="addButton"
-      id="addPhoto"
-      type="button"
-    >
-      Add Photo
-    </button>
-
-  </div>
-
-
-  <!-- AI TOOLS -->
-
-  <div class="sectionTitle">
-    AI Tools
-  </div>
-
-
-  <div class="tools">
-
-    <div
-      class="tool"
-      data-tool="enhance"
-    >
-      <img
-        class="toolIcon"
-        src="enhance-icon.png"
-        alt="Enhance"
-      >
-
-      <div class="toolName">
-        Enhance
-      </div>
-    </div>
-
-
-    <div
-      class="tool"
-      data-tool="smooth"
-    >
-      <img
-        class="toolIcon"
-        src="smooth-icon.png"
-        alt="Smooth Skin"
-      >
-
-      <div class="toolName">
-        Smooth Skin
-      </div>
-    </div>
-
-
-    <div
-      class="tool"
-      data-tool="hair"
-    >
-      <img
-        class="toolIcon"
-        src="hair-icon.png"
-        alt="Hair"
-      >
-
-      <div class="toolName">
-        Hair
-      </div>
-    </div>
-
-
-    <div
-      class="tool"
-      data-tool="retouch"
-    >
-      <img
-        class="toolIcon"
-        src="retouch-icon.png"
-        alt="Retouch"
-      >
-
-      <div class="toolName">
-        Retouch
-      </div>
-    </div>
-
-  </div>
-
-
-  <!-- SMOOTH SKIN -->
-
-  <div
-    class="smoothControl"
-    id="smoothControl"
-  >
-
-    <div class="smoothTop">
-
-      <span class="smoothLabel">
-        Skin Smooth
-      </span>
-
-      <span id="smoothValue">
-        50
-      </span>
-
-    </div>
-
-
-    <input
-      type="range"
-      id="smoothSlider"
-      min="1"
-      max="100"
-      value="50"
-    >
-
-
-    <div class="smoothScale">
-
-      <span>
-        Natural
-      </span>
-
-      <span>
-        Strong
-      </span>
-
-    </div>
-
-  </div>
-
-
-  <!-- HAIR MENU -->
-
-  <div
-    class="hairMenu"
-    id="hairMenu"
-    style="display:none;"
-  >
-
-    <button
-      class="hairOption"
-      id="hairGrow"
-      type="button"
-    >
-      <span class="hairOptionIcon">
-        💇
-      </span>
-
-      <span>
-        Grow
-      </span>
-    </button>
-
-
-    <button
-      class="hairOption"
-      id="hairColor"
-      type="button"
-    >
-      <span class="hairOptionIcon">
-        🎨
-      </span>
-
-      <span>
-        Color
-      </span>
-    </button>
-
-  </div>
-
-
-  <!-- HAIR COLOR -->
-
-  <div
-    class="hairColorPanel"
-    id="hairColorPanel"
-    style="display:none;"
-  >
-
-    <div class="hairColorTitle">
-      Hair Color
-    </div>
-
-
-    <div class="hairColors">
-
-      <button
-        class="hairColorOption"
-        data-color="#111111"
-        type="button"
-      >
-        Black
-      </button>
-
-
-      <button
-        class="hairColorOption"
-        data-color="#5b321b"
-        type="button"
-      >
-        Brown
-      </button>
-
-
-      <button
-        class="hairColorOption"
-        data-color="#d6b36a"
-        type="button"
-      >
-        Blonde
-      </button>
-
-
-      <button
-        class="hairColorOption"
-        data-color="#8b2f1f"
-        type="button"
-      >
-        Red
-      </button>
-
-    </div>
-
-
-    <div class="hairIntensityTop">
-
-      <span>
-        Intensity
-      </span>
-
-      <span id="hairIntensityValue">
-        50
-      </span>
-
-    </div>
-
-
-    <input
-      type="range"
-      id="hairIntensitySlider"
-      min="1"
-      max="100"
-      value="50"
-    >
-
-  </div>
-
-
-  <!-- ADJUSTMENTS -->
-
-  <button
-    class="adjustmentsToggle"
-    id="adjustmentsToggle"
-    type="button"
-  >
-
-    <span>
-      ⚙ Adjustments
-    </span>
-
-    <span
-      class="adjustmentsChevron"
-      id="adjustmentsChevron"
-    >
-      ›
-    </span>
-
+  <button class="addButton" id="addPhoto" type="button">
+    Add Photo
   </button>
+</div>
 
+<script>
+(function () {
 
-  <div
-    class="adjustmentsPanel"
-    id="adjustmentsPanel"
-  >
+  const btn = document.getElementById("addPhoto");
+  const input = document.getElementById("fileInput");
+  const preview = document.getElementById("preview");
+  const placeholder = document.getElementById("placeholder");
 
-    <iframe
-      class="adjustmentsFrame"
-      id="adjustmentsFrame"
-      src="adjustments.html"
-      title="Photo Adjustments"
-    >
-    </iframe>
+  if (!btn || !input) return;
 
+  btn.onclick = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    input.click();
+  };
+
+  input.onchange = function () {
+
+    const file = input.files && input.files[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) return;
+
+    window.__selectedPhotoFile = file;
+
+    if (preview) {
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    }
+
+    if (placeholder) {
+      placeholder.style.display = "none";
+    }
+
+  };
+
+})();
+</script>
+     
+<div class="sectionTitle">AI Tools</div>
+
+<div class="tools">
+
+  <div class="tool" data-tool="enhance">
+    <img class="toolIcon" src="enhance-icon.png" alt="Enhance">
+    <div class="toolName">Enhance</div>
   </div>
 
-
-  <!-- STATUS -->
-
-  <div
-    class="status"
-    id="status"
-  >
+  <div class="tool" data-tool="smooth">
+    <img class="toolIcon" src="smooth-icon.png" alt="Smooth Skin">
+    <div class="toolName">Smooth Skin</div>
   </div>
 
+  <div class="tool" data-tool="hair">
+    <img class="toolIcon" src="hair-icon.png" alt="Hair">
+    <div class="toolName">Hair</div>
+  </div>
 
-  <!-- DOWNLOAD -->
-
-  <button
-    class="downloadButton"
-    id="downloadButton"
-    type="button"
-  >
-    Download Edited Photo
-  </button>
-
-
-  <div class="smallNote">
-    Your photo is processed only when you select an editing tool or change an adjustment.
+  <div class="tool" data-tool="retouch">
+    <img class="toolIcon" src="retouch-icon.png" alt="Retouch">
+    <div class="toolName">Retouch</div>
   </div>
 
 </div>
 
+<!-- Smooth Skin -->
+<div class="smoothControl" id="smoothControl">
+  <div class="smoothTop">
+    <span class="smoothLabel">Skin Smooth</span>
+    <span id="smoothValue">50</span>
+  </div>
 
-<!-- ONLY ONE SCRIPT -->
+  <input
+    type="range"
+    id="smoothSlider"
+    min="1"
+    max="100"
+    value="50"
+  >
+
+  <div class="smoothScale">
+    <span>Natural</span>
+    <span>Strong</span>
+  </div>
+</div>
+
+<!-- Hair Menu -->
+<div class="hairMenu" id="hairMenu" style="display:none;">
+
+  <button class="hairOption" id="hairGrow" type="button">
+    <span class="hairOptionIcon">💇</span>
+    <span>Grow</span>
+  </button>
+
+  <button class="hairOption" id="hairColor" type="button">
+    <span class="hairOptionIcon">🎨</span>
+    <span>Color</span>
+  </button>
+
+</div>
+
+     <!-- Hair Color Panel -->
+<div class="hairColorPanel" id="hairColorPanel" style="display:none;">
+
+  <div class="hairColorTitle">Hair Color</div>
+
+  <div class="hairColors">
+    <button class="hairColorOption" data-color="#111111">Black</button>
+    <button class="hairColorOption" data-color="#5b321b">Brown</button>
+    <button class="hairColorOption" data-color="#d6b36a">Blonde</button>
+    <button class="hairColorOption" data-color="#8b2f1f">Red</button>
+  </div>
+
+  <div class="hairIntensityTop">
+    <span>Intensity</span>
+    <span id="hairIntensityValue">50</span>
+  </div>
+
+  <input
+    type="range"
+    id="hairIntensitySlider"
+    min="1"
+    max="100"
+    value="50"
+  >
+
+</div>
+
+     <!-- Adjustments -->
+<button
+  class="adjustmentsToggle"
+  id="adjustmentsToggle"
+  type="button"
+>
+  <span>⚙ Adjustments</span>
+  <span class="adjustmentsChevron" id="adjustmentsChevron">›</span>
+</button>
+
+<div class="adjustmentsPanel" id="adjustmentsPanel">
+  <iframe
+    class="adjustmentsFrame"
+    id="adjustmentsFrame"
+    src="adjustments.html"
+    title="Photo Adjustments"
+  ></iframe>
+</div>
+
+<div class="status" id="status"></div>
+
+<button
+  class="downloadButton"
+  id="downloadButton"
+  type="button"
+>
+  Download Edited Photo
+</button>
+
+<div class="smallNote">
+Your photo is processed only when you select an editing tool or change an adjustment.
+</div>
+
+</div>
 
 <script src="./app.js"></script>
 
