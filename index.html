@@ -36,38 +36,341 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
   </button>
 </div>
 
- <script>
+<script>
 (function () {
-  const btn = document.getElementById("addPhoto");
-  const input = document.getElementById("fileInput");
+
+  const fileInput = document.getElementById("fileInput");
   const preview = document.getElementById("preview");
   const placeholder = document.getElementById("placeholder");
 
-  if (!btn || !input) return;
+  const tools = document.querySelectorAll(".tool");
 
-  btn.onclick = function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    input.click();
-  };
+  const smoothControl = document.getElementById("smoothControl");
+  const smoothSlider = document.getElementById("smoothSlider");
+  const smoothValue = document.getElementById("smoothValue");
 
-  input.onchange = function () {
-    const file = input.files && input.files[0];
-    if (!file) return;
+  const hairMenu = document.getElementById("hairMenu");
+  const hairColorPanel = document.getElementById("hairColorPanel");
 
-    if (!file.type.startsWith("image/")) return;
+  const hairGrow = document.getElementById("hairGrow");
+  const hairColor = document.getElementById("hairColor");
 
-    if (preview) {
-      preview.src = URL.createObjectURL(file);
-      preview.style.display = "block";
+  const statusBox = document.getElementById("status");
+
+  const adjustmentsButton = document.getElementById("adjustmentsToggle");
+  const adjustmentsPanel = document.getElementById("adjustmentsPanel");
+  const adjustmentsChevron = document.getElementById("adjustmentsChevron");
+
+  let currentPhoto = null;
+
+  function status(text) {
+    if (statusBox) {
+      statusBox.textContent = text;
+      statusBox.style.display = "block";
     }
+  }
 
-    if (placeholder) {
-      placeholder.style.display = "none";
-    }
-  };
+  /*
+    Keep our own reference to the selected photo.
+    This fixes the Enhance "Please select a photo first" problem.
+  */
+  if (fileInput) {
+
+    fileInput.addEventListener("change", function () {
+
+      const file = fileInput.files && fileInput.files[0];
+
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) return;
+
+      currentPhoto = file;
+
+      window.__selectedPhotoFile = file;
+
+    });
+
+  }
+
+  /*
+    AI TOOL BUTTONS
+  */
+  tools.forEach(function (tool) {
+
+    tool.onclick = function (e) {
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const type = tool.dataset.tool;
+
+      /*
+        SMOOTH SKIN
+      */
+      if (type === "smooth") {
+
+        if (!currentPhoto) {
+          status("Please select a photo first.");
+          return;
+        }
+
+        if (hairMenu) {
+          hairMenu.style.display = "none";
+        }
+
+        if (hairColorPanel) {
+          hairColorPanel.style.display = "none";
+        }
+
+        if (smoothControl) {
+          smoothControl.classList.add("show");
+        }
+
+        status("Skin Smooth selected.");
+
+        return;
+      }
+
+      /*
+        ENHANCE
+      */
+      if (type === "enhance") {
+
+        if (!currentPhoto) {
+          status("Please select a photo first.");
+          return;
+        }
+
+        if (hairMenu) {
+          hairMenu.style.display = "none";
+        }
+
+        if (hairColorPanel) {
+          hairColorPanel.style.display = "none";
+        }
+
+        if (smoothControl) {
+          smoothControl.classList.remove("show");
+        }
+
+        if (typeof runHockmanX2 !== "function") {
+          status("Enhance engine is not loaded.");
+          return;
+        }
+
+        status("Starting Enhance AI...");
+
+        runHockmanX2(currentPhoto)
+          .then(function (blob) {
+
+            if (typeof showResult === "function") {
+              showResult(blob);
+            } else {
+
+              if (preview) {
+                preview.src = URL.createObjectURL(blob);
+                preview.style.display = "block";
+              }
+
+              if (placeholder) {
+                placeholder.style.display = "none";
+              }
+
+              const downloadButton =
+                document.getElementById("downloadButton");
+
+              if (downloadButton) {
+                downloadButton.style.display = "block";
+              }
+
+            }
+
+            status("AI Enhance complete ✓");
+
+          })
+          .catch(function (error) {
+
+            console.error(error);
+
+            status(
+              "Enhance failed: " +
+              (error.message || "Please try again.")
+            );
+
+          });
+
+        return;
+      }
+
+      /*
+        HAIR
+      */
+      if (type === "hair") {
+
+        if (!currentPhoto) {
+          status("Please select a photo first.");
+          return;
+        }
+
+        if (smoothControl) {
+          smoothControl.classList.remove("show");
+        }
+
+        if (hairColorPanel) {
+          hairColorPanel.style.display = "none";
+        }
+
+        if (hairMenu) {
+          hairMenu.style.display = "flex";
+        }
+
+        status("Hair menu opened.");
+
+        return;
+      }
+
+      /*
+        RETOUCH
+      */
+      if (type === "retouch") {
+
+        if (!currentPhoto) {
+          status("Please select a photo first.");
+          return;
+        }
+
+        if (smoothControl) {
+          smoothControl.classList.remove("show");
+        }
+
+        if (hairMenu) {
+          hairMenu.style.display = "none";
+        }
+
+        if (hairColorPanel) {
+          hairColorPanel.style.display = "none";
+        }
+
+        status("Retouch tool selected.");
+
+        return;
+      }
+
+    };
+
+  });
+
+
+  /*
+    HAIR GROW
+  */
+  if (hairGrow) {
+
+    hairGrow.onclick = function (e) {
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      if (!currentPhoto) {
+        status("Please select a photo first.");
+        return;
+      }
+
+      status("Hair Grow selected.");
+
+    };
+
+  }
+
+
+  /*
+    HAIR COLOR
+  */
+  if (hairColor) {
+
+    hairColor.onclick = function (e) {
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      if (!currentPhoto) {
+        status("Please select a photo first.");
+        return;
+      }
+
+      if (hairMenu) {
+        hairMenu.style.display = "none";
+      }
+
+      if (hairColorPanel) {
+        hairColorPanel.style.display = "block";
+      }
+
+      status("Hair Color selected.");
+
+    };
+
+  }
+
+
+  /*
+    ADJUSTMENTS
+  */
+  if (adjustmentsButton) {
+
+    adjustmentsButton.onclick = function (e) {
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      if (!adjustmentsPanel) return;
+
+      const opened =
+        adjustmentsPanel.classList.toggle("open");
+
+      adjustmentsButton.classList.toggle("open", opened);
+
+      if (adjustmentsChevron) {
+        adjustmentsChevron.textContent =
+          opened ? "⌄" : "›";
+      }
+
+      status(
+        opened
+          ? "Adjustments opened."
+          : "Adjustments closed."
+      );
+
+    };
+
+  }
+
+
+  /*
+    SMOOTH SLIDER
+    Use app.js smooth processing if available.
+  */
+  if (smoothSlider) {
+
+    smoothSlider.addEventListener("input", function () {
+
+      const value = Number(smoothSlider.value);
+
+      if (smoothValue) {
+        smoothValue.textContent = value;
+      }
+
+      /*
+        app.js already owns the actual Smooth Skin engine.
+        We only make sure the UI remains active here.
+      */
+
+    });
+
+  }
+
 })();
- </script>
+         </script>
 
 <div class="sectionTitle">AI Tools</div>
 
