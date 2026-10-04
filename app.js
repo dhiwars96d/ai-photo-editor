@@ -2,6 +2,14 @@ let Client=null;
 let handle_file=null;
 const fileInput=document.getElementById("fileInput"),addPhoto=document.getElementById("addPhoto"),preview=document.getElementById("preview"),placeholder=document.getElementById("placeholder"),statusBox=document.getElementById("status"),downloadButton=document.getElementById("downloadButton"),adjustmentsToggle=document.getElementById("adjustmentsToggle"),adjustmentsPanel=document.getElementById("adjustmentsPanel"),adjustmentsChevron=document.getElementById("adjustmentsChevron"),adjustmentsFrame=document.getElementById("adjustmentsFrame"),smoothControl=document.getElementById("smoothControl"),smoothSlider=document.getElementById("smoothSlider"),smoothValue=document.getElementById("smoothValue");
 let selectedFile=null,editedBlob=null,adjustmentBaseBlob=null,adjustmentTimer=null,smoothTimer=null;
+Object.defineProperty(window, "__selectedPhotoFile", {
+  set: function(file) {
+    selectedFile = file;
+  },
+  get: function() {
+    return selectedFile;
+  }
+});
 const hairMenu=document.getElementById("hairMenu");
 const hairGrow=document.getElementById("hairGrow");
 const hairColor=document.getElementById("hairColor");
