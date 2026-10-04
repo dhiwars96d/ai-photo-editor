@@ -2748,7 +2748,7 @@ async function applyHairColorLocal() {
       }
 
 
-      if (value < 0.50) {
+      if (value < 0.35) {
 
         value = 0;
 
@@ -3002,7 +3002,7 @@ async function applyHairColorLocal() {
 
 
         if (
-          rawAlpha < 0.40
+          rawAlpha < 0.30
         ) {
 
           continue;
@@ -3017,8 +3017,8 @@ async function applyHairColorLocal() {
               0,
               (
                 rawAlpha -
-                0.40
-              ) / 0.60
+                0.30
+              ) / 0.70
             )
           );
 
