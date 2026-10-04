@@ -3110,18 +3110,14 @@ async function applyHairColorLocal() {
           originalHsl.l;
 
 
-        if (lightBoost > 0) {
+        if(lightBoost>0){
 
-          lightness =
-            Math.min(
-              0.88,
-              Math.max(
-                lightness,
-                0.42
-              ) +
-              lightBoost *
-              intensity
-            );
+  newLightness =
+    Math.min(
+      0.88,
+      newLightness +
+      lightBoost * intensity
+    );
 
         }
 
@@ -3141,11 +3137,11 @@ async function applyHairColorLocal() {
 
         const saturation =
           Math.min(
-            1,
+            0.72
             originalHsl.s *
-            0.35 +
+            0.10 +
             targetSaturation *
-            0.65
+            0.62
           );
 
 
