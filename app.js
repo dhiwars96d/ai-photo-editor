@@ -3524,11 +3524,522 @@ document
    HAIR GROW
 ========================================================= */
 
+async function applyHairGrowLocal() {
+
+  if (!selectedFile) {
+
+    showStatus(
+      "Please select a photo first."
+    );
+
+    return;
+
+  }
+
+  try {
+
+    showStatus(
+      "Detecting hair for Grow..."
+    );
+
+    const segmenter =
+      await getHairSegmenter();
+
+    const img =
+      await loadImage(
+        selectedFile
+      );
+
+    const width =
+      img.naturalWidth;
+
+    const height =
+      img.naturalHeight;
+
+    const canvas =
+      document.createElement(
+        "canvas"
+      );
+
+    canvas.width =
+      width;
+
+    canvas.height =
+      height;
+
+    const ctx =
+      canvas.getContext(
+        "2d",
+        {
+          willReadFrequently: true
+        }
+      );
+
+    ctx.drawImage(
+      img,
+      0,
+      0,
+      width,
+      height
+    );
+
+
+    /* -----------------------------------------
+       AI HAIR MASK
+    ----------------------------------------- */
+
+    const result =
+      segmenter.segment(
+        img
+      );
+
+    let confidenceData =
+      null;
+
+    let categoryData =
+      null;
+
+    let maskWidth =
+      0;
+
+    let maskHeight =
+      0;
+
+
+    if (
+      result.confidenceMasks &&
+      result.confidenceMasks.length > 1
+    ) {
+
+      const hairMask =
+        result.confidenceMasks[1];
+
+      confidenceData =
+        hairMask.getAsFloat32Array();
+
+      maskWidth =
+        hairMask.width;
+
+      maskHeight =
+        hairMask.height;
+
+    }
+
+
+    if (
+      !confidenceData &&
+      result.categoryMask
+    ) {
+
+      categoryData =
+        result.categoryMask
+          .getAsUint8Array();
+
+      maskWidth =
+        result.categoryMask.width;
+
+      maskHeight =
+        result.categoryMask.height;
+
+    }
+
+
+    if (
+      !confidenceData &&
+      !categoryData
+    ) {
+
+      if (result.close) {
+        result.close();
+      }
+
+      throw new Error(
+        "Hair mask was not returned."
+      );
+
+    }
+
+
+    /* -----------------------------------------
+       BUILD HAIR MASK
+    ----------------------------------------- */
+
+    const maskCanvas =
+      document.createElement(
+        "canvas"
+      );
+
+    maskCanvas.width =
+      maskWidth;
+
+    maskCanvas.height =
+      maskHeight;
+
+    const maskCtx =
+      maskCanvas.getContext(
+        "2d",
+        {
+          willReadFrequently: true
+        }
+      );
+
+    const maskImage =
+      maskCtx.createImageData(
+        maskWidth,
+        maskHeight
+      );
+
+    const maskPixels =
+      maskImage.data;
+
+
+    for (
+      let i = 0;
+      i < maskWidth * maskHeight;
+      i++
+    ) {
+
+      let value = 0;
+
+      if (confidenceData) {
+
+        value =
+          Math.max(
+            0,
+            Math.min(
+              1,
+              confidenceData[i]
+            )
+          );
+
+      } else {
+
+        value =
+          categoryData[i] === 1
+            ? 1
+            : 0;
+
+      }
+
+
+      /*
+        Grow uses a slightly softer
+        threshold than Hair Color.
+      */
+
+      if (value < 0.30) {
+        value = 0;
+      }
+
+
+      maskPixels[i * 4] =
+        255;
+
+      maskPixels[i * 4 + 1] =
+        255;
+
+      maskPixels[i * 4 + 2] =
+        255;
+
+      maskPixels[i * 4 + 3] =
+        Math.round(
+          value * 255
+        );
+
+    }
+
+
+    maskCtx.putImageData(
+      maskImage,
+      0,
+      0
+    );
+
+
+    /* -----------------------------------------
+       ENLARGE HAIR MASK
+    ----------------------------------------- */
+
+    const grownMask =
+      document.createElement(
+        "canvas"
+      );
+
+    grownMask.width =
+      width;
+
+    grownMask.height =
+      height;
+
+    const grownMaskCtx =
+      grownMask.getContext(
+        "2d",
+        {
+          willReadFrequently: true
+        }
+      );
+
+
+    /*
+      Slightly enlarge the detected
+      hair region.
+    */
+
+    const growX =
+      width * 0.018;
+
+    const growY =
+      height * 0.025;
+
+
+    grownMaskCtx.filter =
+      "blur(2px)";
+
+
+    grownMaskCtx.drawImage(
+      maskCanvas,
+      -growX,
+      -growY,
+      width + growX * 2,
+      height + growY * 2
+    );
+
+
+    const finalMask =
+      grownMaskCtx.getImageData(
+        0,
+        0,
+        width,
+        height
+      ).data;
+
+
+    /* -----------------------------------------
+       ORIGINAL IMAGE
+    ----------------------------------------- */
+
+    const imageData =
+      ctx.getImageData(
+        0,
+        0,
+        width,
+        height
+      );
+
+    const data =
+      imageData.data;
+
+
+    /*
+      We create a subtle extension
+      using nearby existing hair pixels.
+
+      This is deliberately conservative
+      so the face is not painted.
+    */
+
+    for (
+      let y = 0;
+      y < height;
+      y++
+    ) {
+
+      for (
+        let x = 0;
+        x < width;
+        x++
+      ) {
+
+        const pixelIndex =
+          (
+            y * width +
+            x
+          ) * 4;
+
+        const maskX =
+          Math.min(
+            width - 1,
+            Math.floor(
+              x *
+              maskWidth /
+              width
+            )
+          );
+
+        const maskY =
+          Math.min(
+            height - 1,
+            Math.floor(
+              y *
+              maskHeight /
+              height
+            )
+          );
+
+        const maskIndex =
+          (
+            maskY *
+            maskWidth +
+            maskX
+          ) * 4;
+
+        const alpha =
+          finalMask[
+            maskIndex + 3
+          ] / 255;
+
+
+        if (alpha < 0.22) {
+          continue;
+        }
+
+
+        const r =
+          data[pixelIndex];
+
+        const g =
+          data[pixelIndex + 1];
+
+        const b =
+          data[pixelIndex + 2];
+
+
+        /*
+          Preserve original hair texture.
+        */
+
+        const strength =
+          Math.min(
+            0.38,
+            alpha * 0.38
+          );
+
+
+        /*
+          Very subtle darkening makes
+          the extended area blend into
+          existing hair instead of looking
+          like a solid painted shape.
+        */
+
+        const darkenedR =
+          r * 0.96;
+
+        const darkenedG =
+          g * 0.96;
+
+        const darkenedB =
+          b * 0.96;
+
+
+        data[pixelIndex] =
+          Math.round(
+            r * (1 - strength) +
+            darkenedR * strength
+          );
+
+        data[pixelIndex + 1] =
+          Math.round(
+            g * (1 - strength) +
+            darkenedG * strength
+          );
+
+        data[pixelIndex + 2] =
+          Math.round(
+            b * (1 - strength) +
+            darkenedB * strength
+          );
+
+      }
+
+    }
+
+
+    ctx.putImageData(
+      imageData,
+      0,
+      0
+    );
+
+
+    const blob =
+      await new Promise(
+        function (resolve) {
+
+          canvas.toBlob(
+            resolve,
+            "image/jpeg",
+            0.95
+          );
+
+        }
+      );
+
+
+    if (!blob) {
+      throw new Error(
+        "Could not create Grow result."
+      );
+    }
+
+
+    editedBlob =
+      blob;
+
+    preview.src =
+      URL.createObjectURL(
+        blob
+      );
+
+    preview.style.display =
+      "block";
+
+    placeholder.style.display =
+      "none";
+
+    downloadButton.style.display =
+      "block";
+
+
+    showStatus(
+      "Hair Grow applied ✓"
+    );
+
+
+    if (result.close) {
+      result.close();
+    }
+
+  }
+
+  catch (error) {
+
+    console.error(
+      error
+    );
+
+    showStatus(
+      "Hair Grow failed: " +
+      (
+        error.message ||
+        "Please try again."
+      )
+    );
+
+  }
+
+}
+
+
+/* -----------------------------------------
+   HAIR GROW BUTTON
+----------------------------------------- */
+
 if (hairGrow) {
 
   hairGrow.addEventListener(
     "click",
-    function () {
+    async function () {
 
       if (!selectedFile) {
 
@@ -3541,14 +4052,12 @@ if (hairGrow) {
       }
 
 
-      showStatus(
-        "Hair Grow selected."
-      );
+      await applyHairGrowLocal();
 
     }
   );
 
-}
+  }
 
 
 /* =========================================================
