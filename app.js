@@ -3137,11 +3137,11 @@ async function applyHairColorLocal() {
 
         const saturation =
           Math.min(
-            0.72
+            1,
             originalHsl.s *
-            0.10 +
+            0.35 +
             targetSaturation *
-            0.62
+            0.65
           );
 
 
@@ -3155,12 +3155,12 @@ async function applyHairColorLocal() {
 
         const strength =
           Math.min(
-            1,
+            0.72,
             alpha *
             (
-              0.15 +
+              0.10 +
               intensity *
-              0.85
+              0.62
             )
           );
 
