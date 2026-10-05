@@ -3520,9 +3520,9 @@ document
   );
 
 
-/* =========================================================
+/* =======================================================
    HAIR GROW - BEAUTYPLUS STYLE DRAW UI
-========================================================= */
+======================================================= */
 
 (function () {
 
@@ -3541,6 +3541,8 @@ document
   let strokes = [];
 
   let currentStroke = null;
+
+  let lastErasePoint = null;
 
   let brushSize = 6;
 
@@ -3618,10 +3620,6 @@ document
 
     }
 
-
-    /*
-      Make the main photo area the drawing area.
-    */
 
     previewBox.style.position =
       "relative";
@@ -3740,8 +3738,6 @@ document
     `;
 
 
-    /* Brush */
-
     const brushButton =
       document.createElement(
         "button"
@@ -3765,8 +3761,6 @@ document
       font-size:21px;
     `;
 
-
-    /* Slider */
 
     const slider =
       document.createElement(
@@ -3797,8 +3791,6 @@ document
     `;
 
 
-    /* Size value */
-
     const sizeValue =
       document.createElement(
         "span"
@@ -3816,8 +3808,6 @@ document
       font-weight:600;
     `;
 
-
-    /* Eraser */
 
     const eraserButton =
       document.createElement(
@@ -3992,7 +3982,7 @@ document
 
 
     /* =====================================================
-       BUTTON ROW
+       ACTION BUTTONS
     ===================================================== */
 
     const actionRow =
@@ -4007,8 +3997,6 @@ document
       gap:10px;
     `;
 
-
-    /* Clear */
 
     const clearButton =
       document.createElement(
@@ -4043,7 +4031,6 @@ document
         currentStroke =
           null;
 
-
         redrawGrowLines();
 
 
@@ -4054,8 +4041,6 @@ document
       }
     );
 
-
-    /* Start */
 
     const startButton =
       document.createElement(
@@ -4100,12 +4085,6 @@ document
         }
 
 
-        /*
-          Processing will be connected
-          after the new drawing UI is
-          confirmed working.
-        */
-
         showStatus(
           "Hair Grow drawing ready ✓"
         );
@@ -4113,8 +4092,6 @@ document
       }
     );
 
-
-    /* Close */
 
     const closeButton =
       document.createElement(
@@ -4196,6 +4173,11 @@ document
         sizeValue.textContent =
           brushSize;
 
+        /*
+          IMPORTANT:
+          Old strokes keep their own
+          saved size.
+        */
 
         redrawGrowLines();
 
@@ -4204,7 +4186,7 @@ document
 
 
     /* =====================================================
-       BRUSH BUTTON
+       BRUSH
     ===================================================== */
 
     brushButton.addEventListener(
@@ -4233,7 +4215,7 @@ document
 
 
     /* =====================================================
-       ERASER BUTTON
+       ERASER
     ===================================================== */
 
     eraserButton.addEventListener(
@@ -4257,12 +4239,17 @@ document
         brushButton.style.color =
           "#111";
 
+
+        showStatus(
+          "Eraser selected."
+        );
+
       }
     );
 
 
     /* =====================================================
-       DRAW EVENTS
+       POINTER DOWN
     ===================================================== */
 
     growCanvas.addEventListener(
@@ -4281,18 +4268,47 @@ document
           true;
 
 
-        currentStroke = [];
-
-
         const point =
           getGrowPoint(
             event
           );
 
 
-        currentStroke.push(
-          point
-        );
+        if (eraseMode) {
+
+          lastErasePoint =
+            point;
+
+
+          eraseAt(
+            point.x,
+            point.y
+          );
+
+
+          redrawGrowLines();
+
+
+          return;
+
+        }
+
+
+        /*
+          Each stroke stores its own
+          brush size.
+        */
+
+        currentStroke = {
+
+          points: [
+            point
+          ],
+
+          size:
+            brushSize
+
+        };
 
 
         redrawGrowLines();
@@ -4300,6 +4316,10 @@ document
       }
     );
 
+
+    /* =====================================================
+       POINTER MOVE
+    ===================================================== */
 
     growCanvas.addEventListener(
       "pointermove",
@@ -4319,9 +4339,39 @@ document
           );
 
 
-        currentStroke.push(
-          point
-        );
+        /* ERASER */
+
+        if (eraseMode) {
+
+          eraseAt(
+            point.x,
+            point.y
+          );
+
+
+          lastErasePoint =
+            point;
+
+
+          redrawGrowLines();
+
+
+          return;
+
+        }
+
+
+        /* BRUSH */
+
+        if (
+          currentStroke
+        ) {
+
+          currentStroke.points.push(
+            point
+          );
+
+        }
 
 
         redrawGrowLines();
@@ -4329,6 +4379,10 @@ document
       }
     );
 
+
+    /* =====================================================
+       POINTER UP
+    ===================================================== */
 
     growCanvas.addEventListener(
       "pointerup",
@@ -4341,25 +4395,11 @@ document
       finishStroke
     );
 
-
-    growCanvas.addEventListener(
-      "pointerleave",
-      function () {
-
-        /*
-          Do not finish the stroke here.
-          Finger can temporarily leave
-          the canvas edge.
-        */
-
-      }
-    );
-
   }
 
 
   /* =======================================================
-     GET PHOTO DRAW POSITION
+     GET POSITION
   ======================================================= */
 
   function getGrowPoint(
@@ -4415,8 +4455,9 @@ document
 
 
     if (
+      !eraseMode &&
       currentStroke &&
-      currentStroke.length
+      currentStroke.points.length
     ) {
 
       strokes.push(
@@ -4430,33 +4471,153 @@ document
       null;
 
 
+    lastErasePoint =
+      null;
+
+
     redrawGrowLines();
 
   }
 
 
   /* =======================================================
-     RESIZE CANVAS TO MAIN PHOTO
+     ACTUAL ERASER
+  ======================================================= */
+
+  function eraseAt(
+    x,
+    y
+  ) {
+
+    const eraseRadius =
+      Math.max(
+        8,
+        brushSize * 1.8
+      );
+
+
+    const newStrokes = [];
+
+
+    for (
+      let s = 0;
+      s < strokes.length;
+      s++
+    ) {
+
+      const stroke =
+        strokes[s];
+
+
+      let chunk = [];
+
+
+      for (
+        let p = 0;
+        p < stroke.points.length;
+        p++
+      ) {
+
+        const point =
+          stroke.points[p];
+
+
+        const dx =
+          point.x - x;
+
+
+        const dy =
+          point.y - y;
+
+
+        const distance =
+          Math.sqrt(
+            dx * dx +
+            dy * dy
+          );
+
+
+        if (
+          distance <=
+          eraseRadius
+        ) {
+
+          /*
+            End this section of
+            the stroke.
+          */
+
+          if (
+            chunk.length
+          ) {
+
+            newStrokes.push({
+
+              points:
+                chunk,
+
+              size:
+                stroke.size
+
+            });
+
+          }
+
+
+          chunk = [];
+
+        }
+
+        else {
+
+          chunk.push(
+            point
+          );
+
+        }
+
+      }
+
+
+      if (
+        chunk.length
+      ) {
+
+        newStrokes.push({
+
+          points:
+            chunk,
+
+          size:
+            stroke.size
+
+        });
+
+      }
+
+    }
+
+
+    strokes =
+      newStrokes;
+
+  }
+
+
+  /* =======================================================
+     RESIZE
   ======================================================= */
 
   function resizeGrowCanvas() {
 
-    if (
-      !growCanvas
-    ) {
-
+    if (!growCanvas) {
       return;
-
     }
 
 
     const rect =
       growCanvas.parentElement
         .getBoundingClientRect();
-
-
-    const oldStrokes =
-      strokes;
 
 
     growCanvas.width =
@@ -4477,17 +4638,13 @@ document
       );
 
 
-    strokes =
-      oldStrokes;
-
-
     redrawGrowLines();
 
   }
 
 
   /* =======================================================
-     DRAW GUIDE LINES
+     DRAW ALL STROKES
   ======================================================= */
 
   function redrawGrowLines() {
@@ -4511,16 +4668,9 @@ document
 
 
     /*
-      Guide line is intentionally thin.
-      It is NOT the final hair.
+      Draw one stroke at a time.
+      Every stroke uses its OWN size.
     */
-
-    growCtx.lineCap =
-      "round";
-
-    growCtx.lineJoin =
-      "round";
-
 
     function drawStroke(
       stroke
@@ -4528,7 +4678,8 @@ document
 
       if (
         !stroke ||
-        !stroke.length
+        !stroke.points ||
+        !stroke.points.length
       ) {
 
         return;
@@ -4536,65 +4687,136 @@ document
       }
 
 
-      growCtx.beginPath();
+      const points =
+        stroke.points;
 
 
-      growCtx.moveTo(
-        stroke[0].x,
-        stroke[0].y
-      );
+      const size =
+        stroke.size;
+
+
+      if (
+        points.length === 1
+      ) {
+
+        growCtx.beginPath();
+
+        growCtx.arc(
+          points[0].x,
+          points[0].y,
+          Math.max(
+            1,
+            size / 2
+          ),
+          0,
+          Math.PI * 2
+        );
+
+        growCtx.fillStyle =
+          "rgba(255,255,255,.9)";
+
+        growCtx.fill();
+
+        return;
+
+      }
+
+
+      /*
+        Draw the main stroke in
+        small segments.
+
+        The final part tapers to
+        a sharp point.
+      */
+
+      growCtx.lineJoin =
+        "round";
+
+      growCtx.lineCap =
+        "round";
+
+
+      const total =
+        points.length;
 
 
       for (
         let i = 1;
-        i < stroke.length;
+        i < total;
         i++
       ) {
 
+        const p1 =
+          points[i - 1];
+
+        const p2 =
+          points[i];
+
+
+        const progress =
+          i /
+          (total - 1);
+
+
+        let width =
+          size;
+
+
+        /*
+          Last 25% gradually becomes
+          thinner, creating a sharp
+          hair-like tip.
+        */
+
+        if (
+          progress > 0.75
+        ) {
+
+          const taper =
+            (
+              1 -
+              (
+                progress - 0.75
+              ) / 0.25
+            );
+
+
+          width =
+            Math.max(
+              0.8,
+              size * taper
+            );
+
+        }
+
+
+        growCtx.beginPath();
+
+
+        growCtx.moveTo(
+          p1.x,
+          p1.y
+        );
+
+
         growCtx.lineTo(
-          stroke[i].x,
-          stroke[i].y
-        );
-
-      }
-
-
-      /*
-        Eraser visually removes
-        the guide line.
-      */
-
-      if (eraseMode) {
-
-        growCtx.strokeStyle =
-          "rgba(255,255,255,.75)";
-
-      }
-
-      else {
-
-        growCtx.strokeStyle =
-          "rgba(255,255,255,.85)";
-
-      }
-
-
-      /*
-        Keep guide line much thinner
-        than the actual brush size.
-      */
-
-      growCtx.lineWidth =
-        Math.max(
-          2,
-          Math.min(
-            5,
-            brushSize * 0.35
-          )
+          p2.x,
+          p2.y
         );
 
 
-      growCtx.stroke();
+        growCtx.lineWidth =
+          width;
+
+
+        growCtx.strokeStyle =
+          "rgba(255,255,255,.88)";
+
+
+        growCtx.stroke();
+
+      }
 
     }
 
@@ -4626,7 +4848,7 @@ document
 
 
   /* =======================================================
-     CLOSE GROW EDITOR
+     CLOSE
   ======================================================= */
 
   function closeGrowEditor() {
@@ -4639,6 +4861,9 @@ document
       [];
 
     currentStroke =
+      null;
+
+    lastErasePoint =
       null;
 
 
