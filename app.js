@@ -3520,44 +3520,1429 @@ document
   );
 
 
-/* =======================================================
-   HAIR GROW - BEAUTYPLUS STYLE DRAW UI
-======================================================= */
+/* =========================================================
+   HAIR GROW
+   DRAW + ERASER + HAIR STYLE
+========================================================= */
 
-(function () {
+let hairGrowPanel = null;
+let hairDrawCanvas = null;
+let hairDrawCtx = null;
 
-  if (!hairGrow) {
+let hairDrawing = false;
+let hairErasing = false;
+
+let hairCurrentSize = 6;
+let hairCurrentStyle = "straight";
+
+let hairStrokes = [];
+let hairEraseStrokes = [];
+
+
+/* ---------------------------------------------------------
+   CREATE GROW UI
+--------------------------------------------------------- */
+
+function createHairGrowUI() {
+
+  if (hairGrowPanel) {
+    hairGrowPanel.style.display = "flex";
     return;
   }
 
 
-  let growOverlay = null;
-  let growCanvas = null;
-  let growCtx = null;
-  let growSheet = null;
+  const previewBox =
+    document.querySelector(".previewBox");
 
-  let drawing = false;
-
-  let strokes = [];
-
-  let currentStroke = null;
-
-  let lastErasePoint = null;
-
-  let brushSize = 6;
-
-  let selectedStyle = "straight";
-
-  let eraseMode = false;
+  if (!previewBox) return;
 
 
-  /* =======================================================
-     OPEN GROW
-  ======================================================= */
+  previewBox.style.position = "relative";
+
+
+  /* DRAW CANVAS */
+
+  hairDrawCanvas =
+    document.createElement("canvas");
+
+  hairDrawCanvas.id =
+    "hairGrowDrawCanvas";
+
+
+  hairDrawCanvas.style.position =
+    "absolute";
+
+  hairDrawCanvas.style.left =
+    "0";
+
+  hairDrawCanvas.style.top =
+    "0";
+
+  hairDrawCanvas.style.width =
+    "100%";
+
+  hairDrawCanvas.style.height =
+    "100%";
+
+  hairDrawCanvas.style.zIndex =
+    "20";
+
+  hairDrawCanvas.style.touchAction =
+    "none";
+
+  hairDrawCanvas.style.pointerEvents =
+    "auto";
+
+
+  previewBox.appendChild(
+    hairDrawCanvas
+  );
+
+
+  hairDrawCtx =
+    hairDrawCanvas.getContext(
+      "2d"
+    );
+
+
+  function resizeHairCanvas() {
+
+    const rect =
+      previewBox.getBoundingClientRect();
+
+    const dpr =
+      window.devicePixelRatio || 1;
+
+
+    hairDrawCanvas.width =
+      Math.round(
+        rect.width * dpr
+      );
+
+    hairDrawCanvas.height =
+      Math.round(
+        rect.height * dpr
+      );
+
+
+    hairDrawCtx.setTransform(
+      dpr,
+      0,
+      0,
+      dpr,
+      0,
+      0
+    );
+
+
+    redrawHairStrokes();
+
+  }
+
+
+  resizeHairCanvas();
+
+
+  window.addEventListener(
+    "resize",
+    resizeHairCanvas
+  );
+
+
+  /* -------------------------------------------------------
+     BOTTOM PANEL
+  ------------------------------------------------------- */
+
+  hairGrowPanel =
+    document.createElement(
+      "div"
+    );
+
+  hairGrowPanel.id =
+    "hairGrowPanel";
+
+
+  hairGrowPanel.style.position =
+    "fixed";
+
+  hairGrowPanel.style.left =
+    "0";
+
+  hairGrowPanel.style.right =
+    "0";
+
+  hairGrowPanel.style.bottom =
+    "0";
+
+  hairGrowPanel.style.zIndex =
+    "9999";
+
+  hairGrowPanel.style.background =
+    "#ffffff";
+
+  hairGrowPanel.style.borderRadius =
+    "22px 22px 0 0";
+
+  hairGrowPanel.style.padding =
+    "14px 14px 18px";
+
+  hairGrowPanel.style.boxShadow =
+    "0 -5px 25px rgba(0,0,0,.16)";
+
+  hairGrowPanel.style.display =
+    "flex";
+
+  hairGrowPanel.style.flexDirection =
+    "column";
+
+  hairGrowPanel.style.gap =
+    "12px";
+
+
+  /* -------------------------------------------------------
+     TOP TOOL ROW
+  ------------------------------------------------------- */
+
+  const toolRow =
+    document.createElement(
+      "div"
+    );
+
+  toolRow.style.display =
+    "flex";
+
+  toolRow.style.alignItems =
+    "center";
+
+  toolRow.style.gap =
+    "12px";
+
+
+  const brushButton =
+    document.createElement(
+      "button"
+    );
+
+  brushButton.type =
+    "button";
+
+  brushButton.textContent =
+    "🖌️";
+
+  brushButton.style.fontSize =
+    "22px";
+
+  brushButton.style.border =
+    "0";
+
+  brushButton.style.background =
+    "transparent";
+
+
+  const sizeSlider =
+    document.createElement(
+      "input"
+    );
+
+  sizeSlider.type =
+    "range";
+
+  sizeSlider.min =
+    "1";
+
+  sizeSlider.max =
+    "30";
+
+  sizeSlider.value =
+    String(hairCurrentSize);
+
+  sizeSlider.style.flex =
+    "1";
+
+
+  const sizeValue =
+    document.createElement(
+      "span"
+    );
+
+  sizeValue.textContent =
+    String(hairCurrentSize);
+
+  sizeValue.style.minWidth =
+    "22px";
+
+  sizeValue.style.textAlign =
+    "center";
+
+
+  const eraserButton =
+    document.createElement(
+      "button"
+    );
+
+  eraserButton.type =
+    "button";
+
+  eraserButton.textContent =
+    "⌫";
+
+  eraserButton.style.fontSize =
+    "21px";
+
+  eraserButton.style.border =
+    "0";
+
+  eraserButton.style.background =
+    "transparent";
+
+
+  toolRow.appendChild(
+    brushButton
+  );
+
+  toolRow.appendChild(
+    sizeSlider
+  );
+
+  toolRow.appendChild(
+    sizeValue
+  );
+
+  toolRow.appendChild(
+    eraserButton
+  );
+
+
+  /* -------------------------------------------------------
+     STYLE BUTTONS
+  ------------------------------------------------------- */
+
+  const styleRow =
+    document.createElement(
+      "div"
+    );
+
+  styleRow.style.display =
+    "flex";
+
+  styleRow.style.justifyContent =
+    "center";
+
+  styleRow.style.gap =
+    "12px";
+
+
+  const styleButtons = {};
+
+
+  [
+    ["Bangs", "bangs"],
+    ["Straight", "straight"],
+    ["Curls", "curls"]
+  ].forEach(
+    function(item) {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.type =
+        "button";
+
+      button.textContent =
+        item[0];
+
+      button.style.padding =
+        "8px 18px";
+
+      button.style.borderRadius =
+        "10px";
+
+      button.style.border =
+        "1px solid #ddd";
+
+      button.style.background =
+        "#ffffff";
+
+
+      button.onclick =
+        function() {
+
+          hairCurrentStyle =
+            item[1];
+
+
+          Object.keys(
+            styleButtons
+          ).forEach(
+            function(key) {
+
+              styleButtons[key]
+                .style.background =
+                "#ffffff";
+
+              styleButtons[key]
+                .style.color =
+                "#333";
+
+            }
+          );
+
+
+          button.style.background =
+            "#222";
+
+          button.style.color =
+            "#ffffff";
+
+        };
+
+
+      styleButtons[item[1]] =
+        button;
+
+
+      styleRow.appendChild(
+        button
+      );
+
+    }
+  );
+
+
+  styleButtons.straight.style.background =
+    "#222";
+
+  styleButtons.straight.style.color =
+    "#ffffff";
+
+
+  /* -------------------------------------------------------
+     BOTTOM BUTTON ROW
+  ------------------------------------------------------- */
+
+  const bottomRow =
+    document.createElement(
+      "div"
+    );
+
+  bottomRow.style.display =
+    "flex";
+
+  bottomRow.style.alignItems =
+    "center";
+
+  bottomRow.style.gap =
+    "8px";
+
+
+  const clearButton =
+    document.createElement(
+      "button"
+    );
+
+  clearButton.type =
+    "button";
+
+  clearButton.textContent =
+    "Clear";
+
+  clearButton.style.flex =
+    "1";
+
+  clearButton.style.padding =
+    "12px";
+
+  clearButton.style.borderRadius =
+    "22px";
+
+  clearButton.style.border =
+    "1px solid #ddd";
+
+  clearButton.style.background =
+    "#ffffff";
+
+
+  const startButton =
+    document.createElement(
+      "button"
+    );
+
+  startButton.type =
+    "button";
+
+  startButton.textContent =
+    "✨ Start";
+
+  startButton.style.flex =
+    "2";
+
+  startButton.style.padding =
+    "12px";
+
+  startButton.style.borderRadius =
+    "22px";
+
+  startButton.style.border =
+    "0";
+
+  startButton.style.background =
+    "#ef4fa3";
+
+  startButton.style.color =
+    "#ffffff";
+
+  startButton.style.fontWeight =
+    "600";
+
+
+  const doneButton =
+    document.createElement(
+      "button"
+    );
+
+  doneButton.type =
+    "button";
+
+  doneButton.textContent =
+    "✓";
+
+  doneButton.style.width =
+    "45px";
+
+  doneButton.style.height =
+    "45px";
+
+  doneButton.style.borderRadius =
+    "50%";
+
+  doneButton.style.border =
+    "0";
+
+  doneButton.style.background =
+    "#ffffff";
+
+  doneButton.style.fontSize =
+    "22px";
+
+
+  bottomRow.appendChild(
+    clearButton
+  );
+
+  bottomRow.appendChild(
+    startButton
+  );
+
+  bottomRow.appendChild(
+    doneButton
+  );
+
+
+  hairGrowPanel.appendChild(
+    toolRow
+  );
+
+  hairGrowPanel.appendChild(
+    styleRow
+  );
+
+  hairGrowPanel.appendChild(
+    bottomRow
+  );
+
+
+  document.body.appendChild(
+    hairGrowPanel
+  );
+
+
+  /* -------------------------------------------------------
+     SIZE
+  ------------------------------------------------------- */
+
+  sizeSlider.oninput =
+    function() {
+
+      hairCurrentSize =
+        Number(
+          sizeSlider.value
+        );
+
+      sizeValue.textContent =
+        String(
+          hairCurrentSize
+        );
+
+    };
+
+
+  /* -------------------------------------------------------
+     BRUSH
+  ------------------------------------------------------- */
+
+  brushButton.onclick =
+    function() {
+
+      hairErasing =
+        false;
+
+      brushButton.style.opacity =
+        "1";
+
+      eraserButton.style.opacity =
+        ".45";
+
+    };
+
+
+  /* -------------------------------------------------------
+     ERASER
+  ------------------------------------------------------- */
+
+  eraserButton.onclick =
+    function() {
+
+      hairErasing =
+        true;
+
+      eraserButton.style.opacity =
+        "1";
+
+      brushButton.style.opacity =
+        ".45";
+
+    };
+
+
+  /* -------------------------------------------------------
+     DRAWING
+  ------------------------------------------------------- */
+
+  function getPoint(event) {
+
+    const rect =
+      hairDrawCanvas
+        .getBoundingClientRect();
+
+
+    return {
+
+      x:
+        event.clientX -
+        rect.left,
+
+      y:
+        event.clientY -
+        rect.top
+
+    };
+
+  }
+
+
+  hairDrawCanvas.addEventListener(
+    "pointerdown",
+    function(event) {
+
+      event.preventDefault();
+
+
+      hairDrawing =
+        true;
+
+
+      hairDrawCanvas.setPointerCapture(
+        event.pointerId
+      );
+
+
+      const p =
+        getPoint(event);
+
+
+      if (hairErasing) {
+
+        hairEraseStrokes.push({
+
+          points: [p],
+
+          size:
+            hairCurrentSize
+
+        });
+
+      }
+
+      else {
+
+        hairStrokes.push({
+
+          points: [p],
+
+          size:
+            hairCurrentSize,
+
+          style:
+            hairCurrentStyle
+
+        });
+
+      }
+
+
+      redrawHairStrokes();
+
+    }
+  );
+
+
+  hairDrawCanvas.addEventListener(
+    "pointermove",
+    function(event) {
+
+      if (!hairDrawing) return;
+
+      event.preventDefault();
+
+
+      const p =
+        getPoint(event);
+
+
+      const list =
+        hairErasing
+          ? hairEraseStrokes
+          : hairStrokes;
+
+
+      if (!list.length) return;
+
+
+      const stroke =
+        list[list.length - 1];
+
+
+      stroke.points.push(
+        p
+      );
+
+
+      redrawHairStrokes();
+
+    }
+  );
+
+
+  function stopDrawing() {
+
+    hairDrawing =
+      false;
+
+  }
+
+
+  hairDrawCanvas.addEventListener(
+    "pointerup",
+    stopDrawing
+  );
+
+  hairDrawCanvas.addEventListener(
+    "pointercancel",
+    stopDrawing
+  );
+
+
+  /* -------------------------------------------------------
+     CLEAR
+  ------------------------------------------------------- */
+
+  clearButton.onclick =
+    function() {
+
+      hairStrokes =
+        [];
+
+      hairEraseStrokes =
+        [];
+
+      redrawHairStrokes();
+
+      showStatus(
+        "Drawing cleared."
+      );
+
+    };
+
+
+  /* -------------------------------------------------------
+     DONE / CLOSE
+  ------------------------------------------------------- */
+
+  doneButton.onclick =
+    function() {
+
+      hairGrowPanel.style.display =
+        "none";
+
+      hairDrawCanvas.style.display =
+        "none";
+
+      if (hairMenu) {
+
+        hairMenu.style.display =
+          "flex";
+
+      }
+
+    };
+
+
+  /* -------------------------------------------------------
+     START
+  ------------------------------------------------------- */
+
+  startButton.onclick =
+    async function() {
+
+      if (!hairStrokes.length) {
+
+        showStatus(
+          "Draw where you want new hair."
+        );
+
+        return;
+
+      }
+
+
+      await processDrawnHair();
+
+    };
+
+
+  redrawHairStrokes();
+
+}
+
+
+/* =========================================================
+   REDRAW DRAWING
+========================================================= */
+
+function redrawHairStrokes() {
+
+  if (!hairDrawCtx ||
+      !hairDrawCanvas) {
+
+    return;
+
+  }
+
+
+  const rect =
+    hairDrawCanvas
+      .getBoundingClientRect();
+
+
+  hairDrawCtx.clearRect(
+    0,
+    0,
+    rect.width,
+    rect.height
+  );
+
+
+  /* -------------------------------------------------------
+     DRAW ORIGINAL STROKES
+  ------------------------------------------------------- */
+
+  hairStrokes.forEach(
+    function(stroke) {
+
+      if (
+        !stroke.points ||
+        stroke.points.length < 1
+      ) {
+
+        return;
+
+      }
+
+
+      const points =
+        stroke.points;
+
+
+      hairDrawCtx.save();
+
+      hairDrawCtx.lineCap =
+        "round";
+
+      hairDrawCtx.lineJoin =
+        "round";
+
+      hairDrawCtx.lineWidth =
+        stroke.size;
+
+
+      /*
+        Temporary drawing color.
+        It is only the guide.
+        Final Start processing creates
+        the actual hair.
+      */
+
+      hairDrawCtx.strokeStyle =
+        "rgba(255,70,150,.75)";
+
+
+      hairDrawCtx.beginPath();
+
+
+      hairDrawCtx.moveTo(
+        points[0].x,
+        points[0].y
+      );
+
+
+      for (
+        let i = 1;
+        i < points.length;
+        i++
+      ) {
+
+        hairDrawCtx.lineTo(
+          points[i].x,
+          points[i].y
+        );
+
+      }
+
+
+      hairDrawCtx.stroke();
+
+      hairDrawCtx.restore();
+
+    }
+  );
+
+
+  /* -------------------------------------------------------
+     ERASE VISUAL GUIDE
+  ------------------------------------------------------- */
+
+  hairEraseStrokes.forEach(
+    function(stroke) {
+
+      if (
+        !stroke.points ||
+        stroke.points.length < 1
+      ) {
+
+        return;
+
+      }
+
+
+      hairDrawCtx.save();
+
+      hairDrawCtx.globalCompositeOperation =
+        "destination-out";
+
+      hairDrawCtx.lineWidth =
+        stroke.size * 2;
+
+      hairDrawCtx.lineCap =
+        "round";
+
+      hairDrawCtx.lineJoin =
+        "round";
+
+
+      hairDrawCtx.beginPath();
+
+
+      hairDrawCtx.moveTo(
+        stroke.points[0].x,
+        stroke.points[0].y
+      );
+
+
+      for (
+        let i = 1;
+        i < stroke.points.length;
+        i++
+      ) {
+
+        hairDrawCtx.lineTo(
+          stroke.points[i].x,
+          stroke.points[i].y
+        );
+
+      }
+
+
+      hairDrawCtx.stroke();
+
+      hairDrawCtx.restore();
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   PROCESS DRAWN HAIR
+========================================================= */
+
+async function processDrawnHair() {
+
+  if (!selectedFile) {
+
+    showStatus(
+      "Please select a photo first."
+    );
+
+    return;
+
+  }
+
+
+  try {
+
+    showStatus(
+      "Creating new hair..."
+    );
+
+
+    const img =
+      await loadImage(
+        selectedFile
+      );
+
+
+    const output =
+      document.createElement(
+        "canvas"
+      );
+
+
+    const width =
+      img.naturalWidth;
+
+    const height =
+      img.naturalHeight;
+
+
+    output.width =
+      width;
+
+    output.height =
+      height;
+
+
+    const ctx =
+      output.getContext(
+        "2d"
+      );
+
+
+    ctx.drawImage(
+      img,
+      0,
+      0,
+      width,
+      height
+    );
+
+
+    const rect =
+      hairDrawCanvas
+        .getBoundingClientRect();
+
+
+    const scaleX =
+      width /
+      rect.width;
+
+    const scaleY =
+      height /
+      rect.height;
+
+
+    /*
+      Draw every saved stroke
+      independently.
+
+      IMPORTANT:
+      Each stroke keeps its own
+      original size.
+    */
+
+    hairStrokes.forEach(
+      function(stroke) {
+
+        const points =
+          stroke.points;
+
+
+        if (
+          !points ||
+          points.length < 2
+        ) {
+
+          return;
+
+        }
+
+
+        const baseSize =
+          stroke.size *
+          scaleX;
+
+
+        let strandCount =
+          1;
+
+
+        if (
+          stroke.style ===
+          "bangs"
+        ) {
+
+          strandCount =
+            5;
+
+        }
+
+        else if (
+          stroke.style ===
+          "curls"
+        ) {
+
+          strandCount =
+            4;
+
+        }
+
+        else {
+
+          strandCount =
+            3;
+
+        }
+
+
+        for (
+          let strand = 0;
+          strand < strandCount;
+          strand++
+        ) {
+
+          ctx.save();
+
+          ctx.beginPath();
+
+
+          const offset =
+            (
+              strand -
+              (strandCount - 1) / 2
+            ) *
+            baseSize *
+            0.42;
+
+
+          const first =
+            points[0];
+
+
+          ctx.moveTo(
+            first.x * scaleX,
+            first.y * scaleY
+          );
+
+
+          for (
+            let i = 1;
+            i < points.length;
+            i++
+          ) {
+
+            const p =
+              points[i];
+
+
+            let x =
+              p.x * scaleX;
+
+            let y =
+              p.y * scaleY;
+
+
+            /*
+              Style movement
+            */
+
+            if (
+              stroke.style ===
+              "curls"
+            ) {
+
+              const wave =
+                Math.sin(
+                  i * 0.85 +
+                  strand
+                ) *
+                baseSize *
+                1.15;
+
+
+              x += wave;
+
+            }
+
+
+            else if (
+              stroke.style ===
+              "bangs"
+            ) {
+
+              const bend =
+                Math.sin(
+                  i * 0.35
+                ) *
+                baseSize *
+                0.45;
+
+
+              x += bend;
+
+            }
+
+
+            x +=
+              offset;
+
+
+            ctx.lineTo(
+              x,
+              y
+            );
+
+          }
+
+
+          /*
+            Natural hair appearance
+          */
+
+          ctx.lineWidth =
+            Math.max(
+              1,
+              baseSize *
+              (
+                strand === 0
+                  ? 0.72
+                  : 0.48
+              )
+            );
+
+
+          ctx.lineCap =
+            "round";
+
+          ctx.lineJoin =
+            "round";
+
+
+          /*
+            Dark but slightly transparent
+            so original hair texture can
+            remain visible.
+          */
+
+          ctx.strokeStyle =
+            "rgba(25,18,18,.68)";
+
+
+          ctx.stroke();
+
+          ctx.restore();
+
+        }
+
+      }
+    );
+
+
+    /*
+      Add a few very fine highlight
+      strands for a more natural result.
+    */
+
+    hairStrokes.forEach(
+      function(stroke) {
+
+        const points =
+          stroke.points;
+
+
+        if (
+          !points ||
+          points.length < 2
+        ) {
+
+          return;
+
+        }
+
+
+        ctx.save();
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+          points[0].x * scaleX,
+          points[0].y * scaleY
+        );
+
+
+        for (
+          let i = 1;
+          i < points.length;
+          i++
+        ) {
+
+          const p =
+            points[i];
+
+
+          ctx.lineTo(
+            p.x * scaleX,
+            p.y * scaleY
+          );
+
+        }
+
+
+        ctx.lineWidth =
+          Math.max(
+            0.7,
+            stroke.size *
+            scaleX *
+            0.16
+          );
+
+
+        ctx.lineCap =
+          "round";
+
+
+        ctx.strokeStyle =
+          "rgba(130,100,100,.30)";
+
+
+        ctx.stroke();
+
+        ctx.restore();
+
+      }
+    );
+
+
+    const blob =
+      await new Promise(
+        function(resolve) {
+
+          output.toBlob(
+            resolve,
+            "image/jpeg",
+            0.95
+          );
+
+        }
+      );
+
+
+    if (!blob) {
+
+      throw new Error(
+        "Could not create hair result."
+      );
+
+    }
+
+
+    editedBlob =
+      blob;
+
+
+    preview.src =
+      URL.createObjectURL(
+        blob
+      );
+
+    preview.style.display =
+      "block";
+
+    placeholder.style.display =
+      "none";
+
+    downloadButton.style.display =
+      "block";
+
+
+    /*
+      Hide drawing layer after processing.
+    */
+
+    hairDrawCanvas.style.display =
+      "none";
+
+    hairGrowPanel.style.display =
+      "none";
+
+
+    showStatus(
+      "New hair applied ✓"
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      error
+    );
+
+
+    showStatus(
+      "Hair Grow failed: " +
+      (
+        error.message ||
+        "Please try again."
+      )
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   HAIR GROW BUTTON
+========================================================= */
+
+if (hairGrow) {
 
   hairGrow.addEventListener(
     "click",
-    function () {
+    function() {
 
       if (!selectedFile) {
 
@@ -3586,1337 +4971,49 @@ document
       }
 
 
-      createGrowEditor();
-
-
-      showStatus(
-        "Draw on the photo where you want new hair."
-      );
-
-    }
-  );
-
-
-  /* =======================================================
-     CREATE EDITOR
-  ======================================================= */
-
-  function createGrowEditor() {
-
-    closeGrowEditor();
-
-
-    const previewBox =
-      preview.parentElement;
-
-
-    if (!previewBox) {
-
-      showStatus(
-        "Photo area not found."
-      );
-
-      return;
-
-    }
-
-
-    previewBox.style.position =
-      "relative";
-
-
-    previewBox.style.overflow =
-      "hidden";
-
-
-    /* =====================================================
-       DRAW OVERLAY
-    ===================================================== */
-
-    growOverlay =
-      document.createElement(
-        "div"
-      );
-
-
-    growOverlay.id =
-      "hairGrowOverlay";
-
-
-    growOverlay.style.cssText = `
-      position:absolute;
-      inset:0;
-      z-index:50;
-      pointer-events:auto;
-      touch-action:none;
-    `;
-
-
-    growCanvas =
-      document.createElement(
-        "canvas"
-      );
-
-
-    growCanvas.id =
-      "hairGrowCanvas";
-
-
-    growCanvas.style.cssText = `
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      display:block;
-      touch-action:none;
-    `;
-
-
-    growOverlay.appendChild(
-      growCanvas
-    );
-
-
-    previewBox.appendChild(
-      growOverlay
-    );
-
-
-    growCtx =
-      growCanvas.getContext(
-        "2d"
-      );
-
-
-    resizeGrowCanvas();
-
-
-    /* =====================================================
-       BOTTOM SHEET
-    ===================================================== */
-
-    growSheet =
-      document.createElement(
-        "div"
-      );
-
-
-    growSheet.id =
-      "hairGrowSheet";
-
-
-    growSheet.style.cssText = `
-      position:fixed;
-      left:0;
-      right:0;
-      bottom:0;
-      z-index:9999;
-      box-sizing:border-box;
-      background:#fff;
-      border-radius:22px 22px 0 0;
-      padding:14px 16px 18px;
-      box-shadow:0 -8px 30px rgba(0,0,0,.18);
-      font-family:Arial,sans-serif;
-    `;
-
-
-    /* =====================================================
-       TOP ROW
-    ===================================================== */
-
-    const topRow =
-      document.createElement(
-        "div"
-      );
-
-
-    topRow.style.cssText = `
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:12px;
-    `;
-
-
-    const brushButton =
-      document.createElement(
-        "button"
-      );
-
-
-    brushButton.type =
-      "button";
-
-
-    brushButton.textContent =
-      "🖌️";
-
-
-    brushButton.style.cssText = `
-      width:44px;
-      height:40px;
-      border:0;
-      background:#f2f2f2;
-      border-radius:20px;
-      font-size:21px;
-    `;
-
-
-    const slider =
-      document.createElement(
-        "input"
-      );
-
-
-    slider.type =
-      "range";
-
-
-    slider.min =
-      "1";
-
-
-    slider.max =
-      "30";
-
-
-    slider.value =
-      "6";
-
-
-    slider.style.cssText = `
-      flex:1;
-      min-width:0;
-      accent-color:#111;
-    `;
-
-
-    const sizeValue =
-      document.createElement(
-        "span"
-      );
-
-
-    sizeValue.textContent =
-      "6";
-
-
-    sizeValue.style.cssText = `
-      width:26px;
-      text-align:center;
-      font-size:14px;
-      font-weight:600;
-    `;
-
-
-    const eraserButton =
-      document.createElement(
-        "button"
-      );
-
-
-    eraserButton.type =
-      "button";
-
-
-    eraserButton.textContent =
-      "⌫";
-
-
-    eraserButton.style.cssText = `
-      width:44px;
-      height:40px;
-      border:0;
-      background:#f2f2f2;
-      border-radius:20px;
-      font-size:20px;
-    `;
-
-
-    topRow.appendChild(
-      brushButton
-    );
-
-
-    topRow.appendChild(
-      slider
-    );
-
-
-    topRow.appendChild(
-      sizeValue
-    );
-
-
-    topRow.appendChild(
-      eraserButton
-    );
-
-
-    growSheet.appendChild(
-      topRow
-    );
-
-
-    /* =====================================================
-       STYLE BUTTONS
-    ===================================================== */
-
-    const stylesRow =
-      document.createElement(
-        "div"
-      );
-
-
-    stylesRow.style.cssText = `
-      display:flex;
-      gap:9px;
-      justify-content:center;
-      margin-bottom:14px;
-    `;
-
-
-    const styleNames = [
-      "Bangs",
-      "Straight",
-      "Curls"
-    ];
-
-
-    styleNames.forEach(
-      function (name) {
-
-        const button =
-          document.createElement(
-            "button"
-          );
-
-
-        button.type =
-          "button";
-
-
-        button.textContent =
-          name;
-
-
-        button.style.cssText = `
-          flex:1;
-          max-width:110px;
-          padding:9px 6px;
-          border:1px solid #ddd;
-          background:#fff;
-          border-radius:10px;
-          font-size:13px;
-        `;
-
-
-        if (
-          name.toLowerCase() ===
-          selectedStyle
-        ) {
-
-          button.style.background =
-            "#111";
-
-          button.style.color =
-            "#fff";
-
-        }
-
-
-        button.addEventListener(
-          "click",
-          function () {
-
-            selectedStyle =
-              name.toLowerCase();
-
-
-            const all =
-              stylesRow.querySelectorAll(
-                "button"
-              );
-
-
-            all.forEach(
-              function (item) {
-
-                item.style.background =
-                  "#fff";
-
-                item.style.color =
-                  "#111";
-
-              }
-            );
-
-
-            button.style.background =
-              "#111";
-
-            button.style.color =
-              "#fff";
-
-
-            showStatus(
-              name +
-              " hair style selected."
-            );
-
-          }
-        );
-
-
-        stylesRow.appendChild(
-          button
-        );
-
-      }
-    );
-
-
-    growSheet.appendChild(
-      stylesRow
-    );
-
-
-    /* =====================================================
-       ACTION BUTTONS
-    ===================================================== */
-
-    const actionRow =
-      document.createElement(
-        "div"
-      );
-
-
-    actionRow.style.cssText = `
-      display:flex;
-      align-items:center;
-      gap:10px;
-    `;
-
-
-    const clearButton =
-      document.createElement(
-        "button"
-      );
-
-
-    clearButton.type =
-      "button";
-
-
-    clearButton.textContent =
-      "Clear";
-
-
-    clearButton.style.cssText = `
-      flex:1;
-      height:46px;
-      border:1px solid #ddd;
-      background:#fff;
-      border-radius:23px;
-      font-size:15px;
-    `;
-
-
-    clearButton.addEventListener(
-      "click",
-      function () {
-
-        strokes = [];
-
-        currentStroke =
-          null;
-
-        redrawGrowLines();
-
-
-        showStatus(
-          "Drawing cleared."
-        );
-
-      }
-    );
-
-
-    const startButton =
-      document.createElement(
-        "button"
-      );
-
-
-    startButton.type =
-      "button";
-
-
-    startButton.textContent =
-      "✨ Start";
-
-
-    startButton.style.cssText = `
-      flex:2;
-      height:46px;
-      border:0;
-      background:#ef5aaa;
-      color:#fff;
-      border-radius:23px;
-      font-size:16px;
-      font-weight:600;
-    `;
-
-
-    startButton.addEventListener(
-      "click",
-      function () {
-
-        if (
-          !strokes.length
-        ) {
-
-          showStatus(
-            "First draw on the hair area."
-          );
-
-          return;
-
-        }
-
-
-        showStatus(
-          "Hair Grow drawing ready ✓"
-        );
-
-      }
-    );
-
-
-    const closeButton =
-      document.createElement(
-        "button"
-      );
-
-
-    closeButton.type =
-      "button";
-
-
-    closeButton.textContent =
-      "✓";
-
-
-    closeButton.style.cssText = `
-      width:46px;
-      height:46px;
-      border:0;
-      background:#f2f2f2;
-      border-radius:23px;
-      font-size:22px;
-    `;
-
-
-    closeButton.addEventListener(
-      "click",
-      function () {
-
-        closeGrowEditor();
-
-        showStatus(
-          "Hair Grow closed."
-        );
-
-      }
-    );
-
-
-    actionRow.appendChild(
-      clearButton
-    );
-
-
-    actionRow.appendChild(
-      startButton
-    );
-
-
-    actionRow.appendChild(
-      closeButton
-    );
-
-
-    growSheet.appendChild(
-      actionRow
-    );
-
-
-    document.body.appendChild(
-      growSheet
-    );
-
-
-    /* =====================================================
-       SLIDER
-    ===================================================== */
-
-    slider.addEventListener(
-      "input",
-      function () {
-
-        brushSize =
-          Number(
-            slider.value
-          );
-
-
-        sizeValue.textContent =
-          brushSize;
-
-        /*
-          IMPORTANT:
-          Old strokes keep their own
-          saved size.
-        */
-
-        redrawGrowLines();
-
-      }
-    );
-
-
-    /* =====================================================
-       BRUSH
-    ===================================================== */
-
-    brushButton.addEventListener(
-      "click",
-      function () {
-
-        eraseMode =
-          false;
-
-
-        brushButton.style.background =
-          "#111";
-
-        brushButton.style.color =
-          "#fff";
-
-
-        eraserButton.style.background =
-          "#f2f2f2";
-
-        eraserButton.style.color =
-          "#111";
-
-      }
-    );
-
-
-    /* =====================================================
-       ERASER
-    ===================================================== */
-
-    eraserButton.addEventListener(
-      "click",
-      function () {
-
-        eraseMode =
-          true;
-
-
-        eraserButton.style.background =
-          "#111";
-
-        eraserButton.style.color =
-          "#fff";
-
-
-        brushButton.style.background =
-          "#f2f2f2";
-
-        brushButton.style.color =
-          "#111";
-
-
-        showStatus(
-          "Eraser selected."
-        );
-
-      }
-    );
-
-
-    /* =====================================================
-       POINTER DOWN
-    ===================================================== */
-
-    growCanvas.addEventListener(
-      "pointerdown",
-      function (event) {
-
-        event.preventDefault();
-
-
-        growCanvas.setPointerCapture(
-          event.pointerId
-        );
-
-
-        drawing =
-          true;
-
-
-        const point =
-          getGrowPoint(
-            event
-          );
-
-
-        if (eraseMode) {
-
-          lastErasePoint =
-            point;
-
-
-          eraseAt(
-            point.x,
-            point.y
-          );
-
-
-          redrawGrowLines();
-
-
-          return;
-
-        }
-
-
-        /*
-          Each stroke stores its own
-          brush size.
-        */
-
-        currentStroke = {
-
-          points: [
-            point
-          ],
-
-          size:
-            brushSize
-
-        };
-
-
-        redrawGrowLines();
-
-      }
-    );
-
-
-    /* =====================================================
-       POINTER MOVE
-    ===================================================== */
-
-    growCanvas.addEventListener(
-      "pointermove",
-      function (event) {
-
-        if (!drawing) {
-          return;
-        }
-
-
-        event.preventDefault();
-
-
-        const point =
-          getGrowPoint(
-            event
-          );
-
-
-        /* ERASER */
-
-        if (eraseMode) {
-
-          eraseAt(
-            point.x,
-            point.y
-          );
-
-
-          lastErasePoint =
-            point;
-
-
-          redrawGrowLines();
-
-
-          return;
-
-        }
-
-
-        /* BRUSH */
-
-        if (
-          currentStroke
-        ) {
-
-          currentStroke.points.push(
-            point
-          );
-
-        }
-
-
-        redrawGrowLines();
-
-      }
-    );
-
-
-    /* =====================================================
-       POINTER UP
-    ===================================================== */
-
-    growCanvas.addEventListener(
-      "pointerup",
-      finishStroke
-    );
-
-
-    growCanvas.addEventListener(
-      "pointercancel",
-      finishStroke
-    );
-
-  }
-
-
-  /* =======================================================
-     GET POSITION
-  ======================================================= */
-
-  function getGrowPoint(
-    event
-  ) {
-
-    const rect =
-      growCanvas.getBoundingClientRect();
-
-
-    return {
-
-      x:
-        (
-          event.clientX -
-          rect.left
-        ) *
-        (
-          growCanvas.width /
-          rect.width
-        ),
-
-      y:
-        (
-          event.clientY -
-          rect.top
-        ) *
-        (
-          growCanvas.height /
-          rect.height
-        )
-
-    };
-
-  }
-
-
-  /* =======================================================
-     FINISH STROKE
-  ======================================================= */
-
-  function finishStroke(
-    event
-  ) {
-
-    if (!drawing) {
-      return;
-    }
-
-
-    drawing =
-      false;
-
-
-    if (
-      !eraseMode &&
-      currentStroke &&
-      currentStroke.points.length
-    ) {
-
-      strokes.push(
-        currentStroke
-      );
-
-    }
-
-
-    currentStroke =
-      null;
-
-
-    lastErasePoint =
-      null;
-
-
-    redrawGrowLines();
-
-  }
-
-
-  /* =======================================================
-     ACTUAL ERASER
-  ======================================================= */
-
-  function eraseAt(
-    x,
-    y
-  ) {
-
-    const eraseRadius =
-      Math.max(
-        8,
-        brushSize * 1.8
-      );
-
-
-    const newStrokes = [];
-
-
-    for (
-      let s = 0;
-      s < strokes.length;
-      s++
-    ) {
-
-      const stroke =
-        strokes[s];
-
-
-      let chunk = [];
-
-
-      for (
-        let p = 0;
-        p < stroke.points.length;
-        p++
-      ) {
-
-        const point =
-          stroke.points[p];
-
-
-        const dx =
-          point.x - x;
-
-
-        const dy =
-          point.y - y;
-
-
-        const distance =
-          Math.sqrt(
-            dx * dx +
-            dy * dy
-          );
-
-
-        if (
-          distance <=
-          eraseRadius
-        ) {
-
-          /*
-            End this section of
-            the stroke.
-          */
-
-          if (
-            chunk.length
-          ) {
-
-            newStrokes.push({
-
-              points:
-                chunk,
-
-              size:
-                stroke.size
-
-            });
-
-          }
-
-
-          chunk = [];
-
-        }
-
-        else {
-
-          chunk.push(
-            point
-          );
-
-        }
-
-      }
-
-
-      if (
-        chunk.length
-      ) {
-
-        newStrokes.push({
-
-          points:
-            chunk,
-
-          size:
-            stroke.size
-
-        });
-
-      }
-
-    }
-
-
-    strokes =
-      newStrokes;
-
-  }
-
-
-  /* =======================================================
-     RESIZE
-  ======================================================= */
-
-  function resizeGrowCanvas() {
-
-    if (!growCanvas) {
-      return;
-    }
-
-
-    const rect =
-      growCanvas.parentElement
-        .getBoundingClientRect();
-
-
-    growCanvas.width =
-      Math.max(
-        1,
-        Math.round(
-          rect.width
-        )
-      );
-
-
-    growCanvas.height =
-      Math.max(
-        1,
-        Math.round(
-          rect.height
-        )
-      );
-
-
-    redrawGrowLines();
-
-  }
-
-
-  /* =======================================================
-     DRAW ALL STROKES
-  ======================================================= */
-
-  function redrawGrowLines() {
-
-    if (
-      !growCtx ||
-      !growCanvas
-    ) {
-
-      return;
-
-    }
-
-
-    growCtx.clearRect(
-      0,
-      0,
-      growCanvas.width,
-      growCanvas.height
-    );
-
-
-    /*
-      Draw one stroke at a time.
-      Every stroke uses its OWN size.
-    */
-
-    function drawStroke(
-      stroke
-    ) {
-
-      if (
-        !stroke ||
-        !stroke.points ||
-        !stroke.points.length
-      ) {
-
-        return;
-
-      }
-
-
-      const points =
-        stroke.points;
-
-
-      const size =
-        stroke.size;
-
-
-      if (
-        points.length === 1
-      ) {
-
-        growCtx.beginPath();
-
-        growCtx.arc(
-          points[0].x,
-          points[0].y,
-          Math.max(
-            1,
-            size / 2
-          ),
-          0,
-          Math.PI * 2
-        );
-
-        growCtx.fillStyle =
-          "rgba(255,255,255,.9)";
-
-        growCtx.fill();
-
-        return;
-
-      }
-
-
       /*
-        Draw the main stroke in
-        small segments.
-
-        The final part tapers to
-        a sharp point.
+        Reset only when Grow is
+        opened again.
       */
 
-      growCtx.lineJoin =
-        "round";
+      hairStrokes =
+        [];
 
-      growCtx.lineCap =
-        "round";
+      hairEraseStrokes =
+        [];
 
-
-      const total =
-        points.length;
+      createHairGrowUI();
 
 
-      for (
-        let i = 1;
-        i < total;
-        i++
-      ) {
+      if (hairDrawCanvas) {
 
-        const p1 =
-          points[i - 1];
-
-        const p2 =
-          points[i];
-
-
-        const progress =
-          i /
-          (total - 1);
-
-
-        let width =
-          size;
-
-
-        /*
-          Last 25% gradually becomes
-          thinner, creating a sharp
-          hair-like tip.
-        */
-
-        if (
-          progress > 0.75
-        ) {
-
-          const taper =
-            (
-              1 -
-              (
-                progress - 0.75
-              ) / 0.25
-            );
-
-
-          width =
-            Math.max(
-              0.8,
-              size * taper
-            );
-
-        }
-
-
-        growCtx.beginPath();
-
-
-        growCtx.moveTo(
-          p1.x,
-          p1.y
-        );
-
-
-        growCtx.lineTo(
-          p2.x,
-          p2.y
-        );
-
-
-        growCtx.lineWidth =
-          width;
-
-
-        growCtx.strokeStyle =
-          "rgba(255,255,255,.88)";
-
-
-        growCtx.stroke();
+        hairDrawCanvas.style.display =
+          "block";
 
       }
 
-    }
 
+      if (hairGrowPanel) {
 
-    for (
-      let i = 0;
-      i < strokes.length;
-      i++
-    ) {
-
-      drawStroke(
-        strokes[i]
-      );
-
-    }
-
-
-    if (
-      currentStroke
-    ) {
-
-      drawStroke(
-        currentStroke
-      );
-
-    }
-
-  }
-
-
-  /* =======================================================
-     CLOSE
-  ======================================================= */
-
-  function closeGrowEditor() {
-
-    drawing =
-      false;
-
-
-    strokes =
-      [];
-
-    currentStroke =
-      null;
-
-    lastErasePoint =
-      null;
-
-
-    if (growOverlay) {
-
-      growOverlay.remove();
-
-    }
-
-
-    if (growSheet) {
-
-      growSheet.remove();
-
-    }
-
-
-    growOverlay =
-      null;
-
-    growSheet =
-      null;
-
-    growCanvas =
-      null;
-
-    growCtx =
-      null;
-
-  }
-
-
-  /* =======================================================
-     RESIZE
-  ======================================================= */
-
-  window.addEventListener(
-    "resize",
-    function () {
-
-      if (
-        growCanvas
-      ) {
-
-        resizeGrowCanvas();
+        hairGrowPanel.style.display =
+          "flex";
 
       }
+
+
+      showStatus(
+        "Draw where you want new hair."
+      );
 
     }
   );
 
+}
 
-})();
+
+/* =========================================================
+   HAIR COLOR OPEN
+========================================================= */
 
 
 /* =========================================================
