@@ -4143,115 +4143,127 @@ function createHairGrowUI() {
 
 
   hairDrawCanvas.addEventListener(
-    "pointerdown",
-    function(event) {
+  "pointerdown",
+  function(event) {
 
-      event.preventDefault();
+    event.preventDefault();
+
+    hairDrawing = true;
+
+    hairDrawCanvas.setPointerCapture(
+      event.pointerId
+    );
+
+    const p = getPoint(event);
+
+    if (hairErasing) {
+
+      hairEraseStrokes.push({
+        points: [p],
+        size: hairCurrentSize
+      });
+
+    } else {
+
+      hairStrokes.push({
+        points: [p],
+        size: hairCurrentSize,
+        style: hairCurrentStyle
+      });
+
+    }
+
+    redrawHairStrokes();
+
+  }
+);
 
 
-      hairDrawing =
-        true;
+hairDrawCanvas.addEventListener(
+  "pointermove",
+  function(event) {
+
+    if (!hairDrawing) return;
+
+    event.preventDefault();
+
+    const p = getPoint(event);
+
+    const list =
+      hairErasing
+        ? hairEraseStrokes
+        : hairStrokes;
+
+    if (!list.length) return;
+
+    const stroke =
+      list[list.length - 1];
+
+    const last =
+      stroke.points[stroke.points.length - 1];
+
+    /*
+      Avoid duplicate points.
+    */
+
+    const dx = p.x - last.x;
+    const dy = p.y - last.y;
+
+    if ((dx * dx + dy * dy) < 1.5) {
+      return;
+    }
+
+    stroke.points.push(p);
+
+    redrawHairStrokes();
+
+  }
+);
 
 
-      hairDrawCanvas.setPointerCapture(
+function stopDrawing(event) {
+
+  hairDrawing = false;
+
+  try {
+
+    if (
+      event &&
+      hairDrawCanvas.hasPointerCapture(event.pointerId)
+    ) {
+
+      hairDrawCanvas.releasePointerCapture(
         event.pointerId
       );
 
-
-      const p =
-        getPoint(event);
-
-
-      if (hairErasing) {
-
-        hairEraseStrokes.push({
-
-          points: [p],
-
-          size:
-            hairCurrentSize
-
-        });
-
-      }
-
-      else {
-
-        hairStrokes.push({
-
-          points: [p],
-
-          size:
-            hairCurrentSize,
-
-          style:
-            hairCurrentStyle
-
-        });
-
-      }
-
-
-      redrawHairStrokes();
-
     }
-  );
+
+  } catch (e) {}
+
+}
 
 
-  hairDrawCanvas.addEventListener(
-    "pointermove",
-    function(event) {
+hairDrawCanvas.addEventListener(
+  "pointerup",
+  stopDrawing
+);
 
-      if (!hairDrawing) return;
+hairDrawCanvas.addEventListener(
+  "pointercancel",
+  stopDrawing
+);
 
-      event.preventDefault();
+hairDrawCanvas.addEventListener(
+  "pointerleave",
+  function() {
 
-
-      const p =
-        getPoint(event);
-
-
-      const list =
-        hairErasing
-          ? hairEraseStrokes
-          : hairStrokes;
-
-
-      if (!list.length) return;
-
-
-      const stroke =
-        list[list.length - 1];
-
-
-      stroke.points.push(
-        p
-      );
-
-
-      redrawHairStrokes();
-
-    }
-  );
-
-
-  function stopDrawing() {
-
-    hairDrawing =
-      false;
+    /*
+      Do not stop while captured.
+      Pointer capture keeps drawing continuous.
+    */
 
   }
-
-
-  hairDrawCanvas.addEventListener(
-    "pointerup",
-    stopDrawing
-  );
-
-  hairDrawCanvas.addEventListener(
-    "pointercancel",
-    stopDrawing
-  );
+);
 
 
   /* -------------------------------------------------------
@@ -4333,18 +4345,9 @@ function createHairGrowUI() {
 
 function redrawHairStrokes() {
 
-  if (!hairDrawCtx ||
-      !hairDrawCanvas) {
+  if (!hairDrawCtx || !hairDrawCanvas) return;
 
-    return;
-
-  }
-
-
-  const rect =
-    hairDrawCanvas
-      .getBoundingClientRect();
-
+  const rect = hairDrawCanvas.getBoundingClientRect();
 
   hairDrawCtx.clearRect(
     0,
@@ -4353,143 +4356,116 @@ function redrawHairStrokes() {
     rect.height
   );
 
+  /*
+    DRAW GUIDE STROKES
+    Every stroke keeps its own size.
+  */
 
-  /* -------------------------------------------------------
-     DRAW ORIGINAL STROKES
-  ------------------------------------------------------- */
+  hairStrokes.forEach(function(stroke) {
 
-  hairStrokes.forEach(
-    function(stroke) {
+    const points = stroke.points;
 
-      if (
-        !stroke.points ||
-        stroke.points.length < 1
-      ) {
+    if (!points || points.length === 0) return;
 
-        return;
+    hairDrawCtx.save();
 
-      }
+    hairDrawCtx.lineCap = "round";
+    hairDrawCtx.lineJoin = "round";
+    hairDrawCtx.lineWidth = stroke.size;
+    hairDrawCtx.strokeStyle =
+      "rgba(255,70,150,.72)";
 
+    hairDrawCtx.beginPath();
 
-      const points =
-        stroke.points;
+    hairDrawCtx.moveTo(
+      points[0].x,
+      points[0].y
+    );
 
+    if (points.length === 1) {
 
-      hairDrawCtx.save();
-
-      hairDrawCtx.lineCap =
-        "round";
-
-      hairDrawCtx.lineJoin =
-        "round";
-
-      hairDrawCtx.lineWidth =
-        stroke.size;
-
-
-      /*
-        Temporary drawing color.
-        It is only the guide.
-        Final Start processing creates
-        the actual hair.
-      */
-
-      hairDrawCtx.strokeStyle =
-        "rgba(255,70,150,.75)";
-
-
-      hairDrawCtx.beginPath();
-
-
-      hairDrawCtx.moveTo(
+      hairDrawCtx.arc(
         points[0].x,
-        points[0].y
+        points[0].y,
+        Math.max(1, stroke.size / 2),
+        0,
+        Math.PI * 2
       );
 
+    } else {
 
-      for (
-        let i = 1;
-        i < points.length;
-        i++
-      ) {
+      for (let i = 1; i < points.length; i++) {
+
+        const p = points[i];
 
         hairDrawCtx.lineTo(
-          points[i].x,
-          points[i].y
+          p.x,
+          p.y
         );
 
       }
 
-
       hairDrawCtx.stroke();
 
-      hairDrawCtx.restore();
-
     }
-  );
 
+    hairDrawCtx.restore();
 
-  /* -------------------------------------------------------
-     ERASE VISUAL GUIDE
-  ------------------------------------------------------- */
+  });
 
-  hairEraseStrokes.forEach(
-    function(stroke) {
+  /*
+    SHOW ERASER GUIDE
+  */
 
-      if (
-        !stroke.points ||
-        stroke.points.length < 1
-      ) {
+  hairEraseStrokes.forEach(function(stroke) {
 
-        return;
+    const points = stroke.points;
 
-      }
+    if (!points || points.length === 0) return;
 
+    hairDrawCtx.save();
 
-      hairDrawCtx.save();
+    hairDrawCtx.lineCap = "round";
+    hairDrawCtx.lineJoin = "round";
+    hairDrawCtx.lineWidth =
+      Math.max(4, stroke.size * 2);
 
-      hairDrawCtx.globalCompositeOperation =
-        "destination-out";
+    hairDrawCtx.strokeStyle =
+      "rgba(255,80,80,.35)";
 
-      hairDrawCtx.lineWidth =
-        stroke.size * 2;
+    hairDrawCtx.beginPath();
 
-      hairDrawCtx.lineCap =
-        "round";
+    hairDrawCtx.moveTo(
+      points[0].x,
+      points[0].y
+    );
 
-      hairDrawCtx.lineJoin =
-        "round";
+    for (let i = 1; i < points.length; i++) {
 
-
-      hairDrawCtx.beginPath();
-
-
-      hairDrawCtx.moveTo(
-        stroke.points[0].x,
-        stroke.points[0].y
+      hairDrawCtx.lineTo(
+        points[i].x,
+        points[i].y
       );
 
+    }
 
-      for (
-        let i = 1;
-        i < stroke.points.length;
-        i++
-      ) {
+    if (points.length === 1) {
 
-        hairDrawCtx.lineTo(
-          stroke.points[i].x,
-          stroke.points[i].y
-        );
-
-      }
-
-
-      hairDrawCtx.stroke();
-
-      hairDrawCtx.restore();
+      hairDrawCtx.arc(
+        points[0].x,
+        points[0].y,
+        Math.max(2, stroke.size),
+        0,
+        Math.PI * 2
+      );
 
     }
-  );
+
+    hairDrawCtx.stroke();
+
+    hairDrawCtx.restore();
+
+  });
 
 }
 
@@ -4510,25 +4486,14 @@ async function processDrawnHair() {
 
   }
 
-
   try {
 
     showStatus(
-      "Creating new hair..."
+      "Creating realistic hair..."
     );
 
-
     const img =
-      await loadImage(
-        selectedFile
-      );
-
-
-    const output =
-      document.createElement(
-        "canvas"
-      );
-
+      await loadImage(selectedFile);
 
     const width =
       img.naturalWidth;
@@ -4537,18 +4502,18 @@ async function processDrawnHair() {
       img.naturalHeight;
 
 
-    output.width =
-      width;
+    /*
+      ORIGINAL PHOTO
+    */
 
-    output.height =
-      height;
+    const output =
+      document.createElement("canvas");
 
+    output.width = width;
+    output.height = height;
 
     const ctx =
-      output.getContext(
-        "2d"
-      );
-
+      output.getContext("2d");
 
     ctx.drawImage(
       img,
@@ -4559,27 +4524,368 @@ async function processDrawnHair() {
     );
 
 
-    const rect =
-      hairDrawCanvas
-        .getBoundingClientRect();
+    /*
+      TRANSPARENT HAIR LAYER
 
+      Hair is generated separately
+      and then placed over the original.
+    */
+
+    const hairLayer =
+      document.createElement("canvas");
+
+    hairLayer.width = width;
+    hairLayer.height = height;
+
+    const hctx =
+      hairLayer.getContext("2d");
+
+
+    const rect =
+      hairDrawCanvas.getBoundingClientRect();
 
     const scaleX =
-      width /
-      rect.width;
+      width / rect.width;
 
     const scaleY =
-      height /
-      rect.height;
+      height / rect.height;
 
 
     /*
-      Draw every saved stroke
-      independently.
+      SAMPLE A NATURAL HAIR COLOR
+      FROM THE START OF EACH STROKE.
+    */
 
-      IMPORTANT:
-      Each stroke keeps its own
-      original size.
+    function getHairBaseColor(point) {
+
+      const x =
+        Math.max(
+          0,
+          Math.min(
+            width - 1,
+            Math.round(point.x * scaleX)
+          )
+        );
+
+      const y =
+        Math.max(
+          0,
+          Math.min(
+            height - 1,
+            Math.round(point.y * scaleY)
+          )
+        );
+
+      try {
+
+        const pixel =
+          ctx.getImageData(
+            x,
+            y,
+            1,
+            1
+          ).data;
+
+        const r = pixel[0];
+        const g = pixel[1];
+        const b = pixel[2];
+
+        const brightness =
+          (r + g + b) / 3;
+
+        /*
+          If sampled area is reasonably dark,
+          use it as the hair base.
+
+          Otherwise use a natural dark brown.
+        */
+
+        if (brightness < 150) {
+
+          return {
+            r: Math.max(8, Math.round(r * 0.72)),
+            g: Math.max(6, Math.round(g * 0.72)),
+            b: Math.max(5, Math.round(b * 0.72))
+          };
+
+        }
+
+      } catch (e) {}
+
+      return {
+        r: 35,
+        g: 24,
+        b: 20
+      };
+
+    }
+
+
+    /*
+      DRAW ONE NATURAL HAIR STRAND
+    */
+
+    function drawHairStrand(
+      points,
+      size,
+      style,
+      strandIndex,
+      strandCount,
+      color,
+      alpha
+    ) {
+
+      if (!points || points.length < 1) {
+        return;
+      }
+
+
+      const scaled = [];
+
+      for (
+        let i = 0;
+        i < points.length;
+        i++
+      ) {
+
+        let x =
+          points[i].x * scaleX;
+
+        let y =
+          points[i].y * scaleY;
+
+
+        /*
+          Small deterministic variation.
+          This makes multiple strands
+          look like individual hairs.
+        */
+
+        const phase =
+          strandIndex * 1.73;
+
+
+        if (style === "curls") {
+
+          const wave =
+            Math.sin(
+              i * 0.55 + phase
+            ) *
+            Math.max(1.5, size * scaleX * 0.85);
+
+          x += wave;
+
+        }
+
+        else if (style === "bangs") {
+
+          const bend =
+            Math.sin(
+              i * 0.18 + phase
+            ) *
+            Math.max(1, size * scaleX * 0.30);
+
+          x += bend;
+
+        }
+
+        else {
+
+          const natural =
+            Math.sin(
+              i * 0.11 + phase
+            ) *
+            Math.max(0.5, size * scaleX * 0.16);
+
+          x += natural;
+
+        }
+
+
+        /*
+          Strand separation.
+        */
+
+        const separation =
+          (
+            strandIndex -
+            (strandCount - 1) / 2
+          ) *
+          Math.max(
+            0.5,
+            size * scaleX * 0.32
+          );
+
+        x += separation;
+
+
+        scaled.push({
+          x: x,
+          y: y
+        });
+
+      }
+
+
+      /*
+        DRAW AS MANY SHORT SEGMENTS
+        WITH TAPERING.
+
+        This gives the strand a
+        natural pointed end.
+      */
+
+      for (
+        let i = 1;
+        i < scaled.length;
+        i++
+      ) {
+
+        const a =
+          scaled[i - 1];
+
+        const b =
+          scaled[i];
+
+
+        const progress =
+          i / Math.max(
+            1,
+            scaled.length - 1
+          );
+
+
+        /*
+          Hair is thicker near the root
+          and thinner toward the tip.
+        */
+
+        const rootFactor =
+          0.90;
+
+        const tipFactor =
+          0.08;
+
+
+        const taper =
+          rootFactor +
+          (tipFactor - rootFactor) *
+          progress;
+
+
+        const lineWidth =
+          Math.max(
+            0.35,
+            size *
+            scaleX *
+            0.22 *
+            taper
+          );
+
+
+        hctx.save();
+
+        hctx.beginPath();
+
+        hctx.moveTo(
+          a.x,
+          a.y
+        );
+
+        hctx.lineTo(
+          b.x,
+          b.y
+        );
+
+        hctx.lineWidth =
+          lineWidth;
+
+        hctx.lineCap =
+          "round";
+
+        hctx.lineJoin =
+          "round";
+
+
+        hctx.strokeStyle =
+          "rgba(" +
+          color.r +
+          "," +
+          color.g +
+          "," +
+          color.b +
+          "," +
+          alpha +
+          ")";
+
+
+        hctx.stroke();
+
+        hctx.restore();
+
+      }
+
+
+      /*
+        Pointed tip.
+
+        A very tiny final segment makes
+        the end fade naturally.
+      */
+
+      if (scaled.length >= 2) {
+
+        const last =
+          scaled[scaled.length - 1];
+
+        const previous =
+          scaled[scaled.length - 2];
+
+        hctx.save();
+
+        hctx.beginPath();
+
+        hctx.moveTo(
+          previous.x,
+          previous.y
+        );
+
+        hctx.lineTo(
+          last.x,
+          last.y
+        );
+
+        hctx.lineWidth =
+          Math.max(
+            0.25,
+            size *
+            scaleX *
+            0.04
+          );
+
+        hctx.lineCap =
+          "round";
+
+        hctx.strokeStyle =
+          "rgba(" +
+          color.r +
+          "," +
+          color.g +
+          "," +
+          color.b +
+          ",.45)";
+
+        hctx.stroke();
+
+        hctx.restore();
+
+      }
+
+    }
+
+
+    /*
+      GENERATE EVERY USER STROKE
     */
 
     hairStrokes.forEach(
@@ -4588,10 +4894,9 @@ async function processDrawnHair() {
         const points =
           stroke.points;
 
-
         if (
           !points ||
-          points.length < 2
+          points.length < 1
         ) {
 
           return;
@@ -4599,42 +4904,35 @@ async function processDrawnHair() {
         }
 
 
-        const baseSize =
-          stroke.size *
-          scaleX;
+        const color =
+          getHairBaseColor(
+            points[0]
+          );
 
 
-        let strandCount =
-          1;
+        let strandCount = 9;
 
 
         if (
-          stroke.style ===
-          "bangs"
+          stroke.style === "bangs"
         ) {
 
-          strandCount =
-            5;
+          strandCount = 11;
 
         }
 
         else if (
-          stroke.style ===
-          "curls"
+          stroke.style === "curls"
         ) {
 
-          strandCount =
-            4;
+          strandCount = 13;
 
         }
 
-        else {
 
-          strandCount =
-            3;
-
-        }
-
+        /*
+          Main hair bundle
+        */
 
         for (
           let strand = 0;
@@ -4642,136 +4940,63 @@ async function processDrawnHair() {
           strand++
         ) {
 
-          ctx.save();
-
-          ctx.beginPath();
-
-
-          const offset =
+          const variation =
+            0.82 +
             (
-              strand -
-              (strandCount - 1) / 2
-            ) *
-            baseSize *
-            0.42;
+              (
+                strand * 17
+              ) % 11
+            ) / 100;
 
 
-          const first =
-            points[0];
-
-
-          ctx.moveTo(
-            first.x * scaleX,
-            first.y * scaleY
+          drawHairStrand(
+            points,
+            stroke.size * variation,
+            stroke.style,
+            strand,
+            strandCount,
+            color,
+            0.72
           );
 
-
-          for (
-            let i = 1;
-            i < points.length;
-            i++
-          ) {
-
-            const p =
-              points[i];
+        }
 
 
-            let x =
-              p.x * scaleX;
+        /*
+          Fine individual hairs.
 
-            let y =
-              p.y * scaleY;
+          These are thinner and slightly
+          more transparent.
+        */
 
+        for (
+          let fine = 0;
+          fine < 7;
+          fine++
+        ) {
 
-            /*
-              Style movement
-            */
-
-            if (
-              stroke.style ===
-              "curls"
-            ) {
-
-              const wave =
-                Math.sin(
-                  i * 0.85 +
-                  strand
-                ) *
-                baseSize *
-                1.15;
-
-
-              x += wave;
-
-            }
-
-
-            else if (
-              stroke.style ===
-              "bangs"
-            ) {
-
-              const bend =
-                Math.sin(
-                  i * 0.35
-                ) *
-                baseSize *
-                0.45;
-
-
-              x += bend;
-
-            }
-
-
-            x +=
-              offset;
-
-
-            ctx.lineTo(
-              x,
-              y
-            );
-
-          }
-
-
-          /*
-            Natural hair appearance
-          */
-
-          ctx.lineWidth =
-            Math.max(
-              1,
-              baseSize *
-              (
-                strand === 0
-                  ? 0.72
-                  : 0.48
+          drawHairStrand(
+            points,
+            stroke.size * 0.45,
+            stroke.style,
+            strandCount + fine,
+            strandCount + 7,
+            {
+              r: Math.min(
+                255,
+                color.r + 25
+              ),
+              g: Math.min(
+                255,
+                color.g + 20
+              ),
+              b: Math.min(
+                255,
+                color.b + 18
               )
-            );
-
-
-          ctx.lineCap =
-            "round";
-
-          ctx.lineJoin =
-            "round";
-
-
-          /*
-            Dark but slightly transparent
-            so original hair texture can
-            remain visible.
-          */
-
-          ctx.strokeStyle =
-            "rgba(25,18,18,.68)";
-
-
-          ctx.stroke();
-
-          ctx.restore();
+            },
+            0.28
+          );
 
         }
 
@@ -4780,20 +5005,22 @@ async function processDrawnHair() {
 
 
     /*
-      Add a few very fine highlight
-      strands for a more natural result.
+      APPLY ERASER TO THE HAIR LAYER.
+
+      IMPORTANT:
+      It removes generated hair,
+      not the original photograph.
     */
 
-    hairStrokes.forEach(
+    hairEraseStrokes.forEach(
       function(stroke) {
 
         const points =
           stroke.points;
 
-
         if (
           !points ||
-          points.length < 2
+          points.length === 0
         ) {
 
           return;
@@ -4801,16 +5028,31 @@ async function processDrawnHair() {
         }
 
 
-        ctx.save();
+        hctx.save();
 
-        ctx.beginPath();
+        hctx.globalCompositeOperation =
+          "destination-out";
 
+        hctx.lineWidth =
+          Math.max(
+            4,
+            stroke.size *
+            scaleX *
+            2
+          );
 
-        ctx.moveTo(
+        hctx.lineCap =
+          "round";
+
+        hctx.lineJoin =
+          "round";
+
+        hctx.beginPath();
+
+        hctx.moveTo(
           points[0].x * scaleX,
           points[0].y * scaleY
         );
-
 
         for (
           let i = 1;
@@ -4818,42 +5060,50 @@ async function processDrawnHair() {
           i++
         ) {
 
-          const p =
-            points[i];
-
-
-          ctx.lineTo(
-            p.x * scaleX,
-            p.y * scaleY
+          hctx.lineTo(
+            points[i].x * scaleX,
+            points[i].y * scaleY
           );
 
         }
 
+        if (points.length === 1) {
 
-        ctx.lineWidth =
-          Math.max(
-            0.7,
-            stroke.size *
-            scaleX *
-            0.16
+          hctx.arc(
+            points[0].x * scaleX,
+            points[0].y * scaleY,
+            Math.max(
+              2,
+              stroke.size * scaleX
+            ),
+            0,
+            Math.PI * 2
           );
 
+        }
 
-        ctx.lineCap =
-          "round";
+        hctx.stroke();
 
-
-        ctx.strokeStyle =
-          "rgba(130,100,100,.30)";
-
-
-        ctx.stroke();
-
-        ctx.restore();
+        hctx.restore();
 
       }
     );
 
+
+    /*
+      COMBINE HAIR WITH ORIGINAL PHOTO.
+    */
+
+    ctx.drawImage(
+      hairLayer,
+      0,
+      0
+    );
+
+
+    /*
+      FINAL IMAGE
+    */
 
     const blob =
       await new Promise(
@@ -4862,7 +5112,7 @@ async function processDrawnHair() {
           output.toBlob(
             resolve,
             "image/jpeg",
-            0.95
+            0.96
           );
 
         }
@@ -4883,9 +5133,7 @@ async function processDrawnHair() {
 
 
     preview.src =
-      URL.createObjectURL(
-        blob
-      );
+      URL.createObjectURL(blob);
 
     preview.style.display =
       "block";
@@ -4898,7 +5146,7 @@ async function processDrawnHair() {
 
 
     /*
-      Hide drawing layer after processing.
+      Close Grow editor after success.
     */
 
     hairDrawCanvas.style.display =
@@ -4909,7 +5157,7 @@ async function processDrawnHair() {
 
 
     showStatus(
-      "New hair applied ✓"
+      "Realistic hair applied ✓"
     );
 
   }
@@ -4917,9 +5165,9 @@ async function processDrawnHair() {
   catch (error) {
 
     console.error(
+      "Hair Grow error:",
       error
     );
-
 
     showStatus(
       "Hair Grow failed: " +
@@ -4931,7 +5179,7 @@ async function processDrawnHair() {
 
   }
 
-}
+    }
 
 
 /* =========================================================
@@ -5009,11 +5257,6 @@ if (hairGrow) {
   );
 
 }
-
-
-/* =========================================================
-   HAIR COLOR OPEN
-========================================================= */
 
 
 /* =========================================================
