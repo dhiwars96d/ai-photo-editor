@@ -946,8 +946,43 @@ function close() {
   hgErase = false;
 }
 
-if (typeof hairGrow !== "undefined" && hairGrow) {
-  hairGrow.addEventListener("click", function () {
+const growButton = document.getElementById("hairGrow");
+
+if (growButton) {
+  growButton.addEventListener("click", function () {
+
+    if (!selectedFile) {
+      showStatus("Please select a photo first.");
+      return;
+    }
+
+    if (hairMenu) {
+      hairMenu.style.display = "none";
+    }
+
+    const colorPanel = document.getElementById("hairColorPanel");
+    if (colorPanel) {
+      colorPanel.style.display = "none";
+    }
+
+    hgStrokes = [];
+    hgErase = false;
+
+    makePanel();
+
+    if (hgCanvas) {
+      hgCanvas.style.display = "block";
+    }
+
+    if (hgPanel) {
+      hgPanel.style.display = "flex";
+    }
+
+    resize();
+
+    showStatus("Hair par root se bahar ki taraf stroke draw karein.");
+  });
+}
 
     if (!selectedFile) {
       showStatus("Please select a photo first.");
