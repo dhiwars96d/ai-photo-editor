@@ -795,3 +795,187 @@ nst start = document.createElement("button");
       return;
     }
 
+  const img = new Image();
+
+  img.onload = async function () {
+    try {
+      showStatus("Hair AI processing...");
+
+      const segmenter = await getHairSegmenter();
+      const result = segmenter.segment(img);
+
+      const mask = result.categoryMask;
+      const maskData = mask.getAsUint8Array();
+
+      const out = document.createElement("canvas");
+      out.width = img.naturalWidth;
+      out.height = img.naturalHeight;
+
+      const ctx = out.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+
+      const r = imageRect();
+
+      function toNatural(p) {
+        return {
+          x: (p.x / r.width) * img.naturalWidth,
+          y: (p.y / r.height) * img.naturalHeight
+        };
+      }
+
+      function isHair(x, y) {
+        const mx = Math.max(
+          0,
+          Math.min(mask.width - 1, Math.round(x * mask.width / img.naturalWidth))
+        );
+
+        const my = Math.max(
+          0,
+          Math.min(mask.height - 1, Math.round(y * mask.height / img.naturalHeight))
+        );
+
+        const index = my * mask.width + mx;
+        return maskData[index] === 1;
+      }
+
+      let made = 0;
+
+      hgStrokes.forEach(function (stroke) {
+        if (!stroke.points || stroke.points.length < 2) return;
+
+        const root = toNatural(stroke.points[0]);
+
+        if (!isHair(root.x, root.y)) {
+          return;
+        }
+
+        const pts = stroke.points.map(toNatural);
+
+        const color = colorAt(
+          ctx,
+          Math.round(root.x),
+          Math.round(root.y)
+        );
+
+        const count = Math.max(
+          6,
+          Math.min(14, Math.round(hgSize * 1.5))
+        );
+
+        for (let i = 0; i < count; i++) {
+          const variation = (i - (count - 1) / 2) * 0.9;
+
+          const strandPts = pts.map(function (p, index) {
+            const t = index / Math.max(1, pts.length - 1);
+
+            let bend = 0;
+
+            if (hgStyle === "curls") {
+              bend = Math.sin(t * Math.PI * 3 + i) * (3 + hgSize * 0.4);
+            } else if (hgStyle === "bangs") {
+              bend = Math.sin(t * Math.PI) * (4 + hgSize * 0.5);
+            } else {
+              bend = Math.sin(t * Math.PI) * 1.5;
+            }
+
+            return {
+              x: p.x + variation + bend,
+              y: p.y + variation * 0.25
+            };
+          });
+
+          strand(
+            ctx,
+            smooth(strandPts),
+            color,
+            Math.max(0.8, hgSize * 0.22),
+            0.55 + Math.random() * 0.25,
+            i * 0.37
+          );
+
+          made++;
+        }
+      });
+
+      if (!made) {
+        showStatus("Stroke hair ke upar se start karein.");
+        return;
+      }
+
+      out.toBlob(function (blob) {
+        if (!blob) {
+          showStatus("Hair processing failed.");
+          return;
+        }
+
+        editedBlob = blob;
+
+        preview.src = URL.createObjectURL(blob);
+        preview.style.display = "block";
+
+        if (downloadButton) {
+          downloadButton.style.display = "block";
+        }
+
+        showStatus("Hair Grow applied.");
+      }, "image/jpeg", 0.94);
+
+    } catch (error) {
+      console.error(error);
+      showStatus("Hair AI error: " + (error.message || error));
+    }
+  };
+
+  img.onerror = function () {
+    showStatus("Photo load failed.");
+  };
+
+  img.src = URL.createObjectURL(selectedFile);
+}
+
+function close() {
+  if (hgPanel) {
+    hgPanel.style.display = "none";
+  }
+
+  if (hgCanvas) {
+    hgCanvas.style.display = "none";
+  }
+
+  hgDrawing = false;
+  hgErase = false;
+}
+
+if (typeof hairGrow !== "undefined" && hairGrow) {
+  hairGrow.addEventListener("click", function () {
+
+    if (!selectedFile) {
+      showStatus("Please select a photo first.");
+      return;
+    }
+
+    if (hairMenu) {
+      hairMenu.style.display = "none";
+    }
+
+    if (typeof hairColorPanel !== "undefined" && hairColorPanel) {
+      hairColorPanel.style.display = "none";
+    }
+
+    hgStrokes = [];
+    hgErase = false;
+
+    makePanel();
+
+    hgCanvas.style.display = "block";
+    hgPanel.style.display = "flex";
+
+    resize();
+
+    showStatus("Hair par root se bahar ki taraf stroke draw karein.");
+  });
+}
+
+window.addEventListener("resize", resize);
+
+})();
