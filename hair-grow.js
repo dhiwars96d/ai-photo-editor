@@ -580,8 +580,13 @@
 
         let best = null;
 
-        for (let yy = -12; yy <= 12; yy++) {
-          for (let xx = -12; xx <= 12; xx++) {
+const searchRadius = Math.max(
+  40,
+  Math.round(35 * img.naturalWidth / Math.max(1, ir.width))
+);
+
+for (let yy = -searchRadius; yy <= searchRadius; yy++) {
+  for (let xx = -searchRadius; xx <= searchRadius; xx++) {
             const x = rx + xx;
             const y = ry + yy;
 
