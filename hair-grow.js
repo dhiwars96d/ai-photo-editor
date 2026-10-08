@@ -147,194 +147,311 @@
   }
 
   function makePanel() {
-    if (hgPanel) {
-  hgPanel.style.display = "flex";
+  if (hgPanel) {
+    hgPanel.style.display = "flex";
+    return;
+  }
 
-  hgPanel.style.setProperty("position", "fixed", "important");
-  hgPanel.style.setProperty("left", "10px", "important");
-  hgPanel.style.setProperty("right", "10px", "important");
-  hgPanel.style.setProperty("bottom", "20px", "important");
-  hgPanel.style.setProperty("border-radius", "18px", "important");
-  hgPanel.style.setProperty("max-height", "35vh", "important");
-  hgPanel.style.setProperty("overflow-y", "auto", "important");
+  hgPanel = document.createElement("div");
+  hgPanel.id = "hairGrowPanel";
 
-  return;
-    }
+  Object.assign(hgPanel.style, {
+    position: "fixed",
+    left: "0",
+    right: "0",
+    bottom: "0",
+    width: "100%",
+    zIndex: "99999",
+    background: "#fff",
+    padding: "8px 8px calc(8px + env(safe-area-inset-bottom))",
+    borderRadius: "16px 16px 0 0",
+    boxShadow: "0 -4px 22px rgba(0,0,0,.18)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "7px",
+    boxSizing: "border-box"
+  });
 
-    hgPanel = document.createElement("div");
-    hgPanel.id = "hairGrowPanel";
+  /* TOP TOOL ROW */
+  const row = document.createElement("div");
 
-    Object.assign(hgPanel.style, {
-  position: "fixed",
-  left: "10px",
-  right: "10px",
-  bottom: "calc(16px + env(safe-area-inset-bottom))",
-  zIndex: "99999",
-  background: "#fff",
-  padding: "10px",
-  borderRadius: "18px",
-  boxShadow: "0 4px 24px rgba(0,0,0,.20)",
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  boxSizing: "border-box",
-  maxHeight: "35vh",
-  overflowY: "auto"
-});
+  Object.assign(row.style, {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    width: "100%"
+  });
 
-     hgPanel.style.setProperty("position", "fixed", "important");
-hgPanel.style.setProperty("left", "10px", "important");
-hgPanel.style.setProperty("right", "10px", "important");
-hgPanel.style.setProperty("bottom", "20px", "important");
-hgPanel.style.setProperty("border-radius", "18px", "important");
-   
-     const row = document.createElement("div");
-    Object.assign(row.style, {
-      display: "flex",
-      alignItems: "center",
-      gap: "10px"
+  const brush = document.createElement("button");
+  brush.type = "button";
+  brush.textContent = "🖌️";
+
+  Object.assign(brush.style, {
+    width: "32px",
+    height: "28px",
+    padding: "0",
+    border: "1px solid #ddd",
+    borderRadius: "5px",
+    background: "#fff",
+    fontSize: "16px",
+    flex: "0 0 32px"
+  });
+
+  const slider = document.createElement("input");
+  slider.type = "range";
+  slider.min = "1";
+  slider.max = "15";
+  slider.value = hgSize;
+
+  Object.assign(slider.style, {
+    flex: "1",
+    minWidth: "0",
+    margin: "0",
+    accentColor: "#1683ff"
+  });
+
+  const value = document.createElement("span");
+  value.textContent = hgSize;
+
+  Object.assign(value.style, {
+    minWidth: "18px",
+    textAlign: "center",
+    fontSize: "13px",
+    color: "#222"
+  });
+
+  /* REAL ERASER BUTTON */
+  const eraser = document.createElement("button");
+  eraser.type = "button";
+  eraser.textContent = "🧽";
+  eraser.title = "Eraser";
+
+  Object.assign(eraser.style, {
+    width: "32px",
+    height: "28px",
+    padding: "0",
+    border: "1px solid #ccc",
+    borderRadius: "5px",
+    background: "#fff",
+    fontSize: "17px",
+    lineHeight: "1",
+    flex: "0 0 32px"
+  });
+
+  row.append(brush, slider, value, eraser);
+
+  /* STYLE ROW */
+  const styles = document.createElement("div");
+
+  Object.assign(styles.style, {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "7px",
+    width: "100%"
+  });
+
+  const styleButtons = {};
+
+  ["Bangs", "Straight", "Curls"].forEach(name => {
+    const b = document.createElement("button");
+
+    b.type = "button";
+    b.textContent = name;
+
+    Object.assign(b.style, {
+      border: "1px solid #ddd",
+      background: "#fff",
+      color: "#222",
+      borderRadius: "7px",
+      padding: "5px 9px",
+      fontSize: "11px",
+      fontWeight: "500"
     });
 
-    const brush = document.createElement("button");
-    brush.textContent = "🖌️";
-    brush.type = "button";
+    styleButtons[name.toLowerCase()] = b;
 
-    const slider = document.createElement("input");
-    slider.type = "range";
-    slider.min = "1";
-    slider.max = "15";
-    slider.value = hgSize;
-    slider.style.flex = "1";
+    b.onclick = () => {
+      hgStyle = name.toLowerCase();
+      hgErase = false;
 
-    const value = document.createElement("span");
-    value.textContent = hgSize;
+      eraser.style.background = "#fff";
+      eraser.style.borderColor = "#ccc";
 
-    const eraser = document.createElement("button");
-    eraser.textContent = "⌫";
-    eraser.type = "button";
-
-    row.append(brush, slider, value, eraser);
-
-    const styles = document.createElement("div");
-    styles.style.display = "flex";
-    styles.style.gap = "7px";
-
-    ["Bangs", "Straight", "Curls"].forEach(name => {
-      const b = document.createElement("button");
-      b.textContent = name;
-      b.type = "button";
-
-      b.onclick = () => {
-        hgStyle = name.toLowerCase();
-        hgErase = false;
-      };
-
-      styles.appendChild(b);
-    });
-
-    const actions = document.createElement("div");
-    actions.style.display = "flex";
-    actions.style.gap = "8px";
-
-    const clear = document.createElement("button");
-    clear.textContent = "Clear";
-    clear.type = "button";
-
-    const start = document.createElement("button");
-    start.textContent = "Start";
-    start.type = "button";
-    start.style.flex = "1";
-    start.style.background = "#ff3f91";
-    start.style.color = "#fff";
-    start.style.border = "0";
-    start.style.borderRadius = "12px";
-    start.style.padding = "11px";
-
-    const done = document.createElement("button");
-    done.textContent = "Done";
-    done.type = "button";
-
-    actions.append(clear, start, done);
-    hgPanel.append(row, styles, actions);
-    document.body.appendChild(hgPanel);
-
-    brush.onclick = () => hgErase = false;
-
-    eraser.onclick = () => hgErase = true;
-
-    slider.oninput = () => {
-      hgSize = +slider.value;
-      value.textContent = hgSize;
-    };
-
-    clear.onclick = () => {
-      hgStrokes = [];
-      drawGuides();
-    };
-
-    start.onclick = process;
-
-    done.onclick = close;
-
-    hgCanvas = document.createElement("canvas");
-    hgCanvas.id = "hairGrowCanvas";
-
-    Object.assign(hgCanvas.style, {
-      position: "absolute",
-      inset: "0",
-      width: "100%",
-      height: "100%",
-      zIndex: "50",
-      touchAction: "none"
-    });
-
-    const box = document.querySelector(".previewBox");
-    box.style.position = "relative";
-    box.appendChild(hgCanvas);
-
-    hgCtx = hgCanvas.getContext("2d");
-    resize();
-
-    hgCanvas.onpointerdown = e => {
-      e.preventDefault();
-
-      hgDrawing = true;
-      hgCanvas.setPointerCapture(e.pointerId);
-
-      const p = point(e);
-
-      if (hgErase) {
-        eraseAt(p);
-        return;
-      }
-
-      hgStrokes.push({
-        points: [p],
-        size: hgSize,
-        style: hgStyle
+      Object.keys(styleButtons).forEach(key => {
+        styleButtons[key].style.background = "#fff";
+        styleButtons[key].style.color = "#222";
       });
 
+      b.style.background = "#222";
+      b.style.color = "#fff";
+    };
+
+    styles.appendChild(b);
+  });
+
+  /* ACTION ROW */
+  const actions = document.createElement("div");
+
+  Object.assign(actions.style, {
+    display: "flex",
+    alignItems: "center",
+    gap: "7px",
+    width: "100%"
+  });
+
+  const clear = document.createElement("button");
+  clear.textContent = "Clear";
+  clear.type = "button";
+
+  Object.assign(clear.style, {
+    width: "20%",
+    minWidth: "55px",
+    height: "32px",
+    border: "1px solid #ddd",
+    background: "#fff",
+    borderRadius: "16px",
+    fontSize: "11px"
+  });
+
+  const start = document.createElement("button");
+  start.textContent = "✨ Start";
+  start.type = "button";
+
+  Object.assign(start.style, {
+    flex: "1",
+    height: "32px",
+    background: "#ff3f91",
+    color: "#fff",
+    border: "0",
+    borderRadius: "17px",
+    fontSize: "12px",
+    fontWeight: "600"
+  });
+
+  const done = document.createElement("button");
+  done.textContent = "✓";
+  done.type = "button";
+
+  Object.assign(done.style, {
+    width: "38px",
+    height: "32px",
+    border: "0",
+    background: "#fff",
+    color: "#111",
+    borderRadius: "8px",
+    fontSize: "22px",
+    fontWeight: "500",
+    flex: "0 0 38px"
+  });
+
+  actions.append(clear, start, done);
+
+  hgPanel.append(row, styles, actions);
+  document.body.appendChild(hgPanel);
+
+  /* BRUSH */
+  brush.onclick = () => {
+    hgErase = false;
+
+    eraser.style.background = "#fff";
+    eraser.style.borderColor = "#ccc";
+  };
+
+  /* ERASER */
+  eraser.onclick = () => {
+    hgErase = true;
+
+    eraser.style.background = "#f1f3f7";
+    eraser.style.borderColor = "#6366f1";
+  };
+
+  /* SIZE */
+  slider.oninput = () => {
+    hgSize = +slider.value;
+    value.textContent = hgSize;
+  };
+
+  /* CLEAR */
+  clear.onclick = () => {
+    hgStrokes = [];
+    drawGuides();
+  };
+
+  /* START */
+  start.onclick = process;
+
+  /* DONE */
+  done.onclick = close;
+
+  /* DRAW CANVAS */
+  hgCanvas = document.createElement("canvas");
+  hgCanvas.id = "hairGrowCanvas";
+
+  Object.assign(hgCanvas.style, {
+    position: "absolute",
+    inset: "0",
+    width: "100%",
+    height: "100%",
+    zIndex: "50",
+    touchAction: "none"
+  });
+
+  const box = document.querySelector(".previewBox");
+
+  box.style.position = "relative";
+  box.appendChild(hgCanvas);
+
+  hgCtx = hgCanvas.getContext("2d");
+
+  resize();
+
+  /* DRAW */
+  hgCanvas.onpointerdown = e => {
+    e.preventDefault();
+
+    hgDrawing = true;
+    hgCanvas.setPointerCapture(e.pointerId);
+
+    const p = point(e);
+
+    if (hgErase) {
+      eraseAt(p);
+      return;
+    }
+
+    hgStrokes.push({
+      points: [p],
+      size: hgSize,
+      style: hgStyle
+    });
+
+    drawGuides();
+  };
+
+  hgCanvas.onpointermove = e => {
+    if (!hgDrawing || hgErase) return;
+
+    const p = point(e);
+    const s = hgStrokes[hgStrokes.length - 1];
+
+    if (!s) return;
+
+    const last = s.points[s.points.length - 1];
+
+    if (Math.hypot(p.x - last.x, p.y - last.y) > 2) {
+      s.points.push(p);
       drawGuides();
-    };
+    }
+  };
 
-    hgCanvas.onpointermove = e => {
-      if (!hgDrawing || hgErase) return;
+  hgCanvas.onpointerup = () => {
+    hgDrawing = false;
+  };
 
-      const p = point(e);
-      const s = hgStrokes[hgStrokes.length - 1];
-
-      if (!s) return;
-
-      const last = s.points[s.points.length - 1];
-
-      if (Math.hypot(p.x - last.x, p.y - last.y) > 2) {
-        s.points.push(p);
-        drawGuides();
-      }
-    };
-
-    hgCanvas.onpointerup = () => hgDrawing = false;
-    hgCanvas.onpointercancel = () => hgDrawing = false;
+  hgCanvas.onpointercancel = () => {
+    hgDrawing = false;
+  };
   }
 
   function smooth(points) {
