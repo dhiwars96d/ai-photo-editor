@@ -148,8 +148,17 @@
 
   function makePanel() {
     if (hgPanel) {
-      hgPanel.style.display = "flex";
-      return;
+  hgPanel.style.display = "flex";
+
+  hgPanel.style.setProperty("position", "fixed", "important");
+  hgPanel.style.setProperty("left", "10px", "important");
+  hgPanel.style.setProperty("right", "10px", "important");
+  hgPanel.style.setProperty("bottom", "20px", "important");
+  hgPanel.style.setProperty("border-radius", "18px", "important");
+  hgPanel.style.setProperty("max-height", "35vh", "important");
+  hgPanel.style.setProperty("overflow-y", "auto", "important");
+
+  return;
     }
 
     hgPanel = document.createElement("div");
