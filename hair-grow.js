@@ -156,19 +156,22 @@
     hgPanel.id = "hairGrowPanel";
 
     Object.assign(hgPanel.style, {
-      position: "fixed",
-      left: "0",
-      right: "0",
-      bottom: "0",
-      zIndex: "99999",
-      background: "#fff",
-      padding: "12px",
-      borderRadius: "20px 20px 0 0",
-      boxShadow: "0 -4px 20px rgba(0,0,0,.18)",
-      display: "flex",
-      flexDirection: "column",
-      gap: "10px"
-    });
+  position: "fixed",
+  left: "10px",
+  right: "10px",
+  bottom: "calc(16px + env(safe-area-inset-bottom))",
+  zIndex: "99999",
+  background: "#fff",
+  padding: "10px",
+  borderRadius: "18px",
+  boxShadow: "0 4px 24px rgba(0,0,0,.20)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+  boxSizing: "border-box",
+  maxHeight: "35vh",
+  overflowY: "auto"
+});
 
     const row = document.createElement("div");
     Object.assign(row.style, {
