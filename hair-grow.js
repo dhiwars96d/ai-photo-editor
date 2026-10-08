@@ -173,7 +173,13 @@
   overflowY: "auto"
 });
 
-    const row = document.createElement("div");
+     hgPanel.style.setProperty("position", "fixed", "important");
+hgPanel.style.setProperty("left", "10px", "important");
+hgPanel.style.setProperty("right", "10px", "important");
+hgPanel.style.setProperty("bottom", "20px", "important");
+hgPanel.style.setProperty("border-radius", "18px", "important");
+   
+     const row = document.createElement("div");
     Object.assign(row.style, {
       display: "flex",
       alignItems: "center",
