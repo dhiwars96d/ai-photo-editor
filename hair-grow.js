@@ -602,4 +602,4 @@
   }
 
   window.addEventListener("resize", resize);
-
+})();
