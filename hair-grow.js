@@ -494,47 +494,116 @@
     };
   }
 
-  function strand(ctx, pts, color, width, alpha, seed) {
-    if (pts.length < 2) return;
+  function strand(ctx, pts, color, width, alpha) {
+  if (!pts || pts.length < 2) return;
 
-    ctx.save();
-    ctx.fillStyle =
-      `rgba(${color.r},${color.g},${color.b},${alpha})`;
+  ctx.save();
+  ctx.strokeStyle =
+    `rgba(${color.r},${color.g},${color.b},${alpha})`;
+  ctx.lineCap = "butt";
+  ctx.lineJoin = "round";
 
-    for (let i = 0; i < pts.length - 1; i++) {
-      const a = pts[i];
-      const b = pts[i + 1];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
 
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const len = Math.hypot(dx, dy) || 1;
+    const t = i / Math.max(1, pts.length - 2);
 
-      const nx = -dy / len;
-      const ny = dx / len;
+    /* Strong taper = sharp natural end */
+    const taper = Math.pow(1 - t, 1.65);
+    const w = Math.max(0.08, width * taper);
 
-      const t = i / (pts.length - 1);
-      const w = Math.max(.12, width * (1 - t) * (1 - t));
+    ctx.lineWidth = w;
 
-      const wobble =
-        Math.sin(i * .75 + seed) *
-        width * .35;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
 
-      const ax = a.x + nx * wobble;
-      const ay = a.y + ny * wobble;
-      const bx = b.x + nx * wobble;
-      const by = b.y + ny * wobble;
+  ctx.restore();
+}
 
-      ctx.beginPath();
-      ctx.moveTo(ax + nx * w, ay + ny * w);
-      ctx.lineTo(bx + nx * w * .25, by + ny * w * .25);
-      ctx.lineTo(bx - nx * w * .25, by - ny * w * .25);
-      ctx.lineTo(ax - nx * w, ay - ny * w);
-      ctx.closePath();
-      ctx.fill();
+function stylePoints(basePts, style, k, total, base) {
+  const phase = (k / Math.max(1, total)) * Math.PI * 2;
+
+  return basePts.map((p, i) => {
+    const t = i / Math.max(1, basePts.length - 1);
+
+    const prev =
+      i > 0 ? basePts[i - 1] : basePts[i];
+
+    const next =
+      i < basePts.length - 1
+        ? basePts[i + 1]
+        : basePts[i];
+
+    const dx = next.x - prev.x;
+    const dy = next.y - prev.y;
+    const len = Math.hypot(dx, dy) || 1;
+
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    let offset = 0;
+
+    /* =========================
+       STRAIGHT
+       Mostly follows the guide.
+       Very small natural movement.
+    ========================= */
+    if (style === "straight") {
+
+      offset =
+        Math.sin(t * Math.PI * 1.4 + phase) *
+        base *
+        0.30;
+
     }
 
-    ctx.restore();
-  }
+    /* =========================
+       BANGS
+       Wider curved fringe.
+       Curves strongly instead of
+       following a straight line.
+    ========================= */
+    else if (style === "bangs") {
+
+      offset =
+        Math.sin(t * Math.PI + phase * 0.35) *
+        base *
+        (2.8 + t * 1.5);
+
+    }
+
+    /* =========================
+       CURLS
+       Repeated curl/wave pattern.
+    ========================= */
+    else if (style === "curls") {
+
+      offset =
+        Math.sin(
+          t * Math.PI * 3.4 +
+          phase
+        ) *
+        base *
+        (1.1 + t * 3.0);
+
+    }
+
+    /* Tiny strand-to-strand variation */
+    const variation =
+      Math.sin(k * 7.13 + t * 4.7) *
+      base *
+      0.18;
+
+    return {
+      x: p.x + nx * (offset + variation),
+      y: p.y + ny * (offset + variation)
+    };
+  });
+}
 
   async function process() {
     if (!selectedFile) {
@@ -641,39 +710,37 @@ for (let yy = -searchRadius; yy <= searchRadius; yy++) {
         );
 
         const count =
-          s.style === "curls" ? 14 :
-          s.style === "bangs" ? 12 : 10;
+  s.style === "curls" ? 24 :
+  s.style === "bangs" ? 20 : 18;
 
-        for (let k = 0; k < count; k++) {
-          const p = pts.map((p, i) => {
-            const t = i / Math.max(1, pts.length - 1);
-            const bend =
-              Math.sin(t * Math.PI * 1.7 + k) *
-              base *
-              (s.style === "curls" ? 2.2 :
-               s.style === "bangs" ? 1.1 : .45);
+for (let k = 0; k < count; k++) {
 
-            const dx = i ?
-              pts[i].x - pts[i - 1].x : pts[1].x - pts[0].x;
-            const dy = i ?
-              pts[i].y - pts[i - 1].y : pts[1].y - pts[0].y;
+  const p = stylePoints(
+    pts,
+    s.style,
+    k,
+    count,
+    base
+  );
 
-            const len = Math.hypot(dx, dy) || 1;
+  /* Natural variation in strand thickness */
+  const widthVariation =
+    0.55 +
+    0.35 *
+    ((Math.sin(k * 9.17) + 1) / 2);
 
-            return {
-              x: p.x - dy / len * bend,
-              y: p.y + dx / len * bend
-            };
-          });
+  /* Front strands slightly stronger */
+  const alpha =
+    k < 5 ? 0.58 : 0.28 + ((k % 4) * 0.035);
 
-          strand(
-            ctx,
-            p,
-            color,
-            base * (k < 3 ? 1.15 : .65),
-            k < 3 ? .72 : .38,
-            k * 1.71
-          );
+  strand(
+    ctx,
+    p,
+    color,
+    base * widthVariation,
+    alpha
+  );
+}
         }
 
         made++;
