@@ -784,7 +784,8 @@ for (let k = 0; k < count; k++) {
   }
 
   /* HAIR GROW BUTTON */
-console.log("HAIR GROW JS LOADED");
+document.body.dataset.hairGrowLoaded = "yes";
+alert("Hair Grow JS loaded");
 const growButton = document.getElementById("hairGrow");
 
 if (growButton) growButton.textContent = "Grow TEST";
