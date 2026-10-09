@@ -784,29 +784,32 @@ for (let k = 0; k < count; k++) {
   }
 
   /* HAIR GROW BUTTON */
-  if (typeof hairGrow !== "undefined" && hairGrow) {
-    hairGrow.addEventListener("click", function () {
-      if (!selectedFile) {
-        showStatus("Please select a photo first.");
-        return;
-      }
+const growButton = document.getElementById("hairGrow");
 
-      if (hairMenu) hairMenu.style.display = "none";
-      if (hairColorPanel) hairColorPanel.style.display = "none";
+if (growButton) {
+  growButton.addEventListener("click", function () {
+    const file = window.__selectedPhotoFile;
 
-      hgStrokes = [];
-      hgErase = false;
+    if (!file) {
+      showStatus("Please select a photo first.");
+      return;
+    }
 
-      makePanel();
+    if (hairMenu) hairMenu.style.display = "none";
+    if (hairColorPanel) hairColorPanel.style.display = "none";
 
-      hgCanvas.style.display = "block";
-      hgPanel.style.display = "flex";
+    hgStrokes = [];
+    hgErase = false;
 
-      resize();
+    makePanel();
 
-      showStatus("Hair se bahar ki taraf stroke draw karein.");
-    });
-  }
+    if (hgCanvas) hgCanvas.style.display = "block";
+    if (hgPanel) hgPanel.style.display = "flex";
+
+    resize();
+    showStatus("Hair se bahar ki taraf stroke draw karein.");
+  });
+}
 
   window.addEventListener("resize", resize);
 })();
