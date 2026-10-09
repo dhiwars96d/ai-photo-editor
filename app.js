@@ -223,12 +223,13 @@ if (fileInput) {
 }
 
 
+
 /* =========================================================
-   ENHANCE AI
+   ENHANCE AI - REAL-ESRGAN PYTORCH
 ========================================================= */
 
 const HOCKMAN_SPACE =
-  "Hockman/real-esrgan-upscaler";
+  "Nick088/Real-ESRGAN_Pytorch";
 
 let hockmanAppPromise = null;
 
@@ -237,95 +238,65 @@ async function getHockmanApp() {
 
   if (!hockmanAppPromise) {
 
-    hockmanAppPromise =
-      (async function () {
+    hockmanAppPromise = (async function () {
 
-        showStatus(
-          "Loading Enhance AI..."
-        );
+      showStatus("Connecting to Enhance AI...");
 
+      const gradio = await import(
+        "https://cdn.jsdelivr.net/npm/@gradio/client@2.7.0/+esm"
+      );
 
-        const gradio =
-          await import(
-            "https://cdn.jsdelivr.net/npm/@gradio/client@2.7.0/+esm"
-          );
+      Client = gradio.Client;
+      handle_file = gradio.handle_file;
 
+      return await Client.connect(
+        HOCKMAN_SPACE,
+        {
+          events: ["data", "status"],
 
-        Client =
-          gradio.Client;
+          status_callback: function (s) {
 
-        handle_file =
-          gradio.handle_file;
+            if (!s) return;
 
+            if (
+              s.status === "sleeping"
+            ) {
+              showStatus("Waking Enhance AI...");
+            }
 
-        return await Client.connect(
-          HOCKMAN_SPACE,
-          {
-            events: [
-              "data",
-              "status"
-            ],
+            else if (
+              s.status === "building"
+            ) {
+              showStatus("Enhance AI is starting...");
+            }
 
-            status_callback: function (s) {
+            else if (
+              s.status === "running"
+            ) {
+              showStatus("Enhance AI is ready...");
+            }
 
-              if (!s) return;
-
-
-              if (s.status === "sleeping") {
-
-                showStatus(
-                  "Waking Enhance AI..."
-                );
-
-              }
-
-              else if (
-                s.status === "building"
-              ) {
-
-                showStatus(
-                  "Enhance AI is starting..."
-                );
-
-              }
-
-              else if (
-                s.status === "running"
-              ) {
-
-                showStatus(
-                  "Enhance AI is ready..."
-                );
-
-              }
-
-              else if (
-                s.status === "error" ||
-                s.status === "space_error"
-              ) {
-
-                showStatus(
-                  "Enhance AI Space error. Please try again."
-                );
-
-              }
-
+            else if (
+              s.status === "error" ||
+              s.status === "space_error"
+            ) {
+              showStatus(
+                "Enhance AI Space error. Please try again."
+              );
             }
 
           }
-        );
+        }
+      );
 
-      })()
-      .catch(function (error) {
+    })().catch(function (error) {
 
-        hockmanAppPromise = null;
+      hockmanAppPromise = null;
+      throw error;
 
-        throw error;
-
-      });
+    });
 
   }
-
 
   return await hockmanAppPromise;
 
@@ -335,185 +306,112 @@ async function getHockmanApp() {
 async function runHockmanX2(file) {
 
   if (!file) {
-
-    throw new Error(
-      "No photo selected"
-    );
-
+    throw new Error("No photo selected");
   }
 
+  showStatus("Connecting to Enhance AI...");
 
-  showStatus(
-    "Connecting to Enhance AI..."
+  const app = await getHockmanApp();
+
+  showStatus("Uploading photo to Enhance AI...");
+
+  const image = await handle_file(file);
+
+  showStatus("Enhancing photo at 4×...");
+
+  const job = app.submit(
+    "/predict",
+    {
+      img: image,
+      size_modifier: "4"
+    }
   );
-
-
-  const app =
-    await getHockmanApp();
-
-
-  showStatus(
-    "Uploading photo to Enhance AI..."
-  );
-
-
-  const image =
-    handle_file(file);
-
-
-  showStatus(
-    "Enhancing photo..."
-  );
-
-
-  const job =
-    app.submit(
-      "/process_and_get_output",
-      {
-        img: image
-      }
-    );
-
 
   let finalData = null;
 
-
-  for await (
-    const message of job
-  ) {
+  for await (const message of job) {
 
     if (message.type === "status") {
 
-      const s =
-        message.status || {};
-
+      const s = message.status || {};
 
       if (s.stage === "pending") {
-
-        const position =
-          Number.isFinite(
-            s.position
-          )
-            ? ` (${s.position} in queue)`
-            : "";
-
-
-        showStatus(
-          "Enhance AI is waiting" +
-          position +
-          "..."
-        );
-
+        showStatus("Enhance AI is waiting...");
       }
 
-      else if (
-        s.stage === "generating"
-      ) {
-
-        showStatus(
-          "AI is enhancing your photo..."
-        );
-
+      else if (s.stage === "generating") {
+        showStatus("AI is enhancing your photo...");
       }
 
-      else if (
-        s.stage === "error"
-      ) {
-
+      else if (s.stage === "error") {
         throw new Error(
-          s.message ||
-          "Enhance AI processing failed"
+          s.message || "Enhance AI processing failed"
         );
-
       }
 
     }
-
 
     if (
       message.type === "data" &&
       message.data
     ) {
-
-      finalData =
-        message.data;
-
+      finalData = message.data;
     }
 
   }
 
-
-  if (
-    !finalData ||
-    !finalData[0]
-  ) {
-
+  if (!finalData || !finalData[0]) {
     throw new Error(
       "No image returned from Enhance AI"
     );
-
   }
 
-
-  const output =
-    finalData[0];
-
+  const output = finalData[0];
 
   let outputURL =
     output?.url ||
     output?.path ||
     output;
 
-
-  if (
-    typeof outputURL !== "string"
-  ) {
-
+  if (typeof outputURL !== "string") {
     throw new Error(
       "Enhance AI returned an invalid image result"
     );
-
   }
 
-
-  if (
-    outputURL.startsWith("/")
-  ) {
-
+  if (outputURL.startsWith("/")) {
     outputURL =
-      "https://hockman-real-esrgan-upscaler.hf.space" +
+      "https://nick088-real-esrgan-pytorch.hf.space" +
       outputURL;
-
   }
 
-
-  if (
-    outputURL.startsWith("http://")
-  ) {
-
+  if (outputURL.startsWith("http://")) {
     outputURL =
-      "https://" +
-      outputURL.slice(7);
-
+      "https://" + outputURL.slice(7);
   }
 
+  showStatus("Downloading enhanced photo...");
 
-  const response =
-    await fetch(outputURL);
-
+  const response = await fetch(outputURL);
 
   if (!response.ok) {
-
     throw new Error(
       "Could not download Enhance AI result"
     );
-
   }
 
+  const blob = await response.blob();
 
-  return await response.blob();
+  if (!blob || blob.size === 0) {
+    throw new Error(
+      "Enhance AI returned an empty image"
+    );
+  }
+
+  return blob;
 
 }
+
 
 
 /* =========================================================
