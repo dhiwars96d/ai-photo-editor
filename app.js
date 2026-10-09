@@ -303,6 +303,7 @@ async function getHockmanApp() {
 }
 
 
+
 async function runHockmanX2(file) {
 
   if (!file) {
@@ -319,54 +320,20 @@ async function runHockmanX2(file) {
 
   showStatus("Enhancing photo at 4×...");
 
-  const job = app.submit(
-    "/predict",
-    {
-      img: image,
-      size_modifier: "4"
-    }
-  );
+  const result = await app.predict("/predict", {
+    img: image,
+    size_modifier: "4"
+  });
 
-  let finalData = null;
+  console.log("Real-ESRGAN API result:", result);
 
-  for await (const message of job) {
+  const output = result?.data?.[0];
 
-    if (message.type === "status") {
-
-      const s = message.status || {};
-
-      if (s.stage === "pending") {
-        showStatus("Enhance AI is waiting...");
-      }
-
-      else if (s.stage === "generating") {
-        showStatus("AI is enhancing your photo...");
-      }
-
-      else if (s.stage === "error") {
-        throw new Error(
-          s.message || "Enhance AI processing failed"
-        );
-      }
-
-    }
-
-    if (
-      message.type === "data" &&
-      message.data
-    ) {
-      finalData = message.data;
-    }
-
-  }
-
-  if (!finalData || !finalData[0]) {
+  if (!output) {
     throw new Error(
-      "No image returned from Enhance AI"
+      "API returned no image. Check the console result."
     );
   }
-
-  const output = finalData[0];
 
   let outputURL =
     output?.url ||
@@ -374,9 +341,7 @@ async function runHockmanX2(file) {
     output;
 
   if (typeof outputURL !== "string") {
-    throw new Error(
-      "Enhance AI returned an invalid image result"
-    );
+    throw new Error("Invalid image result from Enhance AI");
   }
 
   if (outputURL.startsWith("/")) {
@@ -386,8 +351,7 @@ async function runHockmanX2(file) {
   }
 
   if (outputURL.startsWith("http://")) {
-    outputURL =
-      "https://" + outputURL.slice(7);
+    outputURL = "https://" + outputURL.slice(7);
   }
 
   showStatus("Downloading enhanced photo...");
@@ -395,22 +359,18 @@ async function runHockmanX2(file) {
   const response = await fetch(outputURL);
 
   if (!response.ok) {
-    throw new Error(
-      "Could not download Enhance AI result"
-    );
+    throw new Error("Could not download Enhance AI result");
   }
 
   const blob = await response.blob();
 
   if (!blob || blob.size === 0) {
-    throw new Error(
-      "Enhance AI returned an empty image"
-    );
+    throw new Error("Downloaded image is empty");
   }
 
   return blob;
-
 }
+
 
 
 
