@@ -733,18 +733,19 @@ for (let k = 0; k < count; k++) {
   const alpha =
     k < 5 ? 0.58 : 0.28 + ((k % 4) * 0.035);
 
-  strand(
-    ctx,
-    p,
-    color,
-    base * widthVariation,
-    alpha
-  );
-}
+          strand(
+          ctx,
+          p,
+          color,
+          base * widthVariation,
+          alpha
+        );
         }
 
         made++;
       }
+
+      if (!made) {
 
       if (!made) {
         showStatus(
