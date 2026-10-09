@@ -320,7 +320,27 @@ async function runHockmanX2(file) {
 
   showStatus("Enhancing photo at 4×...");
 
-  const result = await app.predict("/predict", {
+  let result;
+
+try {
+  result = await app.predict("/predict", {
+    img: image,
+    size_modifier: "4"
+  });
+
+  console.log("Real-ESRGAN API result:", result);
+
+} catch (error) {
+  console.error("REAL-ESRGAN PREDICT ERROR:", error);
+  console.error("Error name:", error?.name);
+  console.error("Error message:", error?.message);
+  console.error("Error stack:", error?.stack);
+
+  throw new Error(
+    "Enhance API failed: " +
+    (error?.message || String(error))
+  );
+}
     img: image,
     size_modifier: "4"
   });
