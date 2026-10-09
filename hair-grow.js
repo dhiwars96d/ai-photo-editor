@@ -787,6 +787,8 @@ for (let k = 0; k < count; k++) {
 console.log("HAIR GROW JS LOADED");
 const growButton = document.getElementById("hairGrow");
 
+if (growButton) growButton.textContent = "Grow TEST";
+
 if (growButton) {
   growButton.addEventListener("click", function () {
     const file = window.__selectedPhotoFile;
