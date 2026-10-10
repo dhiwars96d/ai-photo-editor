@@ -338,12 +338,17 @@ try {
   console.error("Error stack:", error?.stack);
 
   
-showStatus(
-  "Enhance API error: " +
-  (error?.message || String(error))
-);
 
+const details = [
+  "Name: " + (error?.name || "unknown"),
+  "Message: " + (error?.message || String(error)),
+  "Cause: " + (error?.cause?.message || "none"),
+  "Stack: " + (error?.stack || "unavailable")
+].join(" | ");
+
+showStatus("Enhance API error: " + details);
 throw error;
+
 
 }
 
