@@ -324,10 +324,12 @@ async function runHockmanX2(file) {
 
 try {
    showStatus("Enhance AI se result ka intezar hai...");
-  result = await app.predict("/predict", {
-    img: image,
-    size_modifier: "4"
-  });
+  
+result = await app.predict("/predict", [
+  image,
+  4
+]);
+
 
   console.log("Real-ESRGAN API result:", result);
 
