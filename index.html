@@ -100,6 +100,12 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
     <div class="toolName">Retouch</div>
   </div>
 
+  <button class="tool adjustmentsToggle" id="adjustmentsToggle" type="button" aria-label="Adjustments">
+    <span class="toolIcon adjustmentsToolIcon" aria-hidden="true">☷</span>
+    <div class="toolName">Adjustments</div>
+    <span class="adjustmentsChevron" id="adjustmentsChevron" aria-hidden="true">›</span>
+  </button>
+
 </div>
 
 <!-- Smooth Skin -->
@@ -160,17 +166,7 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
 
 </div>
 
-     <!-- Adjustments -->
-<button
-  class="adjustmentsToggle"
-  id="adjustmentsToggle"
-  type="button"
->
-  <span>⚙ Adjustments</span>
-  <span class="adjustmentsChevron" id="adjustmentsChevron">›</span>
-</button>
-
-<div class="adjustmentsPanel" id="adjustmentsPanel">
+     <div class="adjustmentsPanel" id="adjustmentsPanel">
   <iframe
     class="adjustmentsFrame"
     id="adjustmentsFrame"
