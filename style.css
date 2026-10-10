@@ -126,3 +126,55 @@ h1{font-size:34px;line-height:1.12;margin:0 0 12px;letter-spacing:-1px}.subtitle
   margin:0;
   accent-color:#6366f1;
 }
+
+
+/* =========================================================
+   MOBILE EDITOR LAYOUT — full photo + fixed bottom toolbar
+   Existing JavaScript and image-processing functions remain unchanged.
+========================================================= */
+:root{--accent:#f42f91;--accent-soft:#fff0f7;--accent-border:#ff8bc2}
+body{background:#fff}
+.tool.active,.tool:active{border-color:var(--accent);background:var(--accent-soft)}
+.tool.active .toolName{color:var(--accent)}
+#smoothSlider,#hairIntensitySlider{accent-color:var(--accent)}
+.adjustmentsToggle.open{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+/* Toolbar is docked at the bottom; keep room for phone safe-area. */
+.tools{grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
+.tool{border:1px solid transparent;border-radius:13px;padding:8px 2px;background:#fff;min-height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.toolIcon{width:29px;height:29px;margin:0 auto 2px}
+.tool[data-tool="hair"] .toolIcon{width:33px;height:33px;margin:0 auto 0}
+.toolName{font-size:10px;white-space:normal;line-height:1.15;text-align:center}
+.adjustmentsToggle.tool{width:100%;margin:0;border-radius:13px;padding:8px 2px;display:flex;gap:3px;justify-content:center}
+.adjustmentsToolIcon{display:flex;align-items:center;justify-content:center;font-size:28px;line-height:29px;color:#52525b;font-style:normal}
+.adjustmentsToggle.open .adjustmentsToolIcon{color:var(--accent)}
+.adjustmentsToggle .adjustmentsChevron{display:none}
+
+/* When a photo is loaded, switch to the immersive editor view. */
+.app:has(#preview[src]){height:100vh;height:100dvh;max-width:none;margin:0;padding:0;overflow:hidden;background:#fff}
+.app:has(#preview[src]) header,
+.app:has(#preview[src]) h1,
+.app:has(#preview[src]) .subtitle,
+.app:has(#preview[src]) .sectionTitle{display:none}
+.app:has(#preview[src]) .photoCard{position:fixed;inset:0 0 calc(82px + env(safe-area-inset-bottom)) 0;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#fff;display:flex;min-height:0;z-index:1}
+.app:has(#preview[src]) .previewBox{width:100%;height:100%;min-height:0;border:2px solid var(--accent-border);border-radius:0;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.app:has(#preview[src]) #preview{width:100%;height:100%;max-height:none;object-fit:contain;border-radius:0}
+.app:has(#preview[src]) .addButton{display:none}
+.app:has(#preview[src]) .tools{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:7px 7px calc(7px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #f4d7e5;box-shadow:0 -5px 20px rgba(30,20,30,.06);}
+.app:has(#preview[src]) .tool{min-height:62px}
+.app:has(#preview[src]) .smoothControl,
+.app:has(#preview[src]) .hairMenu,
+.app:has(#preview[src]) .hairColorPanel{position:fixed;left:10px;right:10px;bottom:calc(83px + env(safe-area-inset-bottom));width:auto;max-height:45dvh;overflow:auto;z-index:30;margin:0;border:1px solid #f4c5dd;border-radius:20px;box-shadow:0 10px 35px rgba(0,0,0,.15);background:#fff}
+.app:has(#preview[src]) .adjustmentsPanel{position:fixed;left:10px;right:10px;bottom:calc(83px + env(safe-area-inset-bottom));z-index:30;width:auto;max-height:58dvh;overflow:hidden;margin:0;border:1px solid #f4c5dd;border-radius:20px;background:#fff;box-shadow:0 10px 35px rgba(0,0,0,.15)}
+.app:has(#preview[src]) .adjustmentsFrame{height:55dvh;max-height:55dvh;border-radius:20px}
+.app:has(#preview[src]) .status{position:fixed;left:12px;right:12px;bottom:calc(158px + env(safe-area-inset-bottom));z-index:40;margin:0;background:#fff0f7;color:#b81665;border:1px solid #ffd0e6;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.app:has(#preview[src]) .downloadButton{position:fixed;left:16px;right:16px;bottom:calc(91px + env(safe-area-inset-bottom));z-index:25;width:auto;background:var(--accent);border-radius:15px;box-shadow:0 5px 18px rgba(244,47,145,.25)}
+.app:has(#preview[src]) .smallNote{display:none}
+
+/* Empty state remains scrollable and keeps Add Photo accessible. */
+@media(max-width:420px){
+  .app{padding:18px 12px 110px}
+  .tools{gap:1px}
+  .toolName{font-size:9.5px}
+  .app:has(#preview[src]) .tool{padding-left:1px;padding-right:1px}
+}
