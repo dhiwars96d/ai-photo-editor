@@ -336,10 +336,14 @@ try {
   console.error("Error message:", error?.message);
   console.error("Error stack:", error?.stack);
 
-  throw new Error(
-    "Enhance API failed: " +
-    (error?.message || String(error))
-  );
+  
+showStatus(
+  "Enhance API error: " +
+  (error?.message || String(error))
+);
+
+throw error;
+
 }
 
   const output = result?.data?.[0];
