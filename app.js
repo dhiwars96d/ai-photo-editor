@@ -323,6 +323,7 @@ async function runHockmanX2(file) {
   let result;
 
 try {
+   showStatus("Enhance AI se result ka intezar hai...");
   result = await app.predict("/predict", {
     img: image,
     size_modifier: "4"
