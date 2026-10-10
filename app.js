@@ -341,11 +341,6 @@ try {
     (error?.message || String(error))
   );
 }
-    img: image,
-    size_modifier: "4"
-  });
-
-  console.log("Real-ESRGAN API result:", result);
 
   const output = result?.data?.[0];
 
