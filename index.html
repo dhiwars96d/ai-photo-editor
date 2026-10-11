@@ -27,7 +27,7 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
       <div>Select a photo to get started</div>
     </div>
     <img id="preview" alt="Photo Preview">
-    <button class="changePhotoButton" id="changePhoto" type="button" aria-label="Choose another photo">‹  Change Photo</button>
+    <button class="changePhotoButton" id="changePhoto" type="button" aria-label="Change photo">‹ Change Photo</button>
   </div>
 
   <input type="file" id="fileInput" accept="image/*">
@@ -37,45 +37,7 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
   </button>
 </div>
 
-<script>
-(function () {
 
-  const btn = document.getElementById("addPhoto");
-  const input = document.getElementById("fileInput");
-  const preview = document.getElementById("preview");
-  const placeholder = document.getElementById("placeholder");
-
-  if (!btn || !input) return;
-
-  btn.onclick = function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    input.click();
-  };
-
-  input.onchange = function () {
-
-    const file = input.files && input.files[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) return;
-
-    window.__selectedPhotoFile = file;
-
-    if (preview) {
-      preview.src = URL.createObjectURL(file);
-      preview.style.display = "block";
-    }
-
-    if (placeholder) {
-      placeholder.style.display = "none";
-    }
-
-  };
-
-})();
-</script>
      
 <div class="sectionTitle">AI Tools</div>
 
@@ -100,6 +62,12 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
     <img class="toolIcon" src="retouch-icon.png" alt="Retouch">
     <div class="toolName">Retouch</div>
   </div>
+
+  <button class="adjustmentsToggle tool" id="adjustmentsToggle" type="button" aria-label="Adjustments">
+    <span class="adjustmentsToolIcon" aria-hidden="true">☷</span>
+    <span class="toolName">Adjustments</span>
+    <span class="adjustmentsChevron" id="adjustmentsChevron">›</span>
+  </button>
 
 </div>
 
@@ -161,16 +129,7 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
 
 </div>
 
-     <!-- Adjustments -->
-<button
-  class="adjustmentsToggle"
-  id="adjustmentsToggle"
-  type="button"
->
-  <span>⚙ Adjustments</span>
-  <span class="adjustmentsChevron" id="adjustmentsChevron">›</span>
-</button>
-
+     <!-- Adjustments panel is controlled by the toolbar button above. -->
 <div class="adjustmentsPanel" id="adjustmentsPanel">
   <iframe
     class="adjustmentsFrame"
