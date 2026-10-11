@@ -179,34 +179,34 @@ body{background:#fff}
   .app:has(#preview[src]) .tool{padding-left:1px;padding-right:1px}
 }
 
-
-/* CONSISTENT WHITE + PINK THEME — initial and editing screens */
-:root{--accent:#f42f91;--accent-soft:#fff0f7;--accent-border:#f3a0c7;--ink:#29212a}
-body{background:#fff;color:var(--ink)}
-.app:not(:has(#preview[src])){max-width:760px;margin:0 auto;padding:24px 16px 112px;background:#fff}
-.logo{color:var(--ink)}
-.badge{background:var(--accent-soft);color:#bd176b}
-.previewBox{background:#fff;border:2px solid var(--accent-border);border-radius:20px}
-.addButton,.downloadButton{background:var(--accent);color:#fff;border:1px solid var(--accent-border)}
-.addButton{box-shadow:0 5px 16px rgba(244,47,145,.14)}
-.tool,.adjustmentsToggle{background:#fff;border-color:#f1d3e2;color:var(--ink)}
-.tool.active,.tool:active,.adjustmentsToggle.open{background:var(--accent-soft);border-color:var(--accent);color:#bd176b}
-.tool.active .toolName,.adjustmentsToggle.open .adjustmentsToolIcon{color:#bd176b}
-.smoothControl,.hairMenu,.hairColorPanel,.adjustmentsPanel{border-color:#f3c3dc}
-#smoothValue,#hairIntensityValue{background:var(--accent-soft);color:#bd176b}
-.hairColors{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.hairColorOption{min-height:42px;border-color:#f0c8dc;color:var(--ink);background:#fff}
-.hairColorOption:active,.hairColorOption.selected{background:var(--accent-soft);border-color:var(--accent);color:#bd176b}
-#smoothSlider,#hairIntensitySlider{accent-color:var(--accent);min-height:28px}
-.status{background:var(--accent-soft);color:#bd176b;border:1px solid #ffd0e6}
-.status.loading::before{content:"";display:inline-block;width:13px;height:13px;margin-right:9px;vertical-align:-2px;border:2px solid #f7b6d7;border-top-color:var(--accent);border-radius:50%;animation:uiSpin .75s linear infinite}
-@keyframes uiSpin{to{transform:rotate(360deg)}}
-.changePhotoButton{display:none;position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;z-index:45;border:1px solid var(--accent-border);border-radius:999px;background:rgba(255,255,255,.96);color:#bd176b;padding:9px 13px;font-size:13px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.08)}
+/* Fix pack: consistent white/pink theme and reliable mobile editor controls */
+:root{--accent:#f42f91;--accent-soft:#fff0f7;--accent-border:#f0a5cb}
+body{background:#fff;color:#27212a}
+.badge{background:#fff0f7;color:#b81665}
+.addButton{background:var(--accent);color:#fff}
+.previewBox{border:1.5px solid var(--accent-border);background:#fff}
+.tool.active,.tool:active{border-color:var(--accent);background:var(--accent-soft)}
+.tool.active .toolName{color:var(--accent)}
+.adjustmentsToggle.tool{border:1px solid #f0d4e2;background:#fff;color:#27212a;min-width:0;width:auto;margin:0;position:relative}
+.adjustmentsToggle.tool.active,.adjustmentsToggle.tool.open,.adjustmentsToggle.tool:active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.adjustmentsToggle.tool .adjustmentsToolIcon{font-size:24px;line-height:29px;color:inherit}
+.adjustmentsToggle.tool .adjustmentsChevron{display:none}
+.changePhotoButton{display:none;position:absolute;z-index:5;top:9px;left:9px;border:1px solid var(--accent-border);border-radius:22px;background:rgba(255,255,255,.96);color:#b81665;padding:8px 12px;font-size:12px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.08);cursor:pointer}
 .app:has(#preview[src]) .changePhotoButton{display:block}
-.app:has(#preview[src]) .smoothControl,.app:has(#preview[src]) .hairMenu,.app:has(#preview[src]) .hairColorPanel{max-height:calc(55dvh - 24px);padding-bottom:max(16px,env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
-.app:has(#preview[src]) .hairColors{grid-template-columns:repeat(2,minmax(0,1fr))}
-.app:has(#preview[src]) .hairColorOption{min-height:42px;font-size:13px}
-.app:has(#preview[src]) .smoothControl{padding-bottom:20px}
-.app:has(#preview[src]) .status{bottom:calc(160px + env(safe-area-inset-bottom));min-height:42px;display:flex;align-items:center;justify-content:center;line-height:1.35}
-.app:has(#preview[src]) .downloadButton{bottom:calc(88px + env(safe-area-inset-bottom));z-index:35}
-@media(max-width:420px){.app:not(:has(#preview[src])){padding:20px 14px 112px}h1{font-size:30px}.subtitle{margin-bottom:18px}}
+.app:has(#preview[src]) .previewBox{position:relative}
+.hairColors{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.hairColorOption{border-color:#f0d4e2;min-height:42px}
+.hairColorOption:focus,.hairColorOption:active{border-color:var(--accent);background:var(--accent-soft);color:#b81665}
+.smoothControl,.hairMenu,.hairColorPanel{padding:16px;max-height:48dvh;overflow-y:auto;overscroll-behavior:contain}
+#smoothSlider,#hairIntensitySlider{display:block;min-height:28px;padding:0 2px;touch-action:pan-y}
+.status{white-space:normal}
+@media(max-width:520px){
+  .app:has(#preview[src]) .tools{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;padding:7px 5px calc(8px + env(safe-area-inset-bottom));}
+  .app:has(#preview[src]) .tool{min-height:62px;padding:7px 1px;}
+  .app:has(#preview[src]) .toolName{font-size:9px;line-height:1.15;}
+  .app:has(#preview[src]) .toolIcon{width:27px;height:27px;}
+  .app:has(#preview[src]) .tool[data-tool="hair"] .toolIcon{width:30px;height:30px;}
+  .app:has(#preview[src]) .adjustmentsToolIcon{font-size:22px;line-height:27px;}
+  .app:has(#preview[src]) .smoothControl,.app:has(#preview[src]) .hairMenu,.app:has(#preview[src]) .hairColorPanel{bottom:calc(84px + env(safe-area-inset-bottom));max-height:48dvh;}
+  .app:has(#preview[src]) .adjustmentsPanel{bottom:calc(84px + env(safe-area-inset-bottom));max-height:58dvh;}
+}
