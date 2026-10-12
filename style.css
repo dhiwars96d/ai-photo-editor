@@ -187,3 +187,43 @@ body{background:#fff}
 .app:has(#preview[src]) .hairColors{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .app:has(#preview[src]) .hairColorOption{min-height:44px;padding:12px 8px;font-size:13px;white-space:normal}
 .app:has(#preview[src]) .hairColorTitle{margin-bottom:14px}
+
+
+/* FINAL MOBILE UI POLISH: consistent white/pink and non-overlapping controls */
+:root{--accent:#f42f91;--accent-soft:#fff0f7;--accent-border:#f28ab9}
+body{background:#fff;color:#24202a}
+.app{background:#fff}
+header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
+.photoCard{border:1px solid #f3bfd8;background:#fff}
+.previewBox{border:1px solid #f28ab9;background:#fff}
+.addButton{background:#fff;color:#c21868;border:1px solid #e879ac;box-shadow:0 3px 10px rgba(220,39,119,.08)}
+.addButton:active{background:#fce7f3}
+.tool{border:1px solid #f1d2e1;color:#302531}
+.tool.active,.tool:active{border-color:#f42f91;background:#fff0f7}
+.tool.active .toolName{color:#c21868}
+.adjustmentsToggle{border-color:#f1d2e1;background:#fff;color:#302531}
+.adjustmentsToggle.open{border-color:#f42f91;background:#fff0f7;color:#c21868}
+.hairOption,.hairColorOption{border-color:#f1c6dc;color:#302531;background:#fff}
+.hairOption:active,.hairColorOption:active,.hairColorOption.selected{border-color:#f42f91;background:#fff0f7;color:#c21868}
+#smoothSlider,#hairIntensitySlider{accent-color:#f42f91}
+#smoothValue,#hairIntensityValue{background:#fff0f7;color:#c21868}
+/* Change Photo stays fully visible in the upper-left; Download stays upper-right. */
+.app:has(#preview[src]) .previewBox{position:relative}
+.changePhotoButton{display:none}
+.app:has(#preview[src]) .changePhotoButton{display:inline-flex;position:absolute;top:10px;left:10px;right:auto;bottom:auto;z-index:60;align-items:center;justify-content:center;max-width:45%;min-height:38px;padding:9px 12px;margin:0;border:1px solid #e9a0c2;border-radius:999px;background:#fff;color:#b81665;font-size:12px;font-weight:700;line-height:1.2;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.10);cursor:pointer}
+.app:has(#preview[src]) .downloadButton{top:10px;right:10px;left:auto;bottom:auto;z-index:60;max-width:45%;min-height:38px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Panels must sit above the status toast, never behind it. */
+.app:has(#preview[src]) .status{z-index:25;pointer-events:none}
+.app:has(#preview[src]) .smoothControl,
+.app:has(#preview[src]) .hairMenu,
+.app:has(#preview[src]) .hairColorPanel,
+.app:has(#preview[src]) .adjustmentsPanel{z-index:35}
+.app:has(#preview[src]) .hairColorPanel{max-height:min(52dvh,430px);padding:14px;overflow-y:auto;overscroll-behavior:contain}
+.app:has(#preview[src]) .hairColors{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.app:has(#preview[src]) .hairColorOption{width:100%;min-width:0;min-height:44px;padding:10px 6px;font-size:13px;line-height:1.2;overflow-wrap:anywhere}
+@media(max-width:360px){
+ .app:has(#preview[src]) .changePhotoButton{left:7px;top:7px;padding:8px 9px;font-size:11px;max-width:43%}
+ .app:has(#preview[src]) .downloadButton{right:7px;top:7px;padding:8px 9px;font-size:11px;max-width:43%}
+ .app:has(#preview[src]) .hairColorPanel{left:7px;right:7px;padding:12px}
+ .app:has(#preview[src]) .hairColorOption{font-size:12px;padding:9px 4px}
+}
