@@ -3096,9 +3096,7 @@ async function applyHairColorLocal() {
     }
 
 
-    showStatus(
-      "Hair Color applied ✓"
-    );
+    if (statusBox) statusBox.style.display = "none";
 
   }
 
@@ -3266,9 +3264,7 @@ document
             showSmoothControl();
 
 
-            showStatus(
-              "Skin Smooth selected."
-            );
+            if (statusBox) statusBox.style.display = "none";
 
 
             return;
@@ -3369,10 +3365,7 @@ document
             }
 
 
-            showStatus(
-              "Hair menu opened."
-            );
-
+            if (statusBox) statusBox.style.display = "none";
 
             return;
 
@@ -3454,9 +3447,7 @@ if (hairColor) {
       }
 
 
-      showStatus(
-        "Hair Color selected."
-      );
+      if (statusBox) statusBox.style.display = "none";
 
     }
   );
