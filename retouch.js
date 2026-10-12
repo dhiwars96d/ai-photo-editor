@@ -1,23 +1,10 @@
-// RETOUCH.JS — separate Retouch module
-(() => {
-  "use strict";
-
-  const retouchTool = document.querySelector(
-    '.tool[data-tool="retouch"]'
-  );
-
-  if (!retouchTool) {
-    console.warn("Retouch button not found.");
-    return;
+if (type === "retouch") {
+  if (
+    window.Retouch &&
+    typeof window.Retouch.open === "function"
+  ) {
+    window.Retouch.open();
   }
 
-  retouchTool.addEventListener("click", () => {
-    if (typeof window.showStatus === "function") {
-      window.showStatus(
-        "Retouch module ready — blemish detection is the next step."
-      );
-    } else {
-      console.log("Retouch module ready.");
-    }
-  });
-})();
+  return;
+}￼Enter
