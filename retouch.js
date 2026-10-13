@@ -1,22 +1,23 @@
 
-/* RETOUCH.JS — Offline Retouch v1 */
+/* RETOUCH.JS — Offline Retouch v2 */
 (() => {
   "use strict";
 
-  if (window.Retouch) return;
-
   let originalSrc = "";
   let resultUrl = "";
-  let beforeMode = false;
+  let showingBefore = false;
   let busy = false;
 
   const $ = (id) => document.getElementById(id);
 
-  function status(message) {
-    const el = $("status");
-    if (el) {
-      el.textContent = message;
-      el.style.display = "block";
+  function say(text) {
+    const el = $("rtMessage");
+    if (el) el.textContent = text;
+
+    const status = $("status");
+    if (status) {
+      status.textContent = text;
+      status.style.display = "block";
     }
   }
 
@@ -27,158 +28,173 @@
     resultUrl = "";
   }
 
-  function addStyles() {
-    if ($("retouch-v1-style")) return;
+  function installStyles() {
+    if ($("retouchV2Styles")) return;
 
     const style = document.createElement("style");
-    style.id = "retouch-v1-style";
+    style.id = "retouchV2Styles";
     style.textContent = `
-      #retouchV1 {
-        position: relative;
-        margin: 14px 0;
-        padding: 16px;
-        border: 1px solid #f0c4d8;
-        border-radius: 16px;
-        background: #fff8fc;
-        color: #29232a;
-        font-family: inherit;
+      #retouchV2Backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 9998;
+        background: rgba(25, 12, 20, .48);
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
       }
-      #retouchV1 button {
-        border: 1px solid #e6b1ca;
-        border-radius: 10px;
-        padding: 10px 12px;
-        background: white;
-        color: #29232a;
-        font: inherit;
-        cursor: pointer;
-      }
-      #retouchV1 button.primary {
-        background: #e94f96;
-        border-color: #e94f96;
-        color: white;
-      }
-      #retouchV1 .rt-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 12px;
-      }
-      #retouchV1 input[type="range"] {
+      #retouchV2 {
+        box-sizing: border-box;
         width: 100%;
-        accent-color: #e94f96;
+        max-width: 560px;
+        max-height: 78dvh;
+        overflow-y: auto;
+        padding: 20px 18px calc(22px + env(safe-area-inset-bottom));
+        background: #fff8fc;
+        color: #30232b;
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0 -8px 35px rgba(0,0,0,.18);
+        font-family: inherit;
+        animation: rtV2Slide .22s ease-out;
       }
-      #retouchV1 .rt-note {
-        font-size: 13px;
-        opacity: .8;
-        line-height: 1.45;
+      @keyframes rtV2Slide {
+        from { transform: translateY(35px); opacity: .7; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      #retouchV2 * { box-sizing: border-box; }
+      #retouchV2 .rtHead {
+        display:flex; align-items:center; justify-content:space-between;
+        gap:12px; margin-bottom:14px;
+      }
+      #retouchV2 .rtTitle { font-size:20px; font-weight:700; }
+      #retouchV2 .rtSub {
+        color:#786874; font-size:13px; line-height:1.5; margin:0 0 18px;
+      }
+      #retouchV2 button {
+        font:inherit; font-size:14px; border:1px solid #ebc5d8;
+        background:white; color:#382934; border-radius:12px;
+        padding:12px 14px; min-height:44px;
+      }
+      #retouchV2 button.primary {
+        background:#e84f99; color:white; border-color:#e84f99;
+        font-weight:600;
+      }
+      #retouchV2 button:disabled { opacity:.55; }
+      #retouchV2 .rtClose {
+        min-height:38px; padding:8px 12px; border-radius:22px;
+      }
+      #retouchV2 .rtLabel {
+        display:flex; justify-content:space-between; gap:10px;
+        font-size:14px; margin-bottom:8px;
+      }
+      #retouchV2 input[type=range] {
+        width:100%; accent-color:#e84f99; margin:0 0 8px;
+      }
+      #retouchV2 .rtButtons {
+        display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:9px; margin-top:14px;
+      }
+      #retouchV2 .rtButtons button { width:100%; }
+      #retouchV2 #rtMessage {
+        font-size:13px; color:#79566b; line-height:1.5;
+        margin:14px 0 0; overflow-wrap:anywhere;
+      }
+      @media (min-width:700px) {
+        #retouchV2Backdrop { align-items:center; padding:18px; }
+        #retouchV2 { border-radius:24px; }
       }
     `;
     document.head.appendChild(style);
   }
 
-  function makePanel() {
-    addStyles();
+  function createPanel() {
+    installStyles();
 
-    let panel = $("retouchV1");
-    if (panel) {
-      panel.style.display = "block";
-      return panel;
+    let backdrop = $("retouchV2Backdrop");
+    if (backdrop) {
+      backdrop.style.display = "flex";
+      return;
     }
 
-    panel = document.createElement("section");
-    panel.id = "retouchV1";
-    panel.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <strong style="font-size:18px">Offline Retouch</strong>
-        <button type="button" id="rtClose">Close ✕</button>
-      </div>
+    backdrop = document.createElement("div");
+    backdrop.id = "retouchV2Backdrop";
+    backdrop.innerHTML = `
+      <section id="retouchV2" role="dialog"
+        aria-modal="true" aria-label="Offline Retouch">
+        <div style="width:38px;height:4px;border-radius:5px;background:#e8cada;margin:0 auto 16px"></div>
+        <div class="rtHead">
+          <div class="rtTitle">✨ Offline Retouch</div>
+          <button type="button" class="rtClose" id="rtClose">Close ✕</button>
+        </div>
 
-      <p class="rt-note">
-        छोटे दाग कम करने का शुरुआती ऑफलाइन टूल।
-        परिणाम फोटो के अनुसार अलग हो सकता है।
-      </p>
+        <p class="rtSub">
+          त्वचा को हल्का स्मूद करें। आँखों और बालों की डिटेल बचाने की कोशिश की जाती है।
+          यह शुरुआती ऑफलाइन टूल है।
+        </p>
 
-      <label for="rtStrength">
-        Retouch Strength: <strong id="rtStrengthValue">35%</strong>
-      </label>
-      <input id="rtStrength" type="range" min="10" max="60" value="35">
+        <div class="rtLabel">
+          <label for="rtStrength">Skin smoothing</label>
+          <strong id="rtStrengthValue">45%</strong>
+        </div>
+        <input id="rtStrength" type="range" min="10" max="70" value="45">
 
-      <div class="rt-row">
-        <button type="button" class="primary" id="rtApply">Auto Retouch</button>
-        <button type="button" id="rtCompare">Before</button>
-      </div>
-
-      <div class="rt-row">
-        <button type="button" id="rtUndo">Undo</button>
-        <button type="button" id="rtReset">Reset</button>
-        <button type="button" id="rtDownload">Download</button>
-      </div>
-
-      <p id="rtMessage" class="rt-note" aria-live="polite">
-        पहले Auto Retouch दबाएँ।
-      </p>
+        <div class="rtButtons">
+          <button type="button" class="primary" id="rtApply">Auto Retouch</button>
+          <button type="button" id="rtCompare">Before / After</button>
+          <button type="button" id="rtUndo">Undo</button>
+          <button type="button" id="rtReset">Reset</button>
+          <button type="button" class="primary" id="rtDownload"
+            style="grid-column:1 / -1">Download Retouched Photo</button>
+        </div>
+        <p id="rtMessage" aria-live="polite">Strength चुनें और Auto Retouch दबाएँ।</p>
+      </section>
     `;
+    document.body.appendChild(backdrop);
 
-    const preview = $("preview");
-    const host = preview?.parentElement;
-    if (host && host.parentElement) {
-      host.insertAdjacentElement("afterend", panel);
-    } else {
-      document.body.appendChild(panel);
-    }
+    $("rtClose").onclick = closePanel;
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) closePanel();
+    });
 
-    $("rtClose").onclick = () => {
-      panel.style.display = "none";
-      restoreAfterMode();
-    };
-
-    $("rtStrength").oninput = () => {
+    $("rtStrength").addEventListener("input", () => {
       $("rtStrengthValue").textContent = $("rtStrength").value + "%";
-    };
+    });
 
     $("rtApply").onclick = applyRetouch;
-    $("rtCompare").onclick = toggleBefore;
-    $("rtUndo").onclick = undo;
+    $("rtCompare").onclick = compare;
+    $("rtUndo").onclick = reset;
     $("rtReset").onclick = reset;
     $("rtDownload").onclick = download;
-
-    return panel;
   }
 
-  function message(text) {
-    const el = $("rtMessage");
-    if (el) el.textContent = text;
-  }
+  function closePanel() {
+    const backdrop = $("retouchV2Backdrop");
+    if (backdrop) backdrop.style.display = "none";
 
-  function restoreAfterMode() {
     const preview = $("preview");
-    if (beforeMode && preview && originalSrc) {
-      preview.src = originalSrc;
-    }
-    beforeMode = false;
-    const button = $("rtCompare");
-    if (button) button.textContent = "Before";
+    if (showingBefore && preview && resultUrl) preview.src = resultUrl;
+    showingBefore = false;
   }
 
   function open() {
     const preview = $("preview");
 
-    if (!preview || !preview.src || preview.src === location.href) {
-      status("पहले फोटो चुनें।");
+    if (!preview || !preview.src || !preview.complete ||
+        !preview.naturalWidth) {
+      say("पहले फोटो चुनें और उसके लोड होने का इंतज़ार करें।");
       return;
     }
 
-    makePanel();
-
-    // नई फोटो चुनी गई हो तो उसी को शुरुआती फोटो मानें।
-    if (!originalSrc || preview.src !== resultUrl) {
+    // मौजूदा retouch result को मूल फोटो न मानें।
+    if (!resultUrl || preview.src !== resultUrl) {
       originalSrc = preview.src;
       releaseResult();
-      beforeMode = false;
+      showingBefore = false;
     }
 
-    message("Strength चुनें और Auto Retouch दबाएँ।");
-    status("Offline Retouch खुल गया।");
+    createPanel();
+    $("retouchV2Backdrop").style.display = "flex";
+    say("Strength चुनें और Auto Retouch दबाएँ।");
   }
 
   function loadImage(src) {
@@ -191,149 +207,134 @@
   }
 
   async function applyRetouch() {
-    if (busy) return;
-
-    const preview = $("preview");
-    if (!preview || !originalSrc) {
-      message("पहले फोटो चुनें।");
-      return;
-    }
+    if (busy || !originalSrc) return;
 
     busy = true;
     $("rtApply").disabled = true;
-    message("फोटो प्रोसेस हो रही है…");
+    say("फोटो प्रोसेस हो रही है…");
 
     try {
       const img = await loadImage(originalSrc);
+      const scale = Math.min(
+        1,
+        1400 / Math.max(img.naturalWidth, img.naturalHeight)
+      );
 
-      // मोबाइल पर प्रोसेसिंग हल्की रखने के लिए आकार सीमित।
-      const scale = Math.min(1, 1200 / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+
       const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
-      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      canvas.width = w;
+      canvas.height = h;
 
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      if (!ctx) throw new Error("Canvas उपलब्ध नहीं है।");
 
-      const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const src = frame.data;
-      const out = new Uint8ClampedArray(src);
-      const w = canvas.width;
-      const h = canvas.height;
+      ctx.drawImage(img, 0, 0, w, h);
+      const originalPixels = ctx.getImageData(0, 0, w, h);
+
+      // अलग canvas पर हल्का blur बनाते हैं।
+      const blurCanvas = document.createElement("canvas");
+      blurCanvas.width = w;
+      blurCanvas.height = h;
+
+      const bctx = blurCanvas.getContext("2d", { willReadFrequently: true });
+      if (!bctx) throw new Error("Blur canvas उपलब्ध नहीं है।");
+
+      bctx.filter = "blur(2px)";
+      bctx.drawImage(canvas, 0, 0);
+      bctx.filter = "none";
+
+      const smoothPixels = bctx.getImageData(0, 0, w, h);
+      const src = originalPixels.data;
+      const blur = smoothPixels.data;
       const strength = Number($("rtStrength").value) / 100;
 
-      // Conservative local outlier reduction; face/skin detection नहीं है।
-      for (let y = 2; y < h - 2; y++) {
-        for (let x = 2; x < w - 2; x++) {
-          const i = (y * w + x) * 4;
-          const r = src[i], g = src[i + 1], b = src[i + 2];
+      // संभावित त्वचा वाले पिक्सल पर ही हल्का smoothing।
+      // यह face detector नहीं है; गलत जगहों पर असर संभव है।
+      for (let i = 0; i < src.length; i += 4) {
+        const r = src[i];
+        const g = src[i + 1];
+        const b = src[i + 2];
 
-          // केवल संभावित त्वचा जैसे रंगों पर काम करें।
-          const skinLike =
-            r > 75 && g > 35 &&
-            r >= g * 0.88 &&
-            r >= b * 1.04 &&
-            Math.max(r, g, b) - Math.min(r, g, b) > 12;
+        const skinLike =
+          r > 70 &&
+          g > 30 &&
+          r >= g * 0.88 &&
+          r >= b * 1.04 &&
+          (r - b) > 12;
 
-          if (!skinLike) continue;
+        if (!skinLike) continue;
 
-          let sr = 0, sg = 0, sb = 0, count = 0;
-          let minL = 255, maxL = 0;
+        const difference =
+          (Math.abs(r - blur[i]) +
+           Math.abs(g - blur[i + 1]) +
+           Math.abs(b - blur[i + 2])) / 3;
 
-          // आसपास के 5x5 क्षेत्र का औसत; बीच का पिक्सेल छोड़ें।
-          for (let dy = -2; dy <= 2; dy++) {
-            for (let dx = -2; dx <= 2; dx++) {
-              if (dx === 0 && dy === 0) continue;
+        // बड़े edges और बहुत तेज़ बदलाव को काफी हद तक बचाएँ।
+        if (difference > 42) continue;
 
-              const j = ((y + dy) * w + (x + dx)) * 4;
-              const nr = src[j], ng = src[j + 1], nb = src[j + 2];
-              const lum = (nr * 3 + ng * 6 + nb) / 10;
+        const blend = strength * (difference > 10 ? 0.72 : 0.42);
 
-              sr += nr;
-              sg += ng;
-              sb += nb;
-              count++;
-
-              minL = Math.min(minL, lum);
-              maxL = Math.max(maxL, lum);
-            }
-          }
-
-          const ar = sr / count, ag = sg / count, ab = sb / count;
-          const lum = (r * 3 + g * 6 + b) / 10;
-          const avgLum = (ar * 3 + ag * 6 + ab) / 10;
-          const difference = Math.abs(lum - avgLum);
-
-          // बड़े contrast/edges को बचाएँ; सिर्फ अलग दिखने वाले छोटे spots घटाएँ।
-          if (difference < 22 || maxL - minL > 95) continue;
-
-          const amount = Math.min(0.6, strength * (difference - 18) / 35);
-          out[i] = r * (1 - amount) + ar * amount;
-          out[i + 1] = g * (1 - amount) + ag * amount;
-          out[i + 2] = b * (1 - amount) + ab * amount;
-        }
+        src[i] = r * (1 - blend) + blur[i] * blend;
+        src[i + 1] = g * (1 - blend) + blur[i + 1] * blend;
+        src[i + 2] = b * (1 - blend) + blur[i + 2] * blend;
       }
 
-      frame.data.set(out);
-      ctx.putImageData(frame, 0, 0);
+      ctx.putImageData(originalPixels, 0, 0);
 
       releaseResult();
-      resultUrl = canvas.toDataURL("image/jpeg", 0.94);
-      preview.src = resultUrl;
-      beforeMode = false;
-      $("rtCompare").textContent = "Before";
-      message("Retouch लागू हुआ। Before दबाकर तुलना करें।");
-      status("Offline Retouch पूरा हुआ।");
-    } catch (err) {
-      console.error("Retouch error:", err);
-      message("Retouch नहीं हो पाया। फोटो दोबारा चुनकर कोशिश करें।");
-      status("Retouch में समस्या आई।");
+      resultUrl = canvas.toDataURL("image/jpeg", 0.95);
+
+      const preview = $("preview");
+      if (preview) preview.src = resultUrl;
+
+      showingBefore = false;
+      say("Retouch पूरा हुआ। Before / After दबाकर तुलना करें।");
+    } catch (error) {
+      console.error("Offline Retouch:", error);
+      say("Retouch नहीं हो पाया। दूसरी फोटो पर कोशिश करें।");
     } finally {
       busy = false;
       $("rtApply").disabled = false;
     }
   }
 
-  function toggleBefore() {
+  function compare() {
     const preview = $("preview");
+
     if (!preview || !originalSrc || !resultUrl) {
-      message("पहले Auto Retouch चलाएँ।");
+      say("पहले Auto Retouch चलाएँ।");
       return;
     }
 
-    beforeMode = !beforeMode;
-    preview.src = beforeMode ? originalSrc : resultUrl;
-    $("rtCompare").textContent = beforeMode ? "After" : "Before";
-  }
-
-  function undo() {
-    restoreAfterMode();
-    const preview = $("preview");
-    if (preview && originalSrc) preview.src = originalSrc;
-    releaseResult();
-    message("आखिरी Retouch हटाया गया।");
+    showingBefore = !showingBefore;
+    preview.src = showingBefore ? originalSrc : resultUrl;
+    $("rtCompare").textContent = showingBefore ? "Show After" : "Before / After";
   }
 
   function reset() {
-    restoreAfterMode();
     const preview = $("preview");
     if (preview && originalSrc) preview.src = originalSrc;
+
     releaseResult();
-    message("मूल फोटो वापस आ गई।");
+    showingBefore = false;
+    if ($("rtCompare")) $("rtCompare").textContent = "Before / After";
+    say("मूल फोटो वापस आ गई।");
   }
 
   function download() {
     if (!resultUrl) {
-      message("पहले Auto Retouch चलाएँ।");
+      say("पहले Auto Retouch चलाएँ।");
       return;
     }
 
-    const a = document.createElement("a");
-    a.href = resultUrl;
-    a.download = "retouched-photo.jpg";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const link = document.createElement("a");
+    link.href = resultUrl;
+    link.download = "retouched-photo.jpg";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
   window.Retouch = { open };
