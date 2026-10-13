@@ -3372,36 +3372,25 @@ document
           }
 
 
-          if (
-            type === "retouch"
-          ) {
+                    if (type === "retouch") {
 
             if (hairMenu) {
-
-              hairMenu.style.display =
-                "none";
-
+              hairMenu.style.display = "none";
             }
-
 
             if (hairColorPanel) {
-
-              hairColorPanel.style.display =
-                "none";
-
+              hairColorPanel.style.display = "none";
             }
 
-
-            if (type === "retouch") {
-  if (
-    window.Retouch &&
-    typeof window.Retouch.open === "function"
-  ) {
-    window.Retouch.open();
-  }
-
-  return;
+            if (
+              window.Retouch &&
+              typeof window.Retouch.open === "function"
+            ) {
+              window.Retouch.open();
             }
+
+            return;
+                    }
 
         }
       );
