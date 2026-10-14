@@ -15,7 +15,7 @@
     if($("rtV4Style"))return;
     const s=document.createElement("style");s.id="rtV4Style";
     s.textContent=`
-    #retouchV4Backdrop{position:fixed;inset:0;z-index:9998;display:none;align-items:flex-end;justify-content:center;background:rgba(25,12,20,.35);pointer-events:none}
+    #retouchV4Backdrop{position:fixed;inset:0;z-index:9998;display:none;align-items:flex-end;justify-content:center;background:transparent;pointer-events:none}
     #retouchV4{pointer-events:auto;box-sizing:border-box;width:100%;max-width:560px;max-height:43dvh;overflow:auto;overscroll-behavior:contain;padding:10px 14px calc(12px + env(safe-area-inset-bottom));background:#fff8fc;color:#30232b;border-radius:20px 20px 0 0;box-shadow:0 -8px 30px #0003;font-family:inherit}
     #retouchV4 *{box-sizing:border-box}#retouchV4 .rtHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
     #retouchV4 .rtTitle{font-size:18px;font-weight:700}#retouchV4 .rtSub{color:#786874;font-size:12px;line-height:1.4;margin:0 0 10px}
