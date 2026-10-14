@@ -66,21 +66,155 @@
   function keepUndo(){clearHistory();previousResultUrl=resultUrl;}
   function updateCompare(){if($("rtCompare"))$("rtCompare").textContent=showingBefore?"Show After":"Before / After";}
 
-  async function applyRetouch(){
-    if(busy||!originalSrc)return;busy=true;$("rtApply").disabled=true;setTapMode(false);say("फोटो प्रोसेस हो रही है…");
-    try{
-      const img=await image(originalSrc),f=Math.min(1,1400/Math.max(img.naturalWidth,img.naturalHeight));
-      const w=Math.max(1,Math.round(img.naturalWidth*f)),h=Math.max(1,Math.round(img.naturalHeight*f));
-      const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});if(!x)throw Error("Canvas unavailable");
-      x.drawImage(img,0,0,w,h);const pix=x.getImageData(0,0,w,h);
-      const bc=document.createElement("canvas");bc.width=w;bc.height=h;const b=bc.getContext("2d",{willReadFrequently:true});if(!b)throw Error("Blur unavailable");
-      b.filter="blur(4px)";b.drawImage(c,0,0);b.filter="none";const blur=b.getImageData(0,0,w,h).data,d=pix.data,str=Number($("rtStrength").value)/100;
-      for(let i=0;i<d.length;i+=4){const r=d[i],g=d[i+1],bl=d[i+2];if(!(r>70&&g>30&&r>=g*.88&&r>=bl*1.04&&r-bl>12))continue;
-        const diff=(Math.abs(r-blur[i])+Math.abs(g-blur[i+1])+Math.abs(bl-blur[i+2]))/3;if(diff>65)continue;
-        const a=str*(diff>10?.95:.70);d[i]=r*(1-a)+blur[i]*a;d[i+1]=g*(1-a)+blur[i+1]*a;d[i+2]=bl*(1-a)+blur[i+2]*a;}
-      x.putImageData(pix,0,0);keepUndo();resultUrl=c.toDataURL("image/jpeg",.95);$("preview").src=resultUrl;showingBefore=false;updateCompare();say("Auto Retouch पूरा हुआ। अब Tap to Remove इस्तेमाल करें।");
-    }catch(e){console.error(e);say("Retouch नहीं हो पाया। दूसरी फोटो पर कोशिश करें.");}
-    finally{busy=false;$("rtApply").disabled=false;}
+  async function applyRetouch() {
+  if (busy || !originalSrc) return;
+
+  busy = true;
+  $("rtApply").disabled = true;
+  setTapMode(false);
+  say("Natural skin retouch हो रहा है…");
+
+  try {
+    const img = await image(originalSrc);
+    const factor = Math.min(
+      1,
+      1400 / Math.max(img.naturalWidth, img.naturalHeight)
+    );
+
+    const w = Math.max(1, Math.round(img.naturalWidth * factor));
+    const h = Math.max(1, Math.round(img.naturalHeight * factor));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext("2d", {
+      willReadFrequently: true
+    });
+
+    if (!ctx) throw Error("Canvas unavailable");
+
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const original = ctx.getImageData(0, 0, w, h);
+    const src = original.data;
+
+    const blurCanvas = document.createElement("canvas");
+    blurCanvas.width = w;
+    blurCanvas.height = h;
+
+    const blurCtx = blurCanvas.getContext("2d", {
+      willReadFrequently: true
+    });
+
+    if (!blurCtx) throw Error("Blur unavailable");
+
+    // हल्का blur: बहुत ज्यादा facial detail न खोए
+    blurCtx.filter = "blur(2px)";
+    blurCtx.drawImage(canvas, 0, 0);
+    blurCtx.filter = "none";
+
+    const smooth = blurCtx.getImageData(0, 0, w, h).data;
+    const strength = Number($("rtStrength").value) / 100;
+
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = (y * w + x) * 4;
+
+        const r = src[i];
+        const g = src[i + 1];
+        const b = src[i + 2];
+
+        // त्वचा का एक सरल रंग-आधारित अनुमान
+        const skin =
+          r > 65 &&
+          g > 30 &&
+          r >= g * 0.88 &&
+          r >= b * 1.04 &&
+          r - b > 12;
+
+        if (!skin) continue;
+
+        // आँखों, होंठों और तेज किनारों पर असर घटाएँ
+        const left = ((y * w + x - 1) * 4);
+        const right = ((y * w + x + 1) * 4);
+        const up = (((y - 1) * w + x) * 4);
+        const down = (((y + 1) * w + x) * 4);
+
+        const lum = j =>
+          0.299 * src[j] +
+          0.587 * src[j + 1] +
+          0.114 * src[j + 2];
+
+        const edge =
+          Math.abs(lum(left) - lum(right)) +
+          Math.abs(lum(up) - lum(down));
+
+        // तेज किनारों को लगभग सुरक्षित रखें
+        const edgeProtection = Math.max(
+          0,
+          Math.min(1, 1 - edge / 90)
+        );
+
+        // Blur और original के अंतर से बहुत तेज बदलाव रोकें
+        const diff = (
+          Math.abs(r - smooth[i]) +
+          Math.abs(g - smooth[i + 1]) +
+          Math.abs(b - smooth[i + 2])
+        ) / 3;
+
+        const detailProtection = Math.max(
+          0,
+          Math.min(1, 1 - diff / 45)
+        );
+
+        const amount =
+          strength *
+          0.55 *
+          edgeProtection *
+          detailProtection;
+
+        if (amount <= 0.005) continue;
+
+        src[i] = r * (1 - amount) + smooth[i] * amount;
+        src[i + 1] =
+          g * (1 - amount) + smooth[i + 1] * amount;
+        src[i + 2] =
+          b * (1 - amount) + smooth[i + 2] * amount;
+      }
+    }
+
+    ctx.putImageData(original, 0, 0);
+
+    const output = await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(Error("Image export failed")),
+        "image/jpeg",
+        0.95
+      );
+    });
+
+    const nextUrl = URL.createObjectURL(output);
+
+    keepUndo();
+
+    revoke(resultUrl);
+    resultUrl = nextUrl;
+
+    $("preview").src = resultUrl;
+    showingBefore = false;
+    updateCompare();
+
+    say("Natural Retouch पूरा हुआ। Before / After से तुलना करें।");
+
+  } catch (e) {
+    console.error(e);
+    say("Retouch नहीं हो पाया। दोबारा कोशिश करें।");
+
+  } finally {
+    busy = false;
+    $("rtApply").disabled = false;
+  }
   }
   function compare(){const p=$("preview");if(!p||!originalSrc||!resultUrl){say("पहले Auto Retouch चलाएँ।");return;}showingBefore=!showingBefore;p.src=showingBefore?originalSrc:resultUrl;updateCompare();if(showingBefore)setTapMode(false);}
   function undo(){if(busy)return;if(!previousResultUrl){say("Undo करने के लिए पिछला बदलाव नहीं है।");return;}const cur=resultUrl;resultUrl=previousResultUrl;previousResultUrl="";revoke(cur);$("preview").src=resultUrl;showingBefore=false;updateCompare();say("पिछला बदलाव Undo हो गया।");}
