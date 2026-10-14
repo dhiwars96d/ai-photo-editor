@@ -66,16 +66,18 @@
   function keepUndo(){clearHistory();previousResultUrl=resultUrl;}
   function updateCompare(){if($("rtCompare"))$("rtCompare").textContent=showingBefore?"Show After":"Before / After";}
 
-  async function applyRetouch() {
+  
+async function applyRetouch() {
   if (busy || !originalSrc) return;
 
   busy = true;
   $("rtApply").disabled = true;
   setTapMode(false);
-  say("Natural skin retouch हो रहा है…");
+  say("Pimples aur skin spots kam kiye ja rahe hain…");
 
   try {
     const img = await image(originalSrc);
+
     const factor = Math.min(
       1,
       1400 / Math.max(img.naturalWidth, img.naturalHeight)
@@ -99,88 +101,90 @@
     const original = ctx.getImageData(0, 0, w, h);
     const src = original.data;
 
-    const blurCanvas = document.createElement("canvas");
-    blurCanvas.width = w;
-    blurCanvas.height = h;
+    // Nearby skin colour estimate
+    const repairCanvas = document.createElement("canvas");
+    repairCanvas.width = w;
+    repairCanvas.height = h;
 
-    const blurCtx = blurCanvas.getContext("2d", {
+    const repairCtx = repairCanvas.getContext("2d", {
       willReadFrequently: true
     });
 
-    if (!blurCtx) throw Error("Blur unavailable");
+    if (!repairCtx) throw Error("Repair canvas unavailable");
 
-    // हल्का blur: बहुत ज्यादा facial detail न खोए
-    blurCtx.filter = "blur(2px)";
-    blurCtx.drawImage(canvas, 0, 0);
-    blurCtx.filter = "none";
+    repairCtx.filter = "blur(5px)";
+    repairCtx.drawImage(canvas, 0, 0);
+    repairCtx.filter = "none";
 
-    const smooth = blurCtx.getImageData(0, 0, w, h).data;
+    const nearby = repairCtx.getImageData(0, 0, w, h).data;
     const strength = Number($("rtStrength").value) / 100;
 
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
+    function luminance(data, i) {
+      return (
+        0.299 * data[i] +
+        0.587 * data[i + 1] +
+        0.114 * data[i + 2]
+      );
+    }
+
+    for (let y = 2; y < h - 2; y++) {
+      for (let x = 2; x < w - 2; x++) {
         const i = (y * w + x) * 4;
 
         const r = src[i];
         const g = src[i + 1];
         const b = src[i + 2];
 
-        // त्वचा का एक सरल रंग-आधारित अनुमान
-        const skin =
-          r > 65 &&
-          g > 30 &&
+        // Basic skin-colour estimate
+        const isSkin =
+          r > 55 &&
+          g > 25 &&
           r >= g * 0.88 &&
           r >= b * 1.04 &&
-          r - b > 12;
+          r - b > 10;
 
-        if (!skin) continue;
+        if (!isSkin) continue;
 
-        // आँखों, होंठों और तेज किनारों पर असर घटाएँ
-        const left = ((y * w + x - 1) * 4);
-        const right = ((y * w + x + 1) * 4);
-        const up = (((y - 1) * w + x) * 4);
-        const down = (((y + 1) * w + x) * 4);
+        const baseR = nearby[i];
+        const baseG = nearby[i + 1];
+        const baseB = nearby[i + 2];
 
-        const lum = j =>
-          0.299 * src[j] +
-          0.587 * src[j + 1] +
-          0.114 * src[j + 2];
-
-        const edge =
-          Math.abs(lum(left) - lum(right)) +
-          Math.abs(lum(up) - lum(down));
-
-        // तेज किनारों को लगभग सुरक्षित रखें
-        const edgeProtection = Math.max(
-          0,
-          Math.min(1, 1 - edge / 90)
-        );
-
-        // Blur और original के अंतर से बहुत तेज बदलाव रोकें
-        const diff = (
-          Math.abs(r - smooth[i]) +
-          Math.abs(g - smooth[i + 1]) +
-          Math.abs(b - smooth[i + 2])
+        // Detect small colour differences from nearby skin
+        const difference = (
+          Math.abs(r - baseR) +
+          Math.abs(g - baseG) +
+          Math.abs(b - baseB)
         ) / 3;
 
-        const detailProtection = Math.max(
+        // Protect strong edges, such as eyes, lips and face outline
+        const left = i - 4;
+        const right = i + 4;
+        const up = i - w * 4;
+        const down = i + w * 4;
+
+        const edge =
+          Math.abs(luminance(src, left) - luminance(src, right)) +
+          Math.abs(luminance(src, up) - luminance(src, down));
+
+        const edgeProtection = Math.max(
           0,
-          Math.min(1, 1 - diff / 45)
+          Math.min(1, 1 - edge / 100)
+        );
+
+        // Ignore tiny differences; repair more noticeable spots
+        const spotAmount = Math.max(
+          0,
+          Math.min(1, (difference - 9) / 32)
         );
 
         const amount =
-          strength *
-          0.55 *
-          edgeProtection *
-          detailProtection;
+          strength * 0.7 * spotAmount * edgeProtection;
 
-        if (amount <= 0.005) continue;
+        if (amount < 0.01) continue;
 
-        src[i] = r * (1 - amount) + smooth[i] * amount;
-        src[i + 1] =
-          g * (1 - amount) + smooth[i + 1] * amount;
-        src[i + 2] =
-          b * (1 - amount) + smooth[i + 2] * amount;
+        src[i] = r * (1 - amount) + baseR * amount;
+        src[i + 1] = g * (1 - amount) + baseG * amount;
+        src[i + 2] = b * (1 - amount) + baseB * amount;
       }
     }
 
@@ -188,7 +192,10 @@
 
     const output = await new Promise((resolve, reject) => {
       canvas.toBlob(
-        blob => blob ? resolve(blob) : reject(Error("Image export failed")),
+        blob => {
+          if (blob) resolve(blob);
+          else reject(Error("Image export failed"));
+        },
         "image/jpeg",
         0.95
       );
@@ -196,26 +203,28 @@
 
     const nextUrl = URL.createObjectURL(output);
 
+    // Preserve the previous result so Undo can restore it
     keepUndo();
 
-    revoke(resultUrl);
+    // Do not revoke resultUrl here: Undo needs the previous URL
     resultUrl = nextUrl;
 
     $("preview").src = resultUrl;
     showingBefore = false;
     updateCompare();
 
-    say("Natural Retouch पूरा हुआ। Before / After से तुलना करें।");
+    say("Retouch complete. Before / After se result compare karein.");
 
   } catch (e) {
     console.error(e);
-    say("Retouch नहीं हो पाया। दोबारा कोशिश करें।");
+    say("Retouch nahi ho paya. Dobara try karein.");
 
   } finally {
     busy = false;
     $("rtApply").disabled = false;
   }
-  }
+}
+
   function compare(){const p=$("preview");if(!p||!originalSrc||!resultUrl){say("पहले Auto Retouch चलाएँ।");return;}showingBefore=!showingBefore;p.src=showingBefore?originalSrc:resultUrl;updateCompare();if(showingBefore)setTapMode(false);}
   function undo(){if(busy)return;if(!previousResultUrl){say("Undo करने के लिए पिछला बदलाव नहीं है।");return;}const cur=resultUrl;resultUrl=previousResultUrl;previousResultUrl="";revoke(cur);$("preview").src=resultUrl;showingBefore=false;updateCompare();say("पिछला बदलाव Undo हो गया।");}
   function reset(){if(busy)return;setTapMode(false);if($("preview")&&originalSrc)$("preview").src=originalSrc;clearResult();showingBefore=false;updateCompare();resetZoom();say("मूल फोटो वापस आ गई।");}
