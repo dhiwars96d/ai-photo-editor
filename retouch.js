@@ -241,7 +241,7 @@
       const bctx = blurCanvas.getContext("2d", { willReadFrequently: true });
       if (!bctx) throw new Error("Blur canvas उपलब्ध नहीं है।");
 
-      bctx.filter = "blur(2px)";
+      bctx.filter = "blur(4px)";
       bctx.drawImage(canvas, 0, 0);
       bctx.filter = "none";
 
@@ -272,9 +272,9 @@
            Math.abs(b - blur[i + 2])) / 3;
 
         // बड़े edges और बहुत तेज़ बदलाव को काफी हद तक बचाएँ।
-        if (difference > 42) continue;
+        if (difference > 65) continue;
 
-        const blend = strength * (difference > 10 ? 0.72 : 0.42);
+        const blend = strength * (difference > 10 ? 0.95 : 0.70);
 
         src[i] = r * (1 - blend) + blur[i] * blend;
         src[i + 1] = g * (1 - blend) + blur[i + 1] * blend;
