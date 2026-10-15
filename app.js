@@ -214,6 +214,8 @@ if (fileInput) {
     window.__selectedPhotoFile = file;
 
     editedBlob = null;
+    
+     window.__editedPhotoBlob = file;
 
     adjustmentBaseBlob = file;
 
@@ -1221,8 +1223,7 @@ if (smoothSlider) {
     "input",
     function () {
 
-      const file =
-        selectedFile;
+      const file = smoothBaseBlob || getCurrentPhotoBlob();
 
 
       const value =
@@ -3333,10 +3334,14 @@ document
               );
 
 
-              const blob =
-                await runHockmanX2(
-                  selectedFile
-                );
+              const currentFile = getCurrentPhotoFile();
+
+if (!currentFile) {
+  showStatus("पहले फोटो चुनें।");
+  return;
+}
+
+const blob = await runHockmanX2(currentFile);
 
 
               showResult(
