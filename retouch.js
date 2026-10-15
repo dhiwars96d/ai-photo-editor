@@ -14,6 +14,7 @@
   let showingBefore = false;
   let busy = false;
   let tapMode = false;
+   let tapSize = 60;
 
   // Zoom and gesture state
   let scale = 1;
@@ -273,6 +274,18 @@ if (photoCard) {
     $("rtTap").addEventListener("click", toggleTapMode);
     $("rtUndo").addEventListener("click", undo);
     $("rtReset").addEventListener("click", reset);
+     const tapSizeSlider = $("rtTapSize");
+const tapSizeValue = $("rtTapSizeValue");
+
+if (tapSizeSlider) {
+  tapSizeSlider.addEventListener("input", () => {
+    tapSize = Number(tapSizeSlider.value);
+
+    if (tapSizeValue) {
+      tapSizeValue.textContent = String(tapSize);
+    }
+  });
+}
     $("rtZoomOut").addEventListener("click", () => zoomBy(1 / 1.25));
     $("rtZoomIn").addEventListener("click", () => zoomBy(1.25));
     $("rtZoomReset").addEventListener("click", resetZoom);
