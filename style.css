@@ -167,8 +167,32 @@ body{background:#fff}
 .app:has(#preview[src]) .smoothControl,
 .app:has(#preview[src]) .hairMenu,
 .app:has(#preview[src]) .hairColorPanel{position:fixed;left:10px;right:10px;bottom:calc(83px + env(safe-area-inset-bottom));width:auto;max-height:45dvh;overflow:auto;z-index:30;margin:0;border:1px solid #f4c5dd;border-radius:20px;box-shadow:0 10px 35px rgba(0,0,0,.15);background:#fff}
-.app:has(#preview[src]) .adjustmentsPanel{position:fixed;left:10px;right:10px;bottom:calc(83px + env(safe-area-inset-bottom));z-index:30;width:auto;max-height:58dvh;overflow:hidden;margin:0;border:1px solid #f4c5dd;border-radius:20px;background:#fff;box-shadow:0 10px 35px rgba(0,0,0,.15)}
-.app:has(#preview[src]) .adjustmentsFrame{height:55dvh;max-height:55dvh;border-radius:20px}
+
+.app:has(#preview[src]) .adjustmentsPanel {
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: calc(70px + env(safe-area-inset-bottom));
+  z-index: 35;
+  width: auto;
+  max-height: 48dvh;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid rgba(242, 138, 185, 0.55);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.app:has(#preview[src]) .adjustmentsFrame {
+  height: 46dvh;
+  max-height: 46dvh;
+  border-radius: 18px;
+  background: transparent;
+}
+
 .app:has(#preview[src]) .status{position:fixed;left:12px;right:12px;bottom:calc(158px + env(safe-area-inset-bottom));z-index:40;margin:0;background:#fff0f7;color:#b81665;border:1px solid #ffd0e6;box-shadow:0 4px 16px rgba(0,0,0,.08)}
 .app:has(#preview[src]) .downloadButton{position:fixed;top:10px;right:10px;left:auto;bottom:auto;z-index:50;width:auto;max-width:48%;padding:9px 12px;margin:0;background:#fff;color:#b81665;border:1px solid #e9a0c2;border-radius:999px;font-size:12px;box-shadow:0 3px 12px rgba(0,0,0,.10)}
 .app:has(#preview[src]) .smallNote{display:none}
