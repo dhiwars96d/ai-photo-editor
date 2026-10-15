@@ -1,6 +1,7 @@
+
 /* ==========================================
-   RETOUCH.JS — Offline Retouch v5
-   Keeps existing app.js and hair-grow.js
+   RETOUCH.JS — Offline Retouch v6
+   Works with existing index.html and app.js
    ========================================== */
 
 (() => {
@@ -14,9 +15,8 @@
   let showingBefore = false;
   let busy = false;
   let tapMode = false;
-   let tapSize = 60;
+  let tapSize = 60;
 
-  // Zoom and gesture state
   let scale = 1;
   let panX = 0;
   let panY = 0;
@@ -29,17 +29,15 @@
       return;
     }
 
-    const box = $("statusBox") || $("status");
+    const box = $("status") || $("statusBox");
     if (box) box.textContent = message;
   }
 
   function image(src) {
     return new Promise((resolve, reject) => {
       const img = new Image();
-
       img.onload = () => resolve(img);
       img.onerror = () => reject(new Error("Image load failed"));
-
       img.src = src;
     });
   }
@@ -68,24 +66,6 @@
 
     revokeUrl(previousResultUrl);
     previousResultUrl = resultUrl;
-  }
-
-  function updateCompare() {
-    const p = getPreview();
-    if (!p) return;
-
-    const src = showingBefore
-      ? originalSrc
-      : (resultUrl || originalSrc);
-
-    if (src) setPreviewSource(src);
-
-    const button = $("rtCompare");
-    if (button) {
-      button.textContent = showingBefore
-        ? "Show After"
-        : "Before / After";
-    }
   }
 
   function clearResult() {
@@ -120,26 +100,29 @@
     if ($("retouchPanel")) return;
 
     const style = document.createElement("style");
-
     style.id = "retouchStyle";
+
     style.textContent = `
       #retouchPanel {
         display: none;
         width: 100%;
+        max-width: 100%;
         box-sizing: border-box;
-        padding: 12px;
-        margin-top: 12px;
+        padding: 14px;
+        margin: 12px 0;
         border-radius: 14px;
-        background: var(--panel, #171717);
-        color: var(--text, #ffffff);
+        background: #171717;
+        color: #ffffff;
         border: 1px solid #444;
+        position: relative;
+        clear: both;
       }
 
       #retouchPanel .rt-row {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-        margin-top: 9px;
+        margin-top: 10px;
       }
 
       #retouchPanel button {
@@ -147,8 +130,10 @@
         border-radius: 10px;
         padding: 10px 12px;
         background: #292929;
-        color: white;
+        color: #fff;
         font-size: 14px;
+        cursor: pointer;
+        touch-action: manipulation;
       }
 
       #retouchPanel button:disabled {
@@ -160,11 +145,34 @@
         border-color: #8b75ff;
       }
 
+      #retouchPanel .rt-size-control {
+        margin-top: 12px;
+        padding: 12px;
+        border: 1px solid #444;
+        border-radius: 10px;
+      }
+
+      #retouchPanel .rt-size-label {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+
+      #retouchPanel #rtTapSize {
+        display: block;
+        width: 100%;
+        min-height: 30px;
+        accent-color: #8064ff;
+        touch-action: pan-y;
+      }
+
       #retouchPanel .rt-help {
         font-size: 12px;
-        opacity: .8;
-        line-height: 1.5;
-        margin-top: 8px;
+        opacity: .85;
+        line-height: 1.6;
+        margin-top: 10px;
       }
 
       #preview.rt-tap-mode {
@@ -173,29 +181,6 @@
         -webkit-user-select: none;
       }
     `;
-
-     #retouchPanel .rt-size-control {
-  margin-top: 12px;
-  padding: 10px;
-  border: 1px solid #444;
-  border-radius: 10px;
-}
-
-#retouchPanel .rt-size-label {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 13px;
-  margin-bottom: 7px;
-}
-
-#retouchPanel #rtTapSize {
-  display: block;
-  width: 100%;
-  min-height: 28px;
-  accent-color: #8064ff;
-  touch-action: pan-y;
-}
 
     document.head.appendChild(style);
 
@@ -206,88 +191,89 @@
       <strong>Retouch Tools</strong>
 
       <div class="rt-row">
-        <button id="rtAuto">Auto Retouch</button>
-        <button id="rtCompare">Before / After</button>
+        <button id="rtAuto" type="button">Auto Retouch</button>
+        <button id="rtCompare" type="button">Before / After</button>
+      </div>
+
+      <div class="rt-row">
+        <button id="rtTap" type="button">Tap to Remove: OFF</button>
+        <button id="rtUndo" type="button">Undo</button>
+        <button id="rtReset" type="button">Reset</button>
       </div>
 
       <div class="rt-size-control">
-  <div class="rt-size-label">
-    <label for="rtTapSize">Tap Size</label>
-    <span id="rtTapSizeValue">60</span>
-  </div>
-  <input
-    id="rtTapSize"
-    type="range"
-    min="15"
-    max="100"
-    value="60"
-    step="5"
-  >
-  <div class="rt-size-label">
-    <span>Small</span>
-    <span>Large</span>
-  </div>
-</div>
+        <div class="rt-size-label">
+          <label for="rtTapSize">Tap Size</label>
+          <span id="rtTapSizeValue">60</span>
+        </div>
 
-      <div class="rt-row">
-        <button id="rtZoomOut">− Zoom</button>
-        <button id="rtZoomReset">Reset Zoom</button>
-        <button id="rtZoomIn">+ Zoom</button>
+        <input
+          id="rtTapSize"
+          type="range"
+          min="15"
+          max="100"
+          value="60"
+          step="5"
+        >
+
+        <div class="rt-size-label">
+          <span>Small</span>
+          <span>Large</span>
+        </div>
       </div>
 
       <div class="rt-row">
-        <button id="rtDownload">Download</button>
-        <button id="rtClose">Close</button>
+        <button id="rtZoomOut" type="button">− Zoom</button>
+        <button id="rtZoomReset" type="button">Reset Zoom</button>
+        <button id="rtZoomIn" type="button">+ Zoom</button>
+      </div>
+
+      <div class="rt-row">
+        <button id="rtDownload" type="button">Download</button>
+        <button id="rtClose" type="button">Close</button>
       </div>
 
       <div class="rt-help">
         पहले Auto Retouch दबाएँ। फिर Tap to Remove चालू करके
-        छोटे pimples या blemishes पर tap करें। Zoom के लिए
-        + Zoom / − Zoom इस्तेमाल करें। Undo पिछला बदलाव वापस करता है।
+        pimples या छोटे blemishes पर tap करें। Tap Size से
+        retouch का क्षेत्र छोटा या बड़ा करें। Undo पिछला बदलाव
+        वापस करता है।
       </div>
     `;
 
-    // Place Retouch panel below the photo card,
-// not beside the photo preview.
-const photoCard = document.querySelector(".photoCard");
+    // Put the panel BELOW the complete photo card.
+    const photoCard = document.querySelector(".photoCard");
 
-if (photoCard) {
-  photoCard.insertAdjacentElement("afterend", panel);
-} else {
-  const preview = getPreview();
-  const parent = preview?.parentElement;
-  if (parent) {
-    parent.insertAdjacentElement("afterend", panel);
-  } else {
-    document.querySelector(".app")?.appendChild(panel);
-  }
-}
+    if (photoCard) {
+      photoCard.insertAdjacentElement("afterend", panel);
+    } else {
+      const app = document.querySelector(".app");
+      if (app) app.appendChild(panel);
+      else document.body.appendChild(panel);
+    }
 
     $("rtAuto").addEventListener("click", () => {
-      applyRetouch().catch((err) => {
-        console.error(err);
-        say("Auto Retouch नहीं हो पाया।");
-      });
+      applyRetouch();
     });
 
     $("rtCompare").addEventListener("click", compare);
     $("rtTap").addEventListener("click", toggleTapMode);
     $("rtUndo").addEventListener("click", undo);
     $("rtReset").addEventListener("click", reset);
-     const tapSizeSlider = $("rtTapSize");
-const tapSizeValue = $("rtTapSizeValue");
 
-if (tapSizeSlider) {
-  tapSizeSlider.addEventListener("input", () => {
-    tapSize = Number(tapSizeSlider.value);
+    $("rtTapSize").addEventListener("input", (event) => {
+      tapSize = Number(event.target.value);
+      $("rtTapSizeValue").textContent = String(tapSize);
+    });
 
-    if (tapSizeValue) {
-      tapSizeValue.textContent = String(tapSize);
-    }
-  });
-}
-    $("rtZoomOut").addEventListener("click", () => zoomBy(1 / 1.25));
-    $("rtZoomIn").addEventListener("click", () => zoomBy(1.25));
+    $("rtZoomOut").addEventListener("click", () => {
+      zoomBy(1 / 1.25);
+    });
+
+    $("rtZoomIn").addEventListener("click", () => {
+      zoomBy(1.25);
+    });
+
     $("rtZoomReset").addEventListener("click", resetZoom);
     $("rtDownload").addEventListener("click", download);
     $("rtClose").addEventListener("click", closePanel);
@@ -298,7 +284,7 @@ if (tapSizeSlider) {
   function open() {
     const p = getPreview();
 
-    if (!p || !p.src) {
+    if (!p || !p.getAttribute("src") || !p.src) {
       say("पहले Add Photo से फोटो चुनें।");
       return;
     }
@@ -310,7 +296,7 @@ if (tapSizeSlider) {
     const panel = $("retouchPanel");
     if (panel) panel.style.display = "block";
 
-    if (resultUrl) {
+    if (resultUrl && !showingBefore) {
       setPreviewSource(resultUrl);
     }
 
@@ -336,12 +322,11 @@ if (tapSizeSlider) {
     }
 
     busy = true;
-    $("rtAuto").disabled = true;
+    if ($("rtAuto")) $("rtAuto").disabled = true;
 
     try {
       if (!originalSrc) originalSrc = p.src;
 
-      // Use the latest edited result if one exists.
       const source = resultUrl || originalSrc;
       const img = await image(source);
 
@@ -366,39 +351,40 @@ if (tapSizeSlider) {
 
       ctx.drawImage(img, 0, 0, w, h);
 
-      const sourcePixels = ctx.getImageData(0, 0, w, h);
-      const originalPixels = new Uint8ClampedArray(sourcePixels.data);
-      const output = sourcePixels.data;
+      const pixels = ctx.getImageData(0, 0, w, h);
+      const original = new Uint8ClampedArray(pixels.data);
 
-      // Gentle smoothing; preserves most edges and texture.
-      const radius = Math.max(1, Math.min(3, Math.round(w / 500)));
-      const blurredCanvas = document.createElement("canvas");
-      blurredCanvas.width = w;
-      blurredCanvas.height = h;
+      const blurCanvas = document.createElement("canvas");
+      blurCanvas.width = w;
+      blurCanvas.height = h;
 
-      const blurredCtx = blurredCanvas.getContext("2d", {
+      const blurCtx = blurCanvas.getContext("2d", {
         willReadFrequently: true
       });
 
-      blurredCtx.filter = `blur(${radius}px)`;
-      blurredCtx.drawImage(canvas, 0, 0);
-      blurredCtx.filter = "none";
+      if (!blurCtx) throw new Error("Blur canvas unavailable");
 
-      const blurred = blurredCtx.getImageData(0, 0, w, h).data;
+      const radius = Math.max(1, Math.min(3, Math.round(w / 500)));
+
+      blurCtx.filter = `blur(${radius}px)`;
+      blurCtx.drawImage(canvas, 0, 0);
+      blurCtx.filter = "none";
+
+      const blurred = blurCtx.getImageData(0, 0, w, h).data;
+      const output = pixels.data;
 
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
 
-          const r = originalPixels[i];
-          const g = originalPixels[i + 1];
-          const b = originalPixels[i + 2];
+          const r = original[i];
+          const g = original[i + 1];
+          const b = original[i + 2];
 
           const max = Math.max(r, g, b);
           const min = Math.min(r, g, b);
           const brightness = (r + g + b) / 3;
 
-          // Approximate skin-color selection.
           const likelySkin =
             r > 60 &&
             g > 30 &&
@@ -410,17 +396,15 @@ if (tapSizeSlider) {
 
           if (!likelySkin) continue;
 
-          // Preserve high-contrast edges.
           const edge =
-            Math.abs(originalPixels[i - 4] - originalPixels[i + 4]) +
-            Math.abs(originalPixels[i - w * 4] - originalPixels[i + w * 4]);
+            Math.abs(original[i - 4] - original[i + 4]) +
+            Math.abs(original[i - w * 4] - original[i + w * 4]);
 
           if (edge > 95) continue;
 
           const blend = 0.18;
 
-          output[i] =
-            r * (1 - blend) + blurred[i] * blend;
+          output[i] = r * (1 - blend) + blurred[i] * blend;
           output[i + 1] =
             g * (1 - blend) + blurred[i + 1] * blend;
           output[i + 2] =
@@ -428,7 +412,7 @@ if (tapSizeSlider) {
         }
       }
 
-      ctx.putImageData(sourcePixels, 0, 0);
+      ctx.putImageData(pixels, 0, 0);
 
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob((value) => {
@@ -438,11 +422,12 @@ if (tapSizeSlider) {
       });
 
       keepUndo();
-
       revokeUrl(resultUrl);
-      resultUrl = URL.createObjectURL(blob);
 
+      resultUrl = URL.createObjectURL(blob);
       showingBefore = false;
+
+      setTapMode(false);
       setPreviewSource(resultUrl);
       resetZoom();
 
@@ -452,10 +437,7 @@ if (tapSizeSlider) {
       say("Retouch नहीं हो पाया। दूसरी फोटो के साथ कोशिश करें।");
     } finally {
       busy = false;
-
-      if ($("rtAuto")) {
-        $("rtAuto").disabled = false;
-      }
+      if ($("rtAuto")) $("rtAuto").disabled = false;
     }
   }
 
@@ -469,7 +451,14 @@ if (tapSizeSlider) {
 
     if (showingBefore) setTapMode(false);
 
-    updateCompare();
+    setPreviewSource(showingBefore ? originalSrc : resultUrl);
+
+    const button = $("rtCompare");
+    if (button) {
+      button.textContent = showingBefore
+        ? "Show After"
+        : "Before / After";
+    }
   }
 
   function undo() {
@@ -526,6 +515,11 @@ if (tapSizeSlider) {
     const p = getPreview();
     const button = $("rtTap");
 
+    if (tapMode && !resultUrl) {
+      tapMode = false;
+      say("पहले Auto Retouch करें, फिर Tap to Remove चालू करें।");
+    }
+
     if (p) {
       p.classList.toggle("rt-tap-mode", tapMode);
       p.style.touchAction = tapMode ? "none" : "pan-y";
@@ -539,17 +533,9 @@ if (tapSizeSlider) {
       button.classList.toggle("rt-active", tapMode);
     }
 
-    if (tapMode && !resultUrl) {
-      tapMode = false;
-
-      if (p) p.classList.remove("rt-tap-mode");
-      if (button) {
-        button.textContent = "Tap to Remove: OFF";
-        button.classList.remove("rt-active");
-      }
-
-      say("पहले Auto Retouch करें, फिर Tap to Remove चालू करें।");
-      return;
+    if (!tapMode) {
+      pointers.clear();
+      gesture = null;
     }
 
     applyTransform();
@@ -566,11 +552,7 @@ if (tapSizeSlider) {
   }
 
   function zoomBy(factor) {
-    const next = Math.max(1, Math.min(5, scale * factor));
-
-    if (next === scale) return;
-
-    scale = next;
+    scale = Math.max(1, Math.min(5, scale * factor));
     applyTransform();
   }
 
@@ -629,7 +611,6 @@ if (tapSizeSlider) {
       const centerX = (a.x + b.x) / 2;
       const centerY = (a.y + b.y) / 2;
 
-      const oldScale = scale;
       const nextScale = Math.max(
         1,
         Math.min(
@@ -640,12 +621,10 @@ if (tapSizeSlider) {
       );
 
       const rect = p.getBoundingClientRect();
+      const localX = (gesture.cx - rect.left) / scale;
+      const localY = (gesture.cy - rect.top) / scale;
 
-      // Rect already reflects the current CSS transform.
-      // Convert screen point to the preview's local coordinate space.
-      const localX = (gesture.cx - rect.left) / oldScale;
-      const localY = (gesture.cy - rect.top) / oldScale;
-
+      const oldScale = scale;
       scale = nextScale;
 
       panX =
@@ -672,16 +651,12 @@ if (tapSizeSlider) {
 
     try {
       const img = await image(resultUrl);
-
-      // Natural image dimensions are the output canvas dimensions.
       const w = img.naturalWidth;
       const h = img.naturalHeight;
 
       const rect = p.getBoundingClientRect();
 
-      // Important fix:
-      // rect already includes translate() and scale().
-      // Do not subtract panX/panY a second time.
+      // The rectangle already includes the CSS translation.
       const localX = (clientX - rect.left) / scale;
       const localY = (clientY - rect.top) / scale;
 
@@ -689,7 +664,6 @@ if (tapSizeSlider) {
       const boxH = p.clientHeight || p.offsetHeight;
 
       const fit = Math.min(boxW / w, boxH / h);
-
       const displayedW = w * fit;
       const displayedH = h * fit;
 
@@ -723,23 +697,20 @@ if (tapSizeSlider) {
       const imageData = ctx.getImageData(0, 0, w, h);
       const data = imageData.data;
 
-      // Small, soft local patch for blemish removal.
+      // Larger tap size means a larger retouch area.
       const radius = Math.max(
-  12,
-  Math.min(100, Math.round(w * tapSize / 1000))
-);
+        12,
+        Math.min(100, Math.round(w * tapSize / 1000))
+      );
 
-const innerRadius = Math.max(
-  3,
-  Math.round(radius * 0.55)
-);
+      const innerRadius = Math.max(3, Math.round(radius * 0.55));
 
-      // Sample nearby pixels outside the blemish area.
       let sumR = 0;
       let sumG = 0;
       let sumB = 0;
       let samples = 0;
 
+      // Sample surrounding pixels outside the central area.
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
           const distance = Math.hypot(dx, dy);
@@ -769,7 +740,6 @@ const innerRadius = Math.max(
       const avgG = sumG / samples;
       const avgB = sumB / samples;
 
-      // Blend the sampled color softly toward the tap center.
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
           const distance = Math.hypot(dx, dy);
@@ -782,15 +752,21 @@ const innerRadius = Math.max(
 
           const feather = Math.max(
             0,
-            Math.min(1, (radius - distance) / Math.max(1, radius - innerRadius))
+            Math.min(
+              1,
+              (radius - distance) /
+                Math.max(1, radius - innerRadius)
+            )
           );
 
           const strength = 0.82 * feather;
           const i = (sy * w + sx) * 4;
 
           data[i] = data[i] * (1 - strength) + avgR * strength;
-          data[i + 1] = data[i + 1] * (1 - strength) + avgG * strength;
-          data[i + 2] = data[i + 2] * (1 - strength) + avgB * strength;
+          data[i + 1] =
+            data[i + 1] * (1 - strength) + avgG * strength;
+          data[i + 2] =
+            data[i + 2] * (1 - strength) + avgB * strength;
         }
       }
 
@@ -804,10 +780,9 @@ const innerRadius = Math.max(
       });
 
       keepUndo();
-
       revokeUrl(resultUrl);
-      resultUrl = URL.createObjectURL(blob);
 
+      resultUrl = URL.createObjectURL(blob);
       showingBefore = false;
       setPreviewSource(resultUrl);
 
@@ -823,9 +798,9 @@ const innerRadius = Math.max(
   function installGestures() {
     const p = getPreview();
 
-    if (!p || p.dataset.rtV5Gestures) return;
+    if (!p || p.dataset.rtV6Gestures) return;
 
-    p.dataset.rtV5Gestures = "1";
+    p.dataset.rtV6Gestures = "1";
     p.style.transformOrigin = "0 0";
 
     p.addEventListener("pointerdown", (e) => {
@@ -870,19 +845,13 @@ const innerRadius = Math.max(
         pointers.size === 1 &&
         start &&
         start.count === 1 &&
-        Math.hypot(
-          pt.x - start.x,
-          pt.y - start.y
-        ) < 12;
+        Math.hypot(pt.x - start.x, pt.y - start.y) < 12;
 
       pointers.delete(e.pointerId);
       gesture = snapshot();
 
       if (isTap) {
-        removeAtTap(e.clientX, e.clientY).catch((err) => {
-          console.error(err);
-          say("इस जगह को retouch नहीं कर पाए।");
-        });
+        removeAtTap(e.clientX, e.clientY);
       }
     };
 
@@ -895,47 +864,43 @@ const innerRadius = Math.max(
 
     p.addEventListener("click", (e) => {
       if (!tapMode) return;
-
       e.preventDefault();
       e.stopPropagation();
     }, true);
   }
 
-  // Public functions for the rest of the app.
+  function connectExistingButton() {
+    const tool = document.querySelector('.tool[data-tool="retouch"]');
+
+    if (tool && !tool.dataset.rtV6Connected) {
+      tool.dataset.rtV6Connected = "1";
+
+      // Capture phase prevents the main toolbar handler from
+      // interfering with the Retouch tool click.
+      tool.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        open();
+      }, true);
+    }
+
+    const button = [
+      $("retouch"),
+      $("retouchButton"),
+      $("retouchBtn")
+    ].find(Boolean);
+
+    if (button && !button.dataset.rtV6Connected) {
+      button.dataset.rtV6Connected = "1";
+      button.addEventListener("click", open);
+    }
+
+    installGestures();
+  }
+
   window.openRetouch = open;
   window.closeRetouch = closePanel;
   window.applyRetouch = applyRetouch;
-
-  // Add a Retouch button only if the app does not already have one.
-  function connectExistingButton() {
-  // Actual Retouch tool in your index.html
-  const tool = document.querySelector(
-    '.tool[data-tool="retouch"]'
-  );
-
-  if (tool && !tool.dataset.rtV5Connected) {
-    tool.dataset.rtV5Connected = "1";
-
-    tool.addEventListener("click", (event) => {
-      event.preventDefault();
-      open();
-    });
-  }
-
-  // Also support a separate Retouch button if one exists.
-  const button = [
-    $("retouch"),
-    $("retouchButton"),
-    $("retouchBtn")
-  ].find(Boolean);
-
-  if (button && !button.dataset.rtV5Connected) {
-    button.dataset.rtV5Connected = "1";
-    button.addEventListener("click", open);
-  }
-
-  installGestures();
-  }
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", connectExistingButton, {
@@ -945,27 +910,30 @@ const innerRadius = Math.max(
     connectExistingButton();
   }
 
-  // Handle photo selection/reset from the main app.
+  // Keep the newly selected photo as the original.
   const fileInput = $("fileInput");
 
   if (fileInput) {
     fileInput.addEventListener("change", () => {
       const file = fileInput.files && fileInput.files[0];
+
       if (!file || !file.type.startsWith("image/")) return;
 
       clearResult();
-      originalSrc = "";
-      showingBefore = false;
       setTapMode(false);
       resetZoom();
 
-      const reader = new FileReader();
+      // app.js is loaded first and handles this same input first.
+      const p = getPreview();
+      originalSrc = p && p.src ? p.src : "";
 
-      reader.onload = () => {
-        originalSrc = String(reader.result || "");
-      };
-
-      reader.readAsDataURL(file);
+      // If app.js updates the preview asynchronously, sync once more.
+      setTimeout(() => {
+        const currentPreview = getPreview();
+        if (currentPreview && currentPreview.src) {
+          originalSrc = currentPreview.src;
+        }
+      }, 100);
     });
   }
 })();
