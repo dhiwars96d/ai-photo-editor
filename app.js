@@ -3283,6 +3283,10 @@ document
           const type =
             tool.dataset.tool;
 
+           if (tool.id === "adjustmentsToggle") {
+  return;
+           }
+
 
           if (
             type === "smooth"
