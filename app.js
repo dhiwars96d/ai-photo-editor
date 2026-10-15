@@ -78,7 +78,38 @@ let adjustmentTimer = null;
 
 let smoothTimer = null;
 
+let smoothBaseBlob = null;
 
+function getCurrentPhotoBlob() {
+  return window.__editedPhotoBlob || editedBlob || selectedFile;
+}
+
+function getCurrentPhotoFile() {
+  const blob = getCurrentPhotoBlob();
+
+  if (!blob) return null;
+
+  if (typeof File !== "undefined" && blob instanceof File) {
+    return blob;
+  }
+
+  return new File([blob], "edited-photo.jpg", {
+    type: blob.type || "image/jpeg"
+  });
+}
+
+function publishEditedBlob(blob) {
+  if (!blob) return;
+
+  window.__editedPhotoBlob = blob;
+
+  if (
+    window.Retouch &&
+    typeof window.Retouch.setCurrentBlob === "function"
+  ) {
+    window.Retouch.setCurrentBlob(blob);
+  }
+}
 /* =========================================================
    STATUS
 ========================================================= */
