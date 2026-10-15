@@ -77,7 +77,7 @@ async function applyRetouch() {
   say("Skin smoothing aur spots retouch ho rahe hain…");
 
   try {
-    const img = await image(originalSrc);
+    const img = await image(resultUrl || originalSrc);
     const factor = Math.min(
       1,
       1400 / Math.max(img.naturalWidth, img.naturalHeight)
