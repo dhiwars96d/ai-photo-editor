@@ -898,7 +898,7 @@
     installGestures();
   }
 
-  window.openRetouch = open;
+  window.Retouch = { open, close: closePanel, apply: applyRetouch };
   window.closeRetouch = closePanel;
   window.applyRetouch = applyRetouch;
 
