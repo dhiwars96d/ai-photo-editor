@@ -774,9 +774,9 @@ if (panel) {
 
       // Larger tap size means a larger retouch area.
       const radius = Math.max(
-        12,
-        Math.min(100, Math.round(w * tapSize / 1000))
-      );
+  8,
+  Math.min(65, Math.round(w * tapSize / 1400))
+);
 
       const innerRadius = Math.max(3, Math.round(radius * 0.55));
 
@@ -834,7 +834,7 @@ if (panel) {
             )
           );
 
-          const strength = 0.82 * feather;
+          const strength = 0.38 * feather;
           const i = (sy * w + sx) * 4;
 
           data[i] = data[i] * (1 - strength) + avgR * strength;
