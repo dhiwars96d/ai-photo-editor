@@ -175,17 +175,17 @@
         margin-top: 10px;
       }
 
+      
       #preview.rt-tap-mode {
         cursor: crosshair;
         user-select: none;
         -webkit-user-select: none;
       }
-    
+    `;
+
     style.textContent += `
-      /* Retouch panel: keep it visible above the mobile toolbar */
       @media (max-width: 600px) {
         .app:has(#preview[src]) #retouchPanel {
-          display: none;
           position: fixed;
           left: 10px;
           right: 10px;
@@ -198,6 +198,7 @@
           z-index: 100;
           margin: 0;
           padding: 14px;
+          box-sizing: border-box;
           background: #fff;
           color: #302531;
           border: 1px solid #f28ab9;
@@ -224,8 +225,8 @@
       }
     `;
 
-
     document.head.appendChild(style);
+
 
     const panel = document.createElement("section");
     panel.id = "retouchPanel";
