@@ -273,37 +273,45 @@ async function applyRetouch() {
 
   try {
     const p = $("preview");
-    const img = await image(resultUrl);
-    const rect = p.getBoundingClientRect();
+const img = await image(resultUrl);
 
-    // Convert screen coordinates into the original image coordinates.
-    const fit = Math.min(
-      p.clientWidth / img.naturalWidth,
-      p.clientHeight / img.naturalHeight
-    );
+// Photo ki original, untransformed layout size
+const baseW = p.offsetWidth;
+const baseH = p.offsetHeight;
 
-    const displayedW = img.naturalWidth * fit;
-    const displayedH = img.naturalHeight * fit;
+// Transformed image ki screen position
+const r = p.getBoundingClientRect();
 
-    const localX = clientX - rect.left - panX;
-    const localY = clientY - rect.top - panY;
+// Screen tap ko image ke untransformed local coordinates mein badlein
+const localX = (clientX - r.left) / scale;
+const localY = (clientY - r.top) / scale;
 
-    const x = Math.round(
-      (localX - (p.clientWidth - displayedW) / 2) /
-      (fit * scale)
-    );
-    const y = Math.round(
-      (localY - (p.clientHeight - displayedH) / 2) /
-      (fit * scale)
-    );
+// Image ke andar fit hone par aane wali khaali jagah
+const fit = Math.min(
+  baseW / img.naturalWidth,
+  baseH / img.naturalHeight
+);
 
-    const w = img.naturalWidth;
-    const h = img.naturalHeight;
+const displayedW = img.naturalWidth * fit;
+const displayedH = img.naturalHeight * fit;
 
-    if (x < 0 || y < 0 || x >= w || y >= h) {
-      say("Photo ke andar blemish par tap karein.");
-      return;
-    }
+const x = Math.round(
+  (localX - panX) / fit -
+  (baseW - displayedW) / (2 * fit)
+);
+const y = Math.round(
+  (localY - panY) / fit -
+  (baseH - displayedH) / (2 * fit)
+);
+
+if (
+  x < 0 || y < 0 ||
+  x >= img.naturalWidth ||
+  y >= img.naturalHeight
+) {
+  say("Photo ke andar blemish par tap karein.");
+  return;
+}
 
     const canvas = document.createElement("canvas");
     canvas.width = w;
