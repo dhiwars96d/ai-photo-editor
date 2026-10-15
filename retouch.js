@@ -1,414 +1,897 @@
-/* RETOUCH.JS — Offline Retouch v4 */
+/* ==========================================
+   RETOUCH.JS — Offline Retouch v5
+   Keeps existing app.js and hair-grow.js
+   ========================================== */
+
 (() => {
   "use strict";
-  let originalSrc="", resultUrl="", previousResultUrl="", showingBefore=false, busy=false, tapMode=false;
-  let scale=1, panX=0, panY=0, pointers=new Map(), gesture=null;
-  const $=id=>document.getElementById(id);
 
-  function say(t){if($("rtMessage"))$("rtMessage").textContent=t;const s=$("status");if(s){s.textContent=t;s.style.display="block";}}
-  function revoke(u){if(u&&u.startsWith("blob:"))URL.revokeObjectURL(u);}
-  function clearHistory(){revoke(previousResultUrl);previousResultUrl="";}
-  function clearResult(){revoke(resultUrl);clearHistory();resultUrl="";}
-  function image(src){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(Error("Image load failed"));i.src=src;});}
+  const $ = (id) => document.getElementById(id);
 
-  function styles(){
-    if($("rtV4Style"))return;
-    const s=document.createElement("style");s.id="rtV4Style";
-    s.textContent=`
-    #retouchV4Backdrop{position:fixed;inset:0;z-index:9998;display:none;align-items:flex-end;justify-content:center;background:transparent;pointer-events:none}
-    #retouchV4{pointer-events:auto;box-sizing:border-box;width:100%;max-width:560px;max-height:43dvh;overflow:auto;overscroll-behavior:contain;padding:10px 14px calc(12px + env(safe-area-inset-bottom));background:#fff8fc;color:#30232b;border-radius:20px 20px 0 0;box-shadow:0 -8px 30px #0003;font-family:inherit}
-    #retouchV4 *{box-sizing:border-box}#retouchV4 .rtHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
-    #retouchV4 .rtTitle{font-size:18px;font-weight:700}#retouchV4 .rtSub{color:#786874;font-size:12px;line-height:1.4;margin:0 0 10px}
-    #retouchV4 button{font:inherit;font-size:13px;border:1px solid #ebc5d8;background:white;color:#382934;border-radius:11px;padding:9px 10px;min-height:38px;touch-action:manipulation}
-    #retouchV4 button.primary{background:#e84f99;color:white;border-color:#e84f99;font-weight:600}#retouchV4 button.active{background:#382934;color:white}
-    #retouchV4 button:disabled{opacity:.55}#retouchV4 .rtLabel{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
-    #retouchV4 input[type=range]{width:100%;accent-color:#e84f99;margin:0 0 5px}
-    #retouchV4 .rtButtons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
-    #retouchV4 .rtButtons button{width:100%}#retouchV4 #rtMessage{font-size:12px;color:#79566b;line-height:1.35;margin:8px 0 0;overflow-wrap:anywhere}
-    #retouchV4Backdrop.rtTapMode{background:transparent}
-    @media(min-width:700px){#retouchV4{border-radius:20px 20px 0 0}}`;
-    document.head.appendChild(s);
+  let originalSrc = "";
+  let resultUrl = "";
+  let previousResultUrl = "";
+  let showingBefore = false;
+  let busy = false;
+  let tapMode = false;
+
+  // Zoom and gesture state
+  let scale = 1;
+  let panX = 0;
+  let panY = 0;
+  const pointers = new Map();
+  let gesture = null;
+
+  function say(message) {
+    if (typeof window.showStatus === "function") {
+      window.showStatus(message);
+      return;
+    }
+
+    const box = $("statusBox") || $("status");
+    if (box) box.textContent = message;
   }
 
-  function createPanel(){
-    styles();let back=$("retouchV4Backdrop");
-    if(back){back.style.display="flex";return;}
-    back=document.createElement("div");back.id="retouchV4Backdrop";
-    back.innerHTML=`<section id="retouchV4" role="dialog" aria-label="Offline Retouch">
-      <div style="width:36px;height:4px;border-radius:5px;background:#e8cada;margin:0 auto 9px"></div>
-      <div class="rtHead"><div class="rtTitle">✨ Offline Retouch</div><button id="rtClose" type="button">Close ✕</button></div>
-      <p class="rtSub">Auto Retouch से त्वचा स्मूद करें। Tap to Remove चालू करके दाग पर टैप करें।</p>
-      <div class="rtLabel"><label for="rtStrength">Skin smoothing</label><strong id="rtStrengthValue">45%</strong></div>
-      <input id="rtStrength" type="range" min="10" max="70" value="45">
-      <div class="rtButtons">
-        <button class="primary" id="rtApply">Auto Retouch</button><button id="rtCompare">Before / After</button>
-        <button id="rtTapMode">Tap to Remove: OFF</button><button id="rtUndo">Undo</button>
-        <button id="rtReset">Reset</button><button id="rtZoomReset">Reset Zoom</button>
-        <button class="primary" id="rtDownload" style="grid-column:1/-1">Download Retouched Photo</button>
-      </div><p id="rtMessage" aria-live="polite">Strength चुनें और Auto Retouch दबाएँ।</p></section>`;
-    document.body.appendChild(back);
-    $("rtClose").onclick=closePanel;
-    $("rtStrength").addEventListener("input",()=>$("rtStrengthValue").textContent=$("rtStrength").value+"%");
-    $("rtApply").onclick=applyRetouch;$("rtCompare").onclick=compare;$("rtTapMode").onclick=toggleTapMode;
-    $("rtUndo").onclick=undo;$("rtReset").onclick=reset;$("rtZoomReset").onclick=resetZoom;$("rtDownload").onclick=download;
-    back.addEventListener("click",e=>{if(e.target===back)closePanel();});
+  function image(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Image load failed"));
+
+      img.src = src;
+    });
+  }
+
+  function revokeUrl(url) {
+    if (url && url.startsWith("blob:")) {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function getPreview() {
+    return $("preview");
+  }
+
+  function setPreviewSource(src) {
+    const p = getPreview();
+    if (!p || !src) return;
+
+    p.src = src;
+    p.style.transformOrigin = "0 0";
+    applyTransform();
+  }
+
+  function keepUndo() {
+    if (!resultUrl) return;
+
+    revokeUrl(previousResultUrl);
+    previousResultUrl = resultUrl;
+  }
+
+  function updateCompare() {
+    const p = getPreview();
+    if (!p) return;
+
+    const src = showingBefore
+      ? originalSrc
+      : (resultUrl || originalSrc);
+
+    if (src) setPreviewSource(src);
+
+    const button = $("rtCompare");
+    if (button) {
+      button.textContent = showingBefore
+        ? "Show After"
+        : "Before / After";
+    }
+  }
+
+  function clearResult() {
+    revokeUrl(resultUrl);
+    revokeUrl(previousResultUrl);
+
+    resultUrl = "";
+    previousResultUrl = "";
+    showingBefore = false;
+  }
+
+  function resetZoom() {
+    scale = 1;
+    panX = 0;
+    panY = 0;
+    pointers.clear();
+    gesture = null;
+    applyTransform();
+  }
+
+  function applyTransform() {
+    const p = getPreview();
+    if (!p) return;
+
+    p.style.transformOrigin = "0 0";
+    p.style.transform =
+      `translate(${panX}px, ${panY}px) scale(${scale})`;
+    p.style.touchAction = tapMode ? "none" : "pan-y";
+  }
+
+  function makePanel() {
+    if ($("retouchPanel")) return;
+
+    const style = document.createElement("style");
+
+    style.id = "retouchStyle";
+    style.textContent = `
+      #retouchPanel {
+        display: none;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px;
+        margin-top: 12px;
+        border-radius: 14px;
+        background: var(--panel, #171717);
+        color: var(--text, #ffffff);
+        border: 1px solid #444;
+      }
+
+      #retouchPanel .rt-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 9px;
+      }
+
+      #retouchPanel button {
+        border: 1px solid #555;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #292929;
+        color: white;
+        font-size: 14px;
+      }
+
+      #retouchPanel button:disabled {
+        opacity: .5;
+      }
+
+      #retouchPanel button.rt-active {
+        background: #6c4dff;
+        border-color: #8b75ff;
+      }
+
+      #retouchPanel .rt-help {
+        font-size: 12px;
+        opacity: .8;
+        line-height: 1.5;
+        margin-top: 8px;
+      }
+
+      #preview.rt-tap-mode {
+        cursor: crosshair;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+    `;
+
+    document.head.appendChild(style);
+
+    const panel = document.createElement("section");
+    panel.id = "retouchPanel";
+
+    panel.innerHTML = `
+      <strong>Retouch Tools</strong>
+
+      <div class="rt-row">
+        <button id="rtAuto">Auto Retouch</button>
+        <button id="rtCompare">Before / After</button>
+      </div>
+
+      <div class="rt-row">
+        <button id="rtTap">Tap to Remove: OFF</button>
+        <button id="rtUndo">Undo</button>
+        <button id="rtReset">Reset</button>
+      </div>
+
+      <div class="rt-row">
+        <button id="rtZoomOut">− Zoom</button>
+        <button id="rtZoomReset">Reset Zoom</button>
+        <button id="rtZoomIn">+ Zoom</button>
+      </div>
+
+      <div class="rt-row">
+        <button id="rtDownload">Download</button>
+        <button id="rtClose">Close</button>
+      </div>
+
+      <div class="rt-help">
+        पहले Auto Retouch दबाएँ। फिर Tap to Remove चालू करके
+        छोटे pimples या blemishes पर tap करें। Zoom के लिए
+        + Zoom / − Zoom इस्तेमाल करें। Undo पिछला बदलाव वापस करता है।
+      </div>
+    `;
+
+    const preview = getPreview();
+    const parent =
+      preview?.parentElement?.parentElement ||
+      preview?.parentElement;
+
+    if (parent) {
+      parent.appendChild(panel);
+    } else {
+      document.body.appendChild(panel);
+    }
+
+    $("rtAuto").addEventListener("click", () => {
+      applyRetouch().catch((err) => {
+        console.error(err);
+        say("Auto Retouch नहीं हो पाया।");
+      });
+    });
+
+    $("rtCompare").addEventListener("click", compare);
+    $("rtTap").addEventListener("click", toggleTapMode);
+    $("rtUndo").addEventListener("click", undo);
+    $("rtReset").addEventListener("click", reset);
+    $("rtZoomOut").addEventListener("click", () => zoomBy(1 / 1.25));
+    $("rtZoomIn").addEventListener("click", () => zoomBy(1.25));
+    $("rtZoomReset").addEventListener("click", resetZoom);
+    $("rtDownload").addEventListener("click", download);
+    $("rtClose").addEventListener("click", closePanel);
+
     installGestures();
   }
 
-  function open(){
-    const p=$("preview");
-    if(!p||!p.src||!p.complete||!p.naturalWidth){say("पहले फोटो चुनें और लोड होने दें।");return;}
-    if(!resultUrl||(p.src!==resultUrl&&p.src!==originalSrc)){originalSrc=p.src;clearResult();showingBefore=false;}
-    else if(!originalSrc)originalSrc=p.src;
-    createPanel();$("retouchV4Backdrop").style.display="flex";say("Auto Retouch करें या Tap to Remove चालू करें।");
-  }
-  function closePanel(){const p=$("preview");if(showingBefore&&p&&resultUrl)p.src=resultUrl;showingBefore=false;setTapMode(false);if($("retouchV4Backdrop"))$("retouchV4Backdrop").style.display="none";resetZoom();}
-  function keepUndo(){clearHistory();previousResultUrl=resultUrl;}
-  function updateCompare(){if($("rtCompare"))$("rtCompare").textContent=showingBefore?"Show After":"Before / After";}
+  function open() {
+    const p = getPreview();
 
-  
-
-async function applyRetouch() {
-  if (busy || !originalSrc) return;
-
-  busy = true;
-  $("rtApply").disabled = true;
-  setTapMode(false);
-  say("Skin smoothing aur spots retouch ho rahe hain…");
-
-  try {
-    const img = await image(resultUrl || originalSrc);
-    const factor = Math.min(
-      1,
-      1400 / Math.max(img.naturalWidth, img.naturalHeight)
-    );
-    const w = Math.max(1, Math.round(img.naturalWidth * factor));
-    const h = Math.max(1, Math.round(img.naturalHeight * factor));
-
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-
-    const ctx = canvas.getContext("2d", {
-      willReadFrequently: true
-    });
-    if (!ctx) throw Error("Canvas unavailable");
-
-    ctx.drawImage(img, 0, 0, w, h);
-
-    const original = ctx.getImageData(0, 0, w, h);
-    const src = original.data;
-
-    const blurCanvas = document.createElement("canvas");
-    blurCanvas.width = w;
-    blurCanvas.height = h;
-
-    const blurCtx = blurCanvas.getContext("2d", {
-      willReadFrequently: true
-    });
-    if (!blurCtx) throw Error("Blur canvas unavailable");
-
-    blurCtx.filter = "blur(3px)";
-    blurCtx.drawImage(canvas, 0, 0);
-    blurCtx.filter = "none";
-
-    const blurred = blurCtx.getImageData(0, 0, w, h).data;
-    const strength = Number($("rtStrength").value) / 100;
-
-    function lum(data, i) {
-      return (
-        0.299 * data[i] +
-        0.587 * data[i + 1] +
-        0.114 * data[i + 2]
-      );
+    if (!p || !p.src) {
+      say("पहले Add Photo से फोटो चुनें।");
+      return;
     }
 
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
-        const i = (y * w + x) * 4;
-        const r = src[i];
-        const g = src[i + 1];
-        const b = src[i + 2];
+    if (!originalSrc) originalSrc = p.src;
 
-        // Relaxed skin-colour check
-        const skin =
-          r > 35 &&
-          g > 20 &&
-          r > b * 1.02 &&
-          r >= g * 0.75 &&
-          r - b > 5;
+    makePanel();
 
-        if (!skin) continue;
+    const panel = $("retouchPanel");
+    if (panel) panel.style.display = "block";
 
-        const left = i - 4;
-        const right = i + 4;
-        const up = i - w * 4;
-        const down = i + w * 4;
+    if (resultUrl) {
+      setPreviewSource(resultUrl);
+    }
 
-        const edge =
-          Math.abs(lum(src, left) - lum(src, right)) +
-          Math.abs(lum(src, up) - lum(src, down));
+    say("Retouch tools तैयार हैं।");
+  }
 
-        // Protect eyes, lips and strong facial edges
-        const protect = Math.max(
-          0,
-          Math.min(1, 1 - edge / 125)
-        );
+  function closePanel() {
+    const panel = $("retouchPanel");
+    if (panel) panel.style.display = "none";
 
-        const diff = (
-          Math.abs(r - blurred[i]) +
-          Math.abs(g - blurred[i + 1]) +
-          Math.abs(b - blurred[i + 2])
-        ) / 3;
+    setTapMode(false);
+    resetZoom();
+  }
 
-        // Base smoothing plus extra blending for small spots
-        const spot = Math.max(
-          0,
-          Math.min(1, (diff - 6) / 28)
-        );
+  async function applyRetouch() {
+    if (busy) return;
 
-        const smoothAmount = strength * 0.38 * protect;
-        const spotAmount = strength * 0.48 * spot * protect;
-        const amount = Math.min(
-          0.68,
-          smoothAmount + spotAmount
-        );
+    const p = getPreview();
 
-        if (amount <= 0) continue;
+    if (!p || !p.src) {
+      say("पहले फोटो चुनें।");
+      return;
+    }
 
-        src[i] = r * (1 - amount) + blurred[i] * amount;
-        src[i + 1] =
-          g * (1 - amount) + blurred[i + 1] * amount;
-        src[i + 2] =
-          b * (1 - amount) + blurred[i + 2] * amount;
+    busy = true;
+    $("rtAuto").disabled = true;
+
+    try {
+      if (!originalSrc) originalSrc = p.src;
+
+      // Use the latest edited result if one exists.
+      const source = resultUrl || originalSrc;
+      const img = await image(source);
+
+      const maxSize = 1400;
+      const ratio = Math.min(
+        1,
+        maxSize / Math.max(img.naturalWidth, img.naturalHeight)
+      );
+
+      const w = Math.max(1, Math.round(img.naturalWidth * ratio));
+      const h = Math.max(1, Math.round(img.naturalHeight * ratio));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext("2d", {
+        willReadFrequently: true
+      });
+
+      if (!ctx) throw new Error("Canvas unavailable");
+
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const sourcePixels = ctx.getImageData(0, 0, w, h);
+      const originalPixels = new Uint8ClampedArray(sourcePixels.data);
+      const output = sourcePixels.data;
+
+      // Gentle smoothing; preserves most edges and texture.
+      const radius = Math.max(1, Math.min(3, Math.round(w / 500)));
+      const blurredCanvas = document.createElement("canvas");
+      blurredCanvas.width = w;
+      blurredCanvas.height = h;
+
+      const blurredCtx = blurredCanvas.getContext("2d", {
+        willReadFrequently: true
+      });
+
+      blurredCtx.filter = `blur(${radius}px)`;
+      blurredCtx.drawImage(canvas, 0, 0);
+      blurredCtx.filter = "none";
+
+      const blurred = blurredCtx.getImageData(0, 0, w, h).data;
+
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = (y * w + x) * 4;
+
+          const r = originalPixels[i];
+          const g = originalPixels[i + 1];
+          const b = originalPixels[i + 2];
+
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          const brightness = (r + g + b) / 3;
+
+          // Approximate skin-color selection.
+          const likelySkin =
+            r > 60 &&
+            g > 30 &&
+            b > 15 &&
+            r >= g * 0.85 &&
+            r >= b * 1.05 &&
+            max - min > 10 &&
+            brightness > 35;
+
+          if (!likelySkin) continue;
+
+          // Preserve high-contrast edges.
+          const edge =
+            Math.abs(originalPixels[i - 4] - originalPixels[i + 4]) +
+            Math.abs(originalPixels[i - w * 4] - originalPixels[i + w * 4]);
+
+          if (edge > 95) continue;
+
+          const blend = 0.18;
+
+          output[i] =
+            r * (1 - blend) + blurred[i] * blend;
+          output[i + 1] =
+            g * (1 - blend) + blurred[i + 1] * blend;
+          output[i + 2] =
+            b * (1 - blend) + blurred[i + 2] * blend;
+        }
+      }
+
+      ctx.putImageData(sourcePixels, 0, 0);
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((value) => {
+          if (value) resolve(value);
+          else reject(new Error("Could not create image"));
+        }, "image/jpeg", 0.94);
+      });
+
+      keepUndo();
+
+      revokeUrl(resultUrl);
+      resultUrl = URL.createObjectURL(blob);
+
+      showingBefore = false;
+      setPreviewSource(resultUrl);
+      resetZoom();
+
+      say("Auto Retouch पूरा हुआ।");
+    } catch (err) {
+      console.error(err);
+      say("Retouch नहीं हो पाया। दूसरी फोटो के साथ कोशिश करें।");
+    } finally {
+      busy = false;
+
+      if ($("rtAuto")) {
+        $("rtAuto").disabled = false;
       }
     }
+  }
 
-    ctx.putImageData(original, 0, 0);
+  function compare() {
+    if (!originalSrc || !resultUrl) {
+      say("पहले Auto Retouch करें।");
+      return;
+    }
 
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(
-        value => value
-          ? resolve(value)
-          : reject(Error("Image export failed")),
-        "image/jpeg",
-        0.95
-      );
-    });
+    showingBefore = !showingBefore;
 
-    const nextUrl = URL.createObjectURL(blob);
+    if (showingBefore) setTapMode(false);
 
-    // Keep the previous result for Undo
-    keepUndo();
-    resultUrl = nextUrl;
-
-    $("preview").src = resultUrl;
-    showingBefore = false;
     updateCompare();
-
-    say("Retouch complete. Before / After se result dekhein.");
-
-  } catch (e) {
-    console.error(e);
-    say("Retouch nahi ho paya. Dobara try karein.");
-
-  } finally {
-    busy = false;
-    $("rtApply").disabled = false;
-  }
-}
-
-
-  function compare(){const p=$("preview");if(!p||!originalSrc||!resultUrl){say("पहले Auto Retouch चलाएँ।");return;}showingBefore=!showingBefore;p.src=showingBefore?originalSrc:resultUrl;updateCompare();if(showingBefore)setTapMode(false);}
-  function undo(){if(busy)return;if(!previousResultUrl){say("Undo करने के लिए पिछला बदलाव नहीं है।");return;}const cur=resultUrl;resultUrl=previousResultUrl;previousResultUrl="";revoke(cur);$("preview").src=resultUrl;showingBefore=false;updateCompare();say("पिछला बदलाव Undo हो गया।");}
-  function reset(){if(busy)return;setTapMode(false);if($("preview")&&originalSrc)$("preview").src=originalSrc;clearResult();showingBefore=false;updateCompare();resetZoom();say("मूल फोटो वापस आ गई।");}
-  function download(){if(!resultUrl){say("पहले Auto Retouch चलाएँ।");return;}const a=document.createElement("a");a.href=resultUrl;a.download="retouched-photo.jpg";document.body.appendChild(a);a.click();a.remove();}
-
-  function setTapMode(on){
-    tapMode=on;const b=$("rtTapMode"),p=$("preview"),back=$("retouchV4Backdrop");
-    if(b){b.textContent=on?"Tap to Remove: ON":"Tap to Remove: OFF";b.classList.toggle("active",on);}
-    if(p){p.style.cursor=on?"crosshair":"";p.style.touchAction=on?"none":"";}
-    if(back)back.classList.toggle("rtTapMode",on);
-  }
-  async function toggleTapMode(){
-    if(busy)return;if(!resultUrl){say("पहले Auto Retouch चलाएँ।");return;}if(showingBefore){say("पहले Show After दबाएँ।");return;}
-    setTapMode(!tapMode);resetZoom();
-    if(!tapMode){say("Tap to Remove बंद है।");return;}
-    say("चेहरे पर टैप करें। दो उँगलियों से zoom और एक उँगली से drag करें।");
-    try{
-      if(!("FaceDetector" in window))return;
-      const detector=new window.FaceDetector({fastMode:true,maxDetectedFaces:1}),img=await image(resultUrl),faces=await detector.detect(img);
-      if(!tapMode||!faces.length)return;
-      const box=faces[0].boundingBox,p=$("preview"),r=p.getBoundingClientRect(),s=Math.min(r.width/img.naturalWidth,r.height/img.naturalHeight);
-      const faceW=box.width*s;scale=Math.max(1.7,Math.min(3,r.width*.48/Math.max(1,faceW)));
-      panX=r.width/2-(box.x+box.width/2)*s*scale;panY=r.height*.36-(box.y+box.height/2)*s*scale;applyTransform();
-      say("Face zoom हुआ। दो उँगलियों से और zoom करें, दाग पर टैप करें।");
-    }catch(e){console.info("Automatic face detection unavailable",e);}
   }
 
-  function installGestures(){
-    const p=$("preview");if(!p||p.dataset.rtV4Gestures)return;p.dataset.rtV4Gestures="1";p.style.transformOrigin="0 0";
-    p.addEventListener("pointerdown",e=>{if(!tapMode)return;e.preventDefault();try{p.setPointerCapture(e.pointerId);}catch(_){}pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});gesture=snapshot();},{passive:false});
-    p.addEventListener("pointermove",e=>{if(!tapMode||!pointers.has(e.pointerId))return;e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});moveGesture();},{passive:false});
-    const end=e=>{if(!tapMode||!pointers.has(e.pointerId))return;e.preventDefault();const start=gesture;const pt=pointers.get(e.pointerId);const isTap=pointers.size===1&&start&&start.count===1&&Math.hypot(pt.x-start.x,pt.y-start.y)<12;pointers.delete(e.pointerId);gesture=snapshot();if(isTap)removeAtTap(e.clientX,e.clientY).catch(err=>{console.error(err);say("इस जगह को retouch नहीं कर पाए।");});};
-    p.addEventListener("pointerup",end,{passive:false});p.addEventListener("pointercancel",end,{passive:false});
-    p.addEventListener("touchmove",e=>{if(tapMode)e.preventDefault();},{passive:false});
-    p.addEventListener("click",e=>{if(tapMode){e.preventDefault();e.stopPropagation();}},true);
+  function undo() {
+    if (!previousResultUrl) {
+      say("Undo करने के लिए पिछला बदलाव नहीं है।");
+      return;
+    }
+
+    const current = resultUrl;
+    resultUrl = previousResultUrl;
+    previousResultUrl = current;
+
+    showingBefore = false;
+    setPreviewSource(resultUrl);
+
+    say("पिछला बदलाव वापस किया गया।");
   }
-  function snapshot(){const a=[...pointers.values()];if(!a.length)return null;if(a.length===1)return{count:1,x:a[0].x,y:a[0].y,startX:a[0].x,startY:a[0].y,scale,panX,panY};
-    return{count:2,cx:(a[0].x+a[1].x)/2,cy:(a[0].y+a[1].y)/2,dist:Math.max(1,Math.hypot(a[1].x-a[0].x,a[1].y-a[0].y)),scale,panX,panY};}
-  function moveGesture(){if(!gesture)return;const a=[...pointers.values()],p=$("preview"),r=p.getBoundingClientRect();if(a.length===1&&gesture.count===1){panX=gesture.panX+a[0].x-gesture.x;panY=gesture.panY+a[0].y-gesture.y;}
-    else if(a.length>=2&&gesture.count===2){const cx=(a[0].x+a[1].x)/2,cy=(a[0].y+a[1].y)/2,dist=Math.hypot(a[1].x-a[0].x,a[1].y-a[0].y),ns=Math.max(1,Math.min(5,gesture.scale*dist/gesture.dist));
-      const lx=gesture.cx-r.left,ly=gesture.cy-r.top;panX=cx-r.left-(lx-gesture.panX)*ns/gesture.scale;panY=cy-r.top-(ly-gesture.panY)*ns/gesture.scale;scale=ns;}else{gesture=snapshot();return;}applyTransform();}
-  function applyTransform(){const p=$("preview");if(p){p.style.transformOrigin="0 0";p.style.transform=`translate(${panX}px,${panY}px) scale(${scale})`;}}
-  function resetZoom(){scale=1;panX=0;panY=0;pointers.clear();gesture=null;const p=$("preview");if(p)p.style.transform="";}
+
+  function reset() {
+    if (!originalSrc) {
+      say("पहले फोटो चुनें।");
+      return;
+    }
+
+    clearResult();
+    setTapMode(false);
+    resetZoom();
+    setPreviewSource(originalSrc);
+
+    say("फोटो मूल स्थिति में वापस आ गई।");
+  }
+
+  function download() {
+    const src = resultUrl || originalSrc;
+
+    if (!src) {
+      say("Download करने के लिए फोटो नहीं है।");
+      return;
+    }
+
+    const a = document.createElement("a");
+    a.href = src;
+    a.download = "retouched-photo.jpg";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    say("Download शुरू किया गया।");
+  }
+
+  function setTapMode(enabled) {
+    tapMode = Boolean(enabled);
+
+    const p = getPreview();
+    const button = $("rtTap");
+
+    if (p) {
+      p.classList.toggle("rt-tap-mode", tapMode);
+      p.style.touchAction = tapMode ? "none" : "pan-y";
+    }
+
+    if (button) {
+      button.textContent = tapMode
+        ? "Tap to Remove: ON"
+        : "Tap to Remove: OFF";
+
+      button.classList.toggle("rt-active", tapMode);
+    }
+
+    if (tapMode && !resultUrl) {
+      tapMode = false;
+
+      if (p) p.classList.remove("rt-tap-mode");
+      if (button) {
+        button.textContent = "Tap to Remove: OFF";
+        button.classList.remove("rt-active");
+      }
+
+      say("पहले Auto Retouch करें, फिर Tap to Remove चालू करें।");
+      return;
+    }
+
+    applyTransform();
+  }
+
+  function toggleTapMode() {
+    setTapMode(!tapMode);
+
+    if (tapMode) {
+      say("छोटे blemish पर tap करें।");
+    } else {
+      say("Tap to Remove बंद है।");
+    }
+  }
+
+  function zoomBy(factor) {
+    const next = Math.max(1, Math.min(5, scale * factor));
+
+    if (next === scale) return;
+
+    scale = next;
+    applyTransform();
+  }
+
+  function snapshot() {
+    const pts = [...pointers.values()];
+
+    if (pts.length === 1) {
+      return {
+        count: 1,
+        x: pts[0].x,
+        y: pts[0].y,
+        startX: panX,
+        startY: panY,
+        startScale: scale
+      };
+    }
+
+    if (pts.length >= 2) {
+      const a = pts[0];
+      const b = pts[1];
+
+      return {
+        count: 2,
+        distance: Math.hypot(b.x - a.x, b.y - a.y),
+        cx: (a.x + b.x) / 2,
+        cy: (a.y + b.y) / 2,
+        startX: panX,
+        startY: panY,
+        startScale: scale
+      };
+    }
+
+    return null;
+  }
+
+  function moveGesture() {
+    if (!gesture) return;
+
+    const pts = [...pointers.values()];
+    const p = getPreview();
+
+    if (!p || !pts.length) return;
+
+    if (pts.length === 1 && gesture.count === 1) {
+      panX = gesture.startX + (pts[0].x - gesture.x);
+      panY = gesture.startY + (pts[0].y - gesture.y);
+      applyTransform();
+      return;
+    }
+
+    if (pts.length >= 2 && gesture.count === 2) {
+      const a = pts[0];
+      const b = pts[1];
+
+      const distance = Math.hypot(b.x - a.x, b.y - a.y);
+      const centerX = (a.x + b.x) / 2;
+      const centerY = (a.y + b.y) / 2;
+
+      const oldScale = scale;
+      const nextScale = Math.max(
+        1,
+        Math.min(
+          5,
+          gesture.startScale *
+            (distance / Math.max(1, gesture.distance))
+        )
+      );
+
+      const rect = p.getBoundingClientRect();
+
+      // Rect already reflects the current CSS transform.
+      // Convert screen point to the preview's local coordinate space.
+      const localX = (gesture.cx - rect.left) / oldScale;
+      const localY = (gesture.cy - rect.top) / oldScale;
+
+      scale = nextScale;
+
+      panX =
+        gesture.startX +
+        (centerX - gesture.cx) +
+        localX * (oldScale - nextScale);
+
+      panY =
+        gesture.startY +
+        (centerY - gesture.cy) +
+        localY * (oldScale - nextScale);
+
+      applyTransform();
+    }
+  }
 
   async function removeAtTap(clientX, clientY) {
-  if (busy || !resultUrl || showingBefore) {
-    say("Pehle retouched photo dikhayein.");
-    return;
+    if (busy || !resultUrl) return;
+
+    const p = getPreview();
+    if (!p) return;
+
+    busy = true;
+
+    try {
+      const img = await image(resultUrl);
+
+      // Natural image dimensions are the output canvas dimensions.
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+
+      const rect = p.getBoundingClientRect();
+
+      // Important fix:
+      // rect already includes translate() and scale().
+      // Do not subtract panX/panY a second time.
+      const localX = (clientX - rect.left) / scale;
+      const localY = (clientY - rect.top) / scale;
+
+      const boxW = p.clientWidth || p.offsetWidth;
+      const boxH = p.clientHeight || p.offsetHeight;
+
+      const fit = Math.min(boxW / w, boxH / h);
+
+      const displayedW = w * fit;
+      const displayedH = h * fit;
+
+      const offsetX = (boxW - displayedW) / 2;
+      const offsetY = (boxH - displayedH) / 2;
+
+      const x = Math.round((localX - offsetX) / fit);
+      const y = Math.round((localY - offsetY) / fit);
+
+      if (
+        !Number.isFinite(x) ||
+        !Number.isFinite(y) ||
+        x < 0 || y < 0 || x >= w || y >= h
+      ) {
+        say("फोटो के अंदर किसी जगह पर tap करें।");
+        return;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext("2d", {
+        willReadFrequently: true
+      });
+
+      if (!ctx) throw new Error("Canvas unavailable");
+
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const data = imageData.data;
+
+      // Small, soft local patch for blemish removal.
+      const radius = Math.max(5, Math.min(24, Math.round(w * 0.009)));
+      const innerRadius = Math.max(2, Math.round(radius * 0.55));
+
+      // Sample nearby pixels outside the blemish area.
+      let sumR = 0;
+      let sumG = 0;
+      let sumB = 0;
+      let samples = 0;
+
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const distance = Math.hypot(dx, dy);
+
+          if (distance < innerRadius || distance > radius) continue;
+
+          const sx = x + dx;
+          const sy = y + dy;
+
+          if (sx < 0 || sy < 0 || sx >= w || sy >= h) continue;
+
+          const i = (sy * w + sx) * 4;
+
+          sumR += data[i];
+          sumG += data[i + 1];
+          sumB += data[i + 2];
+          samples++;
+        }
+      }
+
+      if (!samples) {
+        say("इस जगह को retouch नहीं कर पाए।");
+        return;
+      }
+
+      const avgR = sumR / samples;
+      const avgG = sumG / samples;
+      const avgB = sumB / samples;
+
+      // Blend the sampled color softly toward the tap center.
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const distance = Math.hypot(dx, dy);
+          if (distance > radius) continue;
+
+          const sx = x + dx;
+          const sy = y + dy;
+
+          if (sx < 0 || sy < 0 || sx >= w || sy >= h) continue;
+
+          const feather = Math.max(
+            0,
+            Math.min(1, (radius - distance) / Math.max(1, radius - innerRadius))
+          );
+
+          const strength = 0.82 * feather;
+          const i = (sy * w + sx) * 4;
+
+          data[i] = data[i] * (1 - strength) + avgR * strength;
+          data[i + 1] = data[i + 1] * (1 - strength) + avgG * strength;
+          data[i + 2] = data[i + 2] * (1 - strength) + avgB * strength;
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((value) => {
+          if (value) resolve(value);
+          else reject(new Error("Could not create retouched image"));
+        }, "image/jpeg", 0.94);
+      });
+
+      keepUndo();
+
+      revokeUrl(resultUrl);
+      resultUrl = URL.createObjectURL(blob);
+
+      showingBefore = false;
+      setPreviewSource(resultUrl);
+
+      say("Tap retouch पूरा हुआ।");
+    } catch (err) {
+      console.error(err);
+      say("इस जगह को retouch नहीं कर पाए।");
+    } finally {
+      busy = false;
+    }
   }
 
-  busy = true;
+  function installGestures() {
+    const p = getPreview();
 
-  try {
-    const p = $("preview");
-const img = await image(resultUrl);
+    if (!p || p.dataset.rtV5Gestures) return;
 
-// Photo ki original, untransformed layout size
-const baseW = p.offsetWidth;
-const baseH = p.offsetHeight;
+    p.dataset.rtV5Gestures = "1";
+    p.style.transformOrigin = "0 0";
 
-// Transformed image ki screen position
-const r = p.getBoundingClientRect();
+    p.addEventListener("pointerdown", (e) => {
+      if (!tapMode) return;
 
-// Screen tap ko image ke untransformed local coordinates mein badlein
-const localX = (clientX - r.left) / scale;
-const localY = (clientY - r.top) / scale;
+      e.preventDefault();
 
-// Image ke andar fit hone par aane wali khaali jagah
-const fit = Math.min(
-  baseW / img.naturalWidth,
-  baseH / img.naturalHeight
-);
+      try {
+        p.setPointerCapture(e.pointerId);
+      } catch (_) {}
 
-const displayedW = img.naturalWidth * fit;
-const displayedH = img.naturalHeight * fit;
+      pointers.set(e.pointerId, {
+        x: e.clientX,
+        y: e.clientY
+      });
 
-const x = Math.round(
-  (localX - panX) / fit -
-  (baseW - displayedW) / (2 * fit)
-);
-const y = Math.round(
-  (localY - panY) / fit -
-  (baseH - displayedH) / (2 * fit)
-);
+      gesture = snapshot();
+    }, { passive: false });
 
-if (
-  x < 0 || y < 0 ||
-  x >= img.naturalWidth ||
-  y >= img.naturalHeight
-) {
-  say("Photo ke andar blemish par tap karein.");
-  return;
-}
+    p.addEventListener("pointermove", (e) => {
+      if (!tapMode || !pointers.has(e.pointerId)) return;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
+      e.preventDefault();
 
-    const ctx = canvas.getContext("2d", {
-      willReadFrequently: true
-    });
-    if (!ctx) throw Error("Canvas unavailable");
+      pointers.set(e.pointerId, {
+        x: e.clientX,
+        y: e.clientY
+      });
 
-    ctx.drawImage(img, 0, 0);
+      moveGesture();
+    }, { passive: false });
 
-    const original = ctx.getImageData(0, 0, w, h);
-    const src = original.data;
-    const out = new Uint8ClampedArray(src);
+    const end = (e) => {
+      if (!tapMode || !pointers.has(e.pointerId)) return;
 
-    // Remove radius adapts to image resolution.
-    const rad = Math.max(5, Math.min(24, Math.round(w * 0.009)));
-    const patchSize = rad * 2 + 1;
+      e.preventDefault();
 
-    // Build a replacement patch from nearby pixels outside the blemish.
-    // Each pixel samples nearby pixels at a similar distance from the tap.
-    for (let dy = -rad; dy <= rad; dy++) {
-      for (let dx = -rad; dx <= rad; dx++) {
-        const dist = Math.hypot(dx, dy);
-        if (dist > rad) continue;
+      const start = gesture;
+      const pt = pointers.get(e.pointerId);
 
-        const px = x + dx;
-        const py = y + dy;
-        if (px < 0 || py < 0 || px >= w || py >= h) continue;
+      const isTap =
+        pointers.size === 1 &&
+        start &&
+        start.count === 1 &&
+        Math.hypot(
+          pt.x - start.x,
+          pt.y - start.y
+        ) < 12;
 
-        let rr = 0, gg = 0, bb = 0, total = 0;
+      pointers.delete(e.pointerId);
+      gesture = snapshot();
 
-        for (let sy = -rad * 2; sy <= rad * 2; sy += 2) {
-          for (let sx = -rad * 2; sx <= rad * 2; sx += 2) {
-            const sd = Math.hypot(sx, sy);
-
-            // Sample surrounding skin, not the blemish itself.
-            if (sd < rad * 1.15 || sd > rad * 2.1) continue;
-
-            const qx = x + sx;
-            const qy = y + sy;
-            if (qx < 0 || qy < 0 || qx >= w || qy >= h) continue;
-
-            // Prefer samples near the same direction and distance.
-            const sampleI = (qy * w + qx) * 4;
-            const weight = 1 / (1 + Math.abs(sd - rad * 1.55));
-
-            rr += src[sampleI] * weight;
-            gg += src[sampleI + 1] * weight;
-            bb += src[sampleI + 2] * weight;
-            total += weight;
-          }
-        }
-
-        if (!total) continue;
-
-        const i = (py * w + px) * 4;
-
-        // Feather the edge to avoid a hard circular patch.
-        const edge = Math.max(0, 1 - dist / (rad * 1.12));
-        const amount = Math.min(0.96, edge * 0.96);
-
-        out[i] = src[i] * (1 - amount) + (rr / total) * amount;
-        out[i + 1] = src[i + 1] * (1 - amount) + (gg / total) * amount;
-        out[i + 2] = src[i + 2] * (1 - amount) + (bb / total) * amount;
+      if (isTap) {
+        removeAtTap(e.clientX, e.clientY).catch((err) => {
+          console.error(err);
+          say("इस जगह को retouch नहीं कर पाए।");
+        });
       }
+    };
+
+    p.addEventListener("pointerup", end, { passive: false });
+    p.addEventListener("pointercancel", end, { passive: false });
+
+    p.addEventListener("touchmove", (e) => {
+      if (tapMode) e.preventDefault();
+    }, { passive: false });
+
+    p.addEventListener("click", (e) => {
+      if (!tapMode) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+  }
+
+  // Public functions for the rest of the app.
+  window.openRetouch = open;
+  window.closeRetouch = closePanel;
+  window.applyRetouch = applyRetouch;
+
+  // Add a Retouch button only if the app does not already have one.
+  function connectExistingButton() {
+    const candidates = [
+      $("retouch"),
+      $("retouchButton"),
+      $("retouchBtn")
+    ];
+
+    const button = candidates.find(Boolean);
+
+    if (button && !button.dataset.rtV5Connected) {
+      button.dataset.rtV5Connected = "1";
+      button.addEventListener("click", open);
     }
 
-    const result = new ImageData(out, w, h);
-    ctx.putImageData(result, 0, 0);
+    installGestures();
+  }
 
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(
-        b => b ? resolve(b) : reject(Error("Image export failed")),
-        "image/jpeg",
-        0.95
-      );
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", connectExistingButton, {
+      once: true
     });
-
-    const nextUrl = URL.createObjectURL(blob);
-
-    keepUndo();
-    resultUrl = nextUrl;
-    p.src = resultUrl;
-    showingBefore = false;
-    updateCompare();
-    applyTransform();
-
-    say("Retouch applied. Zarurat ho to blemish ke center par dobara tap karein.");
-
-  } catch (e) {
-    console.error(e);
-    say("Blemish remove nahi hua. Dobara try karein.");
-  } finally {
-    busy = false;
+  } else {
+    connectExistingButton();
   }
+
+  // Handle photo selection/reset from the main app.
+  const fileInput = $("fileInput");
+
+  if (fileInput) {
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file || !file.type.startsWith("image/")) return;
+
+      clearResult();
+      originalSrc = "";
+      showingBefore = false;
+      setTapMode(false);
+      resetZoom();
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        originalSrc = String(reader.result || "");
+      };
+
+      reader.readAsDataURL(file);
+    });
   }
-  window.Retouch={open};
 })();
