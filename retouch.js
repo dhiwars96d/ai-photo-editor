@@ -173,6 +173,29 @@
       }
     `;
 
+     #retouchPanel .rt-size-control {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid #444;
+  border-radius: 10px;
+}
+
+#retouchPanel .rt-size-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  margin-bottom: 7px;
+}
+
+#retouchPanel #rtTapSize {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  accent-color: #8064ff;
+  touch-action: pan-y;
+}
+
     document.head.appendChild(style);
 
     const panel = document.createElement("section");
@@ -186,11 +209,24 @@
         <button id="rtCompare">Before / After</button>
       </div>
 
-      <div class="rt-row">
-        <button id="rtTap">Tap to Remove: OFF</button>
-        <button id="rtUndo">Undo</button>
-        <button id="rtReset">Reset</button>
-      </div>
+      <div class="rt-size-control">
+  <div class="rt-size-label">
+    <label for="rtTapSize">Tap Size</label>
+    <span id="rtTapSizeValue">60</span>
+  </div>
+  <input
+    id="rtTapSize"
+    type="range"
+    min="15"
+    max="100"
+    value="60"
+    step="5"
+  >
+  <div class="rt-size-label">
+    <span>Small</span>
+    <span>Large</span>
+  </div>
+</div>
 
       <div class="rt-row">
         <button id="rtZoomOut">− Zoom</button>
@@ -210,16 +246,21 @@
       </div>
     `;
 
-    const preview = getPreview();
-    const parent =
-      preview?.parentElement?.parentElement ||
-      preview?.parentElement;
+    // Place Retouch panel below the photo card,
+// not beside the photo preview.
+const photoCard = document.querySelector(".photoCard");
 
-    if (parent) {
-      parent.appendChild(panel);
-    } else {
-      document.body.appendChild(panel);
-    }
+if (photoCard) {
+  photoCard.insertAdjacentElement("afterend", panel);
+} else {
+  const preview = getPreview();
+  const parent = preview?.parentElement;
+  if (parent) {
+    parent.insertAdjacentElement("afterend", panel);
+  } else {
+    document.querySelector(".app")?.appendChild(panel);
+  }
+}
 
     $("rtAuto").addEventListener("click", () => {
       applyRetouch().catch((err) => {
