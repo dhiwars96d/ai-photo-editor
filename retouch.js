@@ -341,6 +341,26 @@
   }
 
   function open() {
+     const adjustmentsPanel =
+  document.getElementById("adjustmentsPanel");
+
+const adjustmentsToggle =
+  document.getElementById("adjustmentsToggle");
+
+const adjustmentsChevron =
+  document.getElementById("adjustmentsChevron");
+
+if (adjustmentsPanel) {
+  adjustmentsPanel.classList.remove("open");
+}
+
+if (adjustmentsToggle) {
+  adjustmentsToggle.classList.remove("open");
+}
+
+if (adjustmentsChevron) {
+  adjustmentsChevron.textContent = "›";
+}
     const p = getPreview();
 
     if (!p || !p.getAttribute("src") || !p.src) {
