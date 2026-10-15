@@ -67,7 +67,22 @@
     revokeUrl(previousResultUrl);
     previousResultUrl = resultUrl;
   }
+// Share the latest edited image with all other tools.
+  function setCurrentBlob(blob) {
+    if (!blob) return;
 
+    revokeUrl(resultUrl);
+    revokeUrl(previousResultUrl);
+
+    resultUrl = URL.createObjectURL(blob);
+    previousResultUrl = "";
+    showingBefore = false;
+
+    window.__editedPhotoBlob = blob;
+
+    setPreviewSource(resultUrl);
+  }
+   
   function clearResult() {
     revokeUrl(resultUrl);
     revokeUrl(previousResultUrl);
@@ -481,10 +496,10 @@ if (panel) {
         }, "image/jpeg", 0.94);
       });
 
-      keepUndo();
-      revokeUrl(resultUrl);
+            keepUndo();
 
       resultUrl = URL.createObjectURL(blob);
+      window.__editedPhotoBlob = blob;
       showingBefore = false;
 
       setTapMode(false);
@@ -839,10 +854,10 @@ if (panel) {
         }, "image/jpeg", 0.94);
       });
 
-      keepUndo();
-      revokeUrl(resultUrl);
+            keepUndo();
 
       resultUrl = URL.createObjectURL(blob);
+      window.__editedPhotoBlob = blob;
       showingBefore = false;
       setPreviewSource(resultUrl);
 
@@ -973,7 +988,12 @@ if (panel) {
 
   }
 
-  window.Retouch = { open, close: closePanel, apply: applyRetouch };
+    window.Retouch = {
+    open,
+    close: closePanel,
+    apply: applyRetouch,
+    setCurrentBlob
+  };
   window.closeRetouch = closePanel;
   window.applyRetouch = applyRetouch;
 
