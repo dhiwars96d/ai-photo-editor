@@ -1374,6 +1374,10 @@ if (adjustmentsToggle) {
     "click",
     function () {
 
+    if (window.Retouch && typeof window.Retouch.close === "function") {
+      window.Retouch.close();
+    }
+
       const opened =
         adjustmentsPanel.classList.toggle(
           "open"
@@ -3286,6 +3290,16 @@ document
            if (tool.id === "adjustmentsToggle") {
   return;
            }
+
+           
+if (
+  type !== "retouch" &&
+  window.Retouch &&
+  typeof window.Retouch.close === "function"
+) {
+  window.Retouch.close();
+}
+
            
            if (adjustmentsPanel) {
   adjustmentsPanel.classList.remove("open");
