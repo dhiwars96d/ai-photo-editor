@@ -3283,6 +3283,21 @@ document
           const type =
             tool.dataset.tool;
 
+           // Close Adjustments when another tool is selected.
+if (type !== "adjustments") {
+  if (adjustmentsPanel) {
+    adjustmentsPanel.classList.remove("open");
+  }
+
+  if (adjustmentsToggle) {
+    adjustmentsToggle.classList.remove("open");
+  }
+
+  if (adjustmentsChevron) {
+    adjustmentsChevron.textContent = "›";
+  }
+}
+
 
           if (
             type === "smooth"
