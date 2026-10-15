@@ -2461,7 +2461,7 @@ let selectedHairIntensity =
 
 async function applyHairColorLocal() {
 
-  if (!selectedFile) {
+  if (!getCurrentPhotoBlob()) {
 
     showStatus(
       "Please select a photo first."
@@ -2483,10 +2483,18 @@ async function applyHairColorLocal() {
       await getHairSegmenter();
 
 
-    const img =
-      await loadImage(
-        selectedFile
-      );
+    const currentPhoto =
+  getCurrentPhotoBlob();
+
+if (!currentPhoto) {
+  showStatus("Please select a photo first.");
+  return;
+}
+
+const img =
+  await loadImage(
+    currentPhoto
+  );
 
 
     const width =
