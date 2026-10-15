@@ -263,26 +263,144 @@ async function applyRetouch() {
   function applyTransform(){const p=$("preview");if(p){p.style.transformOrigin="0 0";p.style.transform=`translate(${panX}px,${panY}px) scale(${scale})`;}}
   function resetZoom(){scale=1;panX=0;panY=0;pointers.clear();gesture=null;const p=$("preview");if(p)p.style.transform="";}
 
-  async function removeAtTap(clientX,clientY){
-    if(busy||!resultUrl||showingBefore){say("पहले retouched फोटो दिखाएँ।");return;}busy=true;
-    try{
-      const p=$("preview"),img=await image(resultUrl),r=p.getBoundingClientRect();
-      // Map tap from transformed preview coordinates back into image pixels.
-      const bx=clientX-r.left-panX,by=clientY-r.top-panY;
-      const fit=Math.min((p.offsetWidth||r.width)/img.naturalWidth,(p.offsetHeight||r.height)/img.naturalHeight);
-      const rw=img.naturalWidth*fit,rh=img.naturalHeight*fit;
-      const x=Math.round((bx-((p.offsetWidth-rw)/2))/(fit*scale)),y=Math.round((by-((p.offsetHeight-rh)/2))/(fit*scale));
-      if(x<0||y<0||x>=img.naturalWidth||y>=img.naturalHeight){say("फोटो के अंदर दाग पर टैप करें।");return;}
-      const w=img.naturalWidth,h=img.naturalHeight,rad=Math.max(6,Math.min(30,Math.round(w*.012)));
-      const c=document.createElement("canvas");c.width=w;c.height=h;const ctx=c.getContext("2d",{willReadFrequently:true});if(!ctx)throw Error("Canvas unavailable");ctx.drawImage(img,0,0);
-      const l=Math.max(0,x-rad*2),t=Math.max(0,y-rad*2),rr=Math.min(w,x+rad*2+1),bb=Math.min(h,y+rad*2+1),pw=rr-l,ph=bb-t,patch=ctx.getImageData(l,t,pw,ph);
-      let sr=0,sg=0,sb=0,n=0;
-      for(let yy=0;yy<ph;yy++)for(let xx=0;xx<pw;xx++){const gx=l+xx,gy=t+yy,d=Math.hypot(gx-x,gy-y);if(d<rad*1.15||d>rad*1.9)continue;const i=(yy*pw+xx)*4;sr+=patch.data[i];sg+=patch.data[i+1];sb+=patch.data[i+2];n++;}
-      if(!n){say("दूसरी जगह टैप करें।");return;}sr/=n;sg/=n;sb/=n;
-      const data=ctx.getImageData(0,0,w,h),d=data.data;
-      for(let yy=Math.max(0,y-rad);yy<=Math.min(h-1,y+rad);yy++)for(let xx=Math.max(0,x-rad);xx<=Math.min(w-1,x+rad);xx++){const dist=Math.hypot(xx-x,yy-y);if(dist>rad)continue;const i=(yy*w+xx)*4,a=.82*Math.pow(1-dist/rad,1.5);d[i]=d[i]*(1-a)+sr*a;d[i+1]=d[i+1]*(1-a)+sg*a;d[i+2]=d[i+2]*(1-a)+sb*a;}
-      ctx.putImageData(data,0,0);keepUndo();resultUrl=c.toDataURL("image/jpeg",.95);p.src=resultUrl;showingBefore=false;updateCompare();applyTransform();say("इस जगह को retouch किया। दूसरे दाग पर भी टैप कर सकते हैं।");
-    }finally{busy=false;}
+  async function removeAtTap(clientX, clientY) {
+  if (busy || !resultUrl || showingBefore) {
+    say("Pehle retouched photo dikhayein.");
+    return;
+  }
+
+  busy = true;
+
+  try {
+    const p = $("preview");
+    const img = await image(resultUrl);
+    const rect = p.getBoundingClientRect();
+
+    // Convert screen coordinates into the original image coordinates.
+    const fit = Math.min(
+      p.clientWidth / img.naturalWidth,
+      p.clientHeight / img.naturalHeight
+    );
+
+    const displayedW = img.naturalWidth * fit;
+    const displayedH = img.naturalHeight * fit;
+
+    const localX = clientX - rect.left - panX;
+    const localY = clientY - rect.top - panY;
+
+    const x = Math.round(
+      (localX - (p.clientWidth - displayedW) / 2) /
+      (fit * scale)
+    );
+    const y = Math.round(
+      (localY - (p.clientHeight - displayedH) / 2) /
+      (fit * scale)
+    );
+
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+
+    if (x < 0 || y < 0 || x >= w || y >= h) {
+      say("Photo ke andar blemish par tap karein.");
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext("2d", {
+      willReadFrequently: true
+    });
+    if (!ctx) throw Error("Canvas unavailable");
+
+    ctx.drawImage(img, 0, 0);
+
+    const original = ctx.getImageData(0, 0, w, h);
+    const src = original.data;
+    const out = new Uint8ClampedArray(src);
+
+    // Remove radius adapts to image resolution.
+    const rad = Math.max(5, Math.min(24, Math.round(w * 0.009)));
+    const patchSize = rad * 2 + 1;
+
+    // Build a replacement patch from nearby pixels outside the blemish.
+    // Each pixel samples nearby pixels at a similar distance from the tap.
+    for (let dy = -rad; dy <= rad; dy++) {
+      for (let dx = -rad; dx <= rad; dx++) {
+        const dist = Math.hypot(dx, dy);
+        if (dist > rad) continue;
+
+        const px = x + dx;
+        const py = y + dy;
+        if (px < 0 || py < 0 || px >= w || py >= h) continue;
+
+        let rr = 0, gg = 0, bb = 0, total = 0;
+
+        for (let sy = -rad * 2; sy <= rad * 2; sy += 2) {
+          for (let sx = -rad * 2; sx <= rad * 2; sx += 2) {
+            const sd = Math.hypot(sx, sy);
+
+            // Sample surrounding skin, not the blemish itself.
+            if (sd < rad * 1.15 || sd > rad * 2.1) continue;
+
+            const qx = x + sx;
+            const qy = y + sy;
+            if (qx < 0 || qy < 0 || qx >= w || qy >= h) continue;
+
+            // Prefer samples near the same direction and distance.
+            const sampleI = (qy * w + qx) * 4;
+            const weight = 1 / (1 + Math.abs(sd - rad * 1.55));
+
+            rr += src[sampleI] * weight;
+            gg += src[sampleI + 1] * weight;
+            bb += src[sampleI + 2] * weight;
+            total += weight;
+          }
+        }
+
+        if (!total) continue;
+
+        const i = (py * w + px) * 4;
+
+        // Feather the edge to avoid a hard circular patch.
+        const edge = Math.max(0, 1 - dist / (rad * 1.12));
+        const amount = Math.min(0.96, edge * 0.96);
+
+        out[i] = src[i] * (1 - amount) + (rr / total) * amount;
+        out[i + 1] = src[i + 1] * (1 - amount) + (gg / total) * amount;
+        out[i + 2] = src[i + 2] * (1 - amount) + (bb / total) * amount;
+      }
+    }
+
+    const result = new ImageData(out, w, h);
+    ctx.putImageData(result, 0, 0);
+
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        b => b ? resolve(b) : reject(Error("Image export failed")),
+        "image/jpeg",
+        0.95
+      );
+    });
+
+    const nextUrl = URL.createObjectURL(blob);
+
+    keepUndo();
+    resultUrl = nextUrl;
+    p.src = resultUrl;
+    showingBefore = false;
+    updateCompare();
+    applyTransform();
+
+    say("Retouch applied. Zarurat ho to blemish ke center par dobara tap karein.");
+
+  } catch (e) {
+    console.error(e);
+    say("Blemish remove nahi hua. Dobara try karein.");
+  } finally {
+    busy = false;
+  }
   }
   window.Retouch={open};
 })();
