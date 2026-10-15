@@ -1178,6 +1178,8 @@ function showSmoothResult(blob) {
   editedBlob =
     blob;
 
+   adjustmentBaseBlob = blob;
+publishEditedBlob(blob);
 
   if (preview) {
 
@@ -2085,18 +2087,17 @@ async function applyAdjustments() {
   );
 
 
-  editedBlob =
-    await new Promise(
-      function (resolve) {
-
-        canvas.toBlob(
-          resolve,
-          "image/jpeg",
-          0.94
-        );
-
-      }
+  editedBlob = await new Promise(
+  function (resolve) {
+    canvas.toBlob(
+      resolve,
+      "image/jpeg",
+      0.94
     );
+  }
+);
+
+publishEditedBlob(editedBlob);
 
 
   if (preview) {
@@ -3097,6 +3098,8 @@ async function applyHairColorLocal() {
 
     editedBlob =
       blob;
+     
+     publishEditedBlob(blob);
 
 
     if (preview) {
@@ -3276,7 +3279,7 @@ document
           if (
             type === "smooth"
           ) {
-
+smoothBaseBlob = getCurrentPhotoBlob();
             if (hairMenu) {
 
               hairMenu.style.display =
