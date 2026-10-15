@@ -955,7 +955,22 @@ if (panel) {
       button.addEventListener("click", open);
     }
 
+    
+    // Close Retouch when another editing tool is selected.
+    document.querySelectorAll(".tool[data-tool]").forEach((tool) => {
+      if (tool.dataset.rtCloseOnOtherTool) return;
+
+      tool.dataset.rtCloseOnOtherTool = "1";
+
+      tool.addEventListener("click", () => {
+        if (tool.dataset.tool !== "retouch") {
+          closePanel();
+        }
+      }, true);
+    });
+
     installGestures();
+
   }
 
   window.Retouch = { open, close: closePanel, apply: applyRetouch };
