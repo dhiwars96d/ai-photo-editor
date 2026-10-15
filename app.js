@@ -3286,6 +3286,18 @@ document
            if (tool.id === "adjustmentsToggle") {
   return;
            }
+           
+           if (adjustmentsPanel) {
+  adjustmentsPanel.classList.remove("open");
+}
+
+if (adjustmentsToggle) {
+  adjustmentsToggle.classList.remove("open");
+}
+
+if (adjustmentsChevron) {
+  adjustmentsChevron.textContent = "›";
+}
 
 
           if (
