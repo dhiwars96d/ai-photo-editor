@@ -180,7 +180,50 @@
         user-select: none;
         -webkit-user-select: none;
       }
+    
+    style.textContent += `
+      /* Retouch panel: keep it visible above the mobile toolbar */
+      @media (max-width: 600px) {
+        .app:has(#preview[src]) #retouchPanel {
+          display: none;
+          position: fixed;
+          left: 10px;
+          right: 10px;
+          bottom: calc(90px + env(safe-area-inset-bottom));
+          width: auto;
+          max-width: none;
+          max-height: 55dvh;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          z-index: 100;
+          margin: 0;
+          padding: 14px;
+          background: #fff;
+          color: #302531;
+          border: 1px solid #f28ab9;
+          border-radius: 18px;
+          box-shadow: 0 8px 30px rgba(0,0,0,.18);
+        }
+
+        #retouchPanel button {
+          color: #302531;
+          background: #fff;
+          border-color: #f1c6dc;
+        }
+
+        #retouchPanel button.rt-active {
+          background: #fff0f7;
+          border-color: #f42f91;
+          color: #c21868;
+        }
+
+        #retouchPanel input[type="range"] {
+          width: 100%;
+          accent-color: #f42f91;
+        }
+      }
     `;
+
 
     document.head.appendChild(style);
 
