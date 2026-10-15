@@ -335,10 +335,26 @@
 
     if (!originalSrc) originalSrc = p.src;
 
-    makePanel();
+    
+makePanel();
 
-    const panel = $("retouchPanel");
-    if (panel) panel.style.display = "block";
+const panel = $("retouchPanel");
+
+if (panel) {
+  panel.style.setProperty("display", "block", "important");
+  panel.style.setProperty("position", "fixed", "important");
+  panel.style.setProperty("left", "10px", "important");
+  panel.style.setProperty("right", "10px", "important");
+  panel.style.setProperty("bottom", "calc(90px + env(safe-area-inset-bottom))", "important");
+  panel.style.setProperty("width", "auto", "important");
+  panel.style.setProperty("max-height", "55dvh", "important");
+  panel.style.setProperty("overflow-y", "auto", "important");
+  panel.style.setProperty("z-index", "99999", "important");
+  panel.style.setProperty("margin", "0", "important");
+  panel.style.setProperty("background", "#fff", "important");
+  panel.style.setProperty("color", "#302531", "important");
+}
+
 
     if (resultUrl && !showingBefore) {
       setPreviewSource(resultUrl);
