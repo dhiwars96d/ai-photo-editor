@@ -847,20 +847,33 @@
 
   // Add a Retouch button only if the app does not already have one.
   function connectExistingButton() {
-    const candidates = [
-      $("retouch"),
-      $("retouchButton"),
-      $("retouchBtn")
-    ];
+  // Actual Retouch tool in your index.html
+  const tool = document.querySelector(
+    '.tool[data-tool="retouch"]'
+  );
 
-    const button = candidates.find(Boolean);
+  if (tool && !tool.dataset.rtV5Connected) {
+    tool.dataset.rtV5Connected = "1";
 
-    if (button && !button.dataset.rtV5Connected) {
-      button.dataset.rtV5Connected = "1";
-      button.addEventListener("click", open);
-    }
+    tool.addEventListener("click", (event) => {
+      event.preventDefault();
+      open();
+    });
+  }
 
-    installGestures();
+  // Also support a separate Retouch button if one exists.
+  const button = [
+    $("retouch"),
+    $("retouchButton"),
+    $("retouchBtn")
+  ].find(Boolean);
+
+  if (button && !button.dataset.rtV5Connected) {
+    button.dataset.rtV5Connected = "1";
+    button.addEventListener("click", open);
+  }
+
+  installGestures();
   }
 
   if (document.readyState === "loading") {
