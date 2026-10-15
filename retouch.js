@@ -724,8 +724,15 @@ if (tapSizeSlider) {
       const data = imageData.data;
 
       // Small, soft local patch for blemish removal.
-      const radius = Math.max(5, Math.min(24, Math.round(w * 0.009)));
-      const innerRadius = Math.max(2, Math.round(radius * 0.55));
+      const radius = Math.max(
+  12,
+  Math.min(100, Math.round(w * tapSize / 1000))
+);
+
+const innerRadius = Math.max(
+  3,
+  Math.round(radius * 0.55)
+);
 
       // Sample nearby pixels outside the blemish area.
       let sumR = 0;
