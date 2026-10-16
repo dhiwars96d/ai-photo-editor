@@ -411,43 +411,42 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 }
 
 
-/* PHOTO HISTORY CONTROLS - BEAUTYPLUS STYLE */
-.photoCard {
-  position: relative;
-}
 
-.previewBox {
-  position: relative;
-}
-
+/* UNDO / REDO - ABOVE ALL TOOL PANELS */
 .photoHistoryControls {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  position: fixed !important;
+  left: 12px !important;
+  bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+  z-index: 9999 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+
+  padding: 5px 8px !important;
+  border-radius: 28px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
 }
 
 .photoHistoryControls button {
-  width: 42px;
-  height: 42px;
-  border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.96);
-  color: #333;
-  font-size: 28px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-  padding: 0;
-  cursor: pointer;
+  width: 40px !important;
+  height: 40px !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  color: #333 !important;
+  font-size: 28px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
 }
 
 .photoHistoryControls button:disabled {
-  opacity: 0.4;
+  opacity: 0.4 !important;
 }
+
 
