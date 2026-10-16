@@ -204,7 +204,7 @@
           position: fixed;
           left: 10px;
           right: 10px;
-          bottom: calc(90px + env(safe-area-inset-bottom));
+          bottom: calc(145px + env(safe-area-inset-bottom));
           width: auto;
           max-width: none;
           max-height: 55dvh;
@@ -380,7 +380,7 @@ if (panel) {
   panel.style.setProperty("position", "fixed", "important");
   panel.style.setProperty("left", "10px", "important");
   panel.style.setProperty("right", "10px", "important");
-  panel.style.setProperty("bottom", "calc(90px + env(safe-area-inset-bottom))", "important");
+  panel.style.setProperty("bottom", "calc(145px + env(safe-area-inset-bottom))", "important");
   panel.style.setProperty("width", "auto", "important");
   panel.style.setProperty("max-height", "55dvh", "important");
   panel.style.setProperty("overflow-y", "auto", "important");
