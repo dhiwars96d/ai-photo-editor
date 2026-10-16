@@ -190,6 +190,20 @@ function resetToOriginalPhoto() {
   showStatus("Original photo restore ho gayi ✓");
 }
 
+
+/* =========================================================
+   UNDO + RESET BUTTONS
+========================================================= */
+
+document.querySelectorAll('.tool[data-tool="undo"]').forEach(button => {
+  button.addEventListener("click", undoLastEdit);
+});
+
+document.querySelectorAll('.tool[data-tool="reset"]').forEach(button => {
+  button.addEventListener("click", resetToOriginalPhoto);
+});
+
+
 /* =========================================================
    STATUS
 ========================================================= */
