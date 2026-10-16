@@ -67,7 +67,17 @@
     revokeUrl(previousResultUrl);
     previousResultUrl = resultUrl;
   }
-// Share the latest edited image with all other tools.
+   function saveMainUndoState() {
+  const currentBlob = window.__editedPhotoBlob;
+
+  if (currentBlob && typeof window.saveUndoState === "function") {
+    window.saveUndoState(currentBlob);
+     window.saveUndoState = saveUndoState;
+  }
+   }
+   
+
+   // Share the latest edited image with all other tools.
   function setCurrentBlob(blob) {
     if (!blob) return;
 
