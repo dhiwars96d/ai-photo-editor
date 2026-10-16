@@ -410,6 +410,7 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
   z-index: 100 !important;
 }
 
+
 /* PHOTO HISTORY CONTROLS - BEAUTYPLUS STYLE */
 .photoCard {
   position: relative;
@@ -449,3 +450,4 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 .photoHistoryControls button:disabled {
   opacity: 0.4;
 }
+
