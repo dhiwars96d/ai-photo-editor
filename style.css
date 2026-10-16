@@ -355,3 +355,8 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+/* Keep the new Skin button in the main toolbar */
+.app:has(#preview[src]) .tools > .tool[data-tool="skin"] {
+  display: flex;
+}
