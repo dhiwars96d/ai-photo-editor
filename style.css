@@ -175,7 +175,7 @@ body{background:#fff}
   bottom: calc(55px + env(safe-area-inset-bottom));
   z-index: 35;
   width: auto;
-  max-height: 48dvh;
+  max-height: 35dvh;
   overflow: hidden;
   margin: 0;
   border: 1px solid rgba(242, 138, 185, 0.55);
