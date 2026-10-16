@@ -409,3 +409,43 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 .app:has(#preview[src]) .tools {
   z-index: 100 !important;
 }
+
+/* PHOTO HISTORY CONTROLS - BEAUTYPLUS STYLE */
+.photoCard {
+  position: relative;
+}
+
+.previewBox {
+  position: relative;
+}
+
+.photoHistoryControls {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.photoHistoryControls button {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.96);
+  color: #333;
+  font-size: 28px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  padding: 0;
+  cursor: pointer;
+}
+
+.photoHistoryControls button:disabled {
+  opacity: 0.4;
+}
