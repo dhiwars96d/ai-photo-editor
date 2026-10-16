@@ -360,3 +360,52 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 .app:has(#preview[src]) .tools > .tool[data-tool="skin"] {
   display: none !important;
 }
+
+/* BEAUTYPLUS-STYLE TOOLBAR SPACE */
+.app:has(#preview[src]) .tools {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 3px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  min-height: 82px !important;
+  padding: 7px 6px calc(7px + env(safe-area-inset-bottom)) !important;
+  scrollbar-width: none;
+}
+
+.app:has(#preview[src]) .tools::-webkit-scrollbar {
+  display: none;
+}
+
+.app:has(#preview[src]) .tools > .tool {
+  flex: 0 0 64px !important;
+  width: 64px !important;
+  min-width: 64px !important;
+  min-height: 66px !important;
+  padding: 7px 2px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Skin button stays available in the editor */
+.app:has(#preview[src]) .tools > .tool[data-tool="skin"] {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Keep panels above the taller toolbar */
+.app:has(#preview[src]) .smoothControl,
+.app:has(#preview[src]) .hairMenu,
+.app:has(#preview[src]) .hairColorPanel,
+.app:has(#preview[src]) .adjustmentsPanel {
+  bottom: calc(94px + env(safe-area-inset-bottom)) !important;
+  max-height: 45dvh !important;
+  z-index: 35 !important;
+}
+
+/* Retouch and other panels should not cover the toolbar */
+.app:has(#preview[src]) .tools {
+  z-index: 100 !important;
+}
