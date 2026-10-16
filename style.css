@@ -172,7 +172,7 @@ body{background:#fff}
   position: fixed;
   left: 10px;
   right: 10px;
-  bottom: calc(55px + env(safe-area-inset-bottom));
+  bottom: calc(75px + env(safe-area-inset-bottom));
   z-index: 35;
   width: auto;
   max-height: 35dvh;
