@@ -110,6 +110,86 @@ function publishEditedBlob(blob) {
     window.Retouch.setCurrentBlob(blob);
   }
 }
+
+/* =========================================================
+   UNDO + RESET PHOTO
+========================================================= */
+
+const undoHistory = [];
+const MAX_UNDO_STEPS = 15;
+
+function saveUndoState(blob) {
+  if (!blob) return;
+
+  undoHistory.push(blob);
+
+  if (undoHistory.length > MAX_UNDO_STEPS) {
+    undoHistory.shift();
+  }
+}
+
+function restorePhoto(blob) {
+  if (!blob) return;
+
+  editedBlob = blob;
+  adjustmentBaseBlob = blob;
+  window.__editedPhotoBlob = blob;
+
+  if (preview) {
+    preview.src = URL.createObjectURL(blob);
+    preview.style.display = "block";
+  }
+
+  if (placeholder) {
+    placeholder.style.display = "none";
+  }
+
+  if (downloadButton) {
+    downloadButton.style.display = "block";
+  }
+
+  resetAdjustmentValues();
+
+  if (statusBox) {
+    statusBox.style.display = "none";
+  }
+}
+
+function undoLastEdit() {
+  if (undoHistory.length === 0) {
+    showStatus("Undo karne ke liye koi pichhla edit nahi hai.");
+    return;
+  }
+
+  const previousPhoto = undoHistory.pop();
+
+  restorePhoto(previousPhoto);
+  showStatus("Pichhla edit undo ho gaya ✓");
+}
+
+function resetToOriginalPhoto() {
+  if (!selectedFile) {
+    showStatus("Pehle photo select karo.");
+    return;
+  }
+
+  undoHistory.length = 0;
+
+  restorePhoto(selectedFile);
+
+  resetSmoothSlider();
+
+  if (smoothControl) smoothControl.classList.remove("show");
+  if (hairMenu) hairMenu.style.display = "none";
+  if (hairColorPanel) hairColorPanel.style.display = "none";
+
+  if (window.Retouch && typeof window.Retouch.close === "function") {
+    window.Retouch.close();
+  }
+
+  showStatus("Original photo restore ho gayi ✓");
+}
+
 /* =========================================================
    STATUS
 ========================================================= */
@@ -210,6 +290,8 @@ if (fileInput) {
 
 
     selectedFile = file;
+
+     undoHistory.length = 0;
 
     window.__selectedPhotoFile = file;
 
@@ -453,9 +535,11 @@ function showResult(blob) {
   if (!blob) return;
 
 
-  editedBlob = blob;
+  saveUndoState(getCurrentPhotoBlob());
 
-  adjustmentBaseBlob = blob;
+editedBlob = blob;
+adjustmentBaseBlob = blob;
+publishEditedBlob(blob);
 
 
   if (preview) {
@@ -1174,7 +1258,8 @@ function showSmoothResult(blob) {
 
   if (!blob) return;
 
-
+saveUndoState(getCurrentPhotoBlob());
+  
   editedBlob =
     blob;
 
