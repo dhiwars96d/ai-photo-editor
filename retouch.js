@@ -526,6 +526,7 @@ if (panel) {
         }, "image/jpeg", 0.94);
       });
 
+       saveMainUndoState();
             keepUndo();
 
       resultUrl = URL.createObjectURL(blob);
@@ -884,6 +885,7 @@ if (panel) {
         }, "image/jpeg", 0.94);
       });
 
+       saveMainUndoState();
             keepUndo();
 
       resultUrl = URL.createObjectURL(blob);
