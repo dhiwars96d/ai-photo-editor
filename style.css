@@ -308,3 +308,50 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 .app:has(#preview[src]) .tools {
   z-index: 100 !important;
 }
+
+/* FINAL FIX: Raise panels well above the bottom toolbar */
+.app:has(#preview[src]) .smoothControl,
+.app:has(#preview[src]) .hairMenu,
+.app:has(#preview[src]) .hairColorPanel,
+.app:has(#preview[src]) .adjustmentsPanel {
+  position: fixed !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: calc(105px + env(safe-area-inset-bottom)) !important;
+  width: auto !important;
+  max-height: 50dvh !important;
+  overflow-y: auto !important;
+  z-index: 35 !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+.app:has(#preview[src]) .smoothControl {
+  padding: 16px !important;
+}
+
+.app:has(#preview[src]) .smoothControl input[type="range"],
+.app:has(#preview[src]) #smoothSlider,
+.app:has(#preview[src]) #hairIntensitySlider {
+  display: block !important;
+  width: 100% !important;
+  min-height: 24px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.app:has(#preview[src]) .hairColorPanel {
+  max-height: 50dvh !important;
+}
+
+.app:has(#preview[src]) .hairColors {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.app:has(#preview[src]) .hairColorOption {
+  display: block !important;
+  min-height: 44px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
