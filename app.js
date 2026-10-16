@@ -112,10 +112,11 @@ function publishEditedBlob(blob) {
 }
 
 /* =========================================================
-   UNDO + RESET PHOTO
+   UNDO + REDO PHOTO
 ========================================================= */
 
 const undoHistory = [];
+const redoHistory = [];
 const MAX_UNDO_STEPS = 15;
 
 function saveUndoState(blob) {
@@ -126,6 +127,9 @@ function saveUndoState(blob) {
   if (undoHistory.length > MAX_UNDO_STEPS) {
     undoHistory.shift();
   }
+
+  // Naye edit ke baad purana Redo history hatao
+  redoHistory.length = 0;
 }
 
 function restorePhoto(blob) {
@@ -153,18 +157,45 @@ function restorePhoto(blob) {
   if (statusBox) {
     statusBox.style.display = "none";
   }
+
+  if (window.Retouch &&
+      typeof window.Retouch.setCurrentBlob === "function") {
+    window.Retouch.setCurrentBlob(blob);
+  }
 }
 
 function undoLastEdit() {
   if (undoHistory.length === 0) {
-    showStatus("Undo karne ke liye koi pichhla edit nahi hai.");
+    showStatus("Undo ke liye pichhla edit nahi hai.");
     return;
   }
 
+  const currentPhoto = getCurrentPhotoBlob();
   const previousPhoto = undoHistory.pop();
 
+  if (currentPhoto) {
+    redoHistory.push(currentPhoto);
+  }
+
   restorePhoto(previousPhoto);
-  showStatus("Pichhla edit undo ho gaya ✓");
+  showStatus("Undo ho gaya ✓");
+}
+
+function redoLastEdit() {
+  if (redoHistory.length === 0) {
+    showStatus("Redo ke liye koi edit nahi hai.");
+    return;
+  }
+
+  const currentPhoto = getCurrentPhotoBlob();
+  const nextPhoto = redoHistory.pop();
+
+  if (currentPhoto) {
+    undoHistory.push(currentPhoto);
+  }
+
+  restorePhoto(nextPhoto);
+  showStatus("Redo ho gaya ✓");
 }
 
 function resetToOriginalPhoto() {
@@ -174,9 +205,9 @@ function resetToOriginalPhoto() {
   }
 
   undoHistory.length = 0;
+  redoHistory.length = 0;
 
   restorePhoto(selectedFile);
-
   resetSmoothSlider();
 
   if (smoothControl) smoothControl.classList.remove("show");
@@ -188,6 +219,19 @@ function resetToOriginalPhoto() {
   }
 
   showStatus("Original photo restore ho gayi ✓");
+}
+
+/* BUTTON CONNECTIONS */
+
+const undoButton = document.getElementById("undoButton");
+const redoButton = document.getElementById("redoButton");
+
+if (undoButton) {
+  undoButton.addEventListener("click", undoLastEdit);
+}
+
+if (redoButton) {
+  redoButton.addEventListener("click", redoLastEdit);
 }
 
 
@@ -306,6 +350,8 @@ if (fileInput) {
     selectedFile = file;
 
      undoHistory.length = 0;
+
+     redoHistory.length = 0;
 
     window.__selectedPhotoFile = file;
 
