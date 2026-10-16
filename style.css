@@ -555,3 +555,37 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
   display: none !important;
 }
 
+/* Keep global Undo/Redo above every editing panel */
+.app:has(#preview[src]) .photoHistoryControls {
+  position: fixed !important;
+  left: 10px !important;
+  bottom: calc(94px + env(safe-area-inset-bottom)) !important;
+  top: auto !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  gap: 8px !important;
+  padding: 5px !important;
+  border-radius: 24px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18) !important;
+}
+
+.app:has(#preview[src]) .photoHistoryControls button {
+  position: relative !important;
+  z-index: 10000 !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  border: 1px solid #eee !important;
+  font-size: 23px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Retouch panel should not cover the history controls */
+.app:has(#preview[src]) .retouchPanel,
+.app:has(#preview[src]) #retouchPanel {
+  z-index: 100 !important;
+}
