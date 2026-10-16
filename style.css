@@ -589,3 +589,79 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 .app:has(#preview[src]) #retouchPanel {
   z-index: 100 !important;
 }
+
+/* FIRST SCREEN LAYOUT FIX */
+.app:not(:has(#preview[src])) {
+  max-width: 760px !important;
+  margin: 0 auto !important;
+  padding: 18px 12px 30px !important;
+  height: auto !important;
+  min-height: 100vh;
+  overflow: visible !important;
+}
+
+.app:not(:has(#preview[src])) header {
+  margin-bottom: 22px !important;
+}
+
+.app:not(:has(#preview[src])) h1 {
+  font-size: 28px !important;
+  line-height: 1.2 !important;
+  margin-bottom: 8px !important;
+}
+
+.app:not(:has(#preview[src])) .subtitle {
+  font-size: 13px !important;
+  margin-bottom: 18px !important;
+}
+
+.app:not(:has(#preview[src])) .photoCard {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 10px !important;
+  margin-bottom: 16px !important;
+  overflow: visible !important;
+}
+
+.app:not(:has(#preview[src])) .previewBox {
+  min-height: 260px !important;
+  width: 100% !important;
+  position: relative !important;
+  border-radius: 14px !important;
+}
+
+.app:not(:has(#preview[src])) .tools {
+  position: static !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  padding: 10px 0 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.app:not(:has(#preview[src])) .tools > .tool {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 72px !important;
+  flex: initial !important;
+  border: 1px solid #f1d2e1 !important;
+  border-radius: 12px !important;
+  padding: 9px 4px !important;
+}
+
+.app:not(:has(#preview[src])) .tools .toolName {
+  font-size: 11px !important;
+  white-space: normal !important;
+  line-height: 1.2 !important;
+}
+
+.app:not(:has(#preview[src])) .addButton {
+  display: block !important;
+  width: 100% !important;
+  margin-top: 10px !important;
+}
