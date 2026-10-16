@@ -356,11 +356,7 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
   opacity: 1 !important;
 }
 
-/* Skin button only in the main toolbar */
+/* Hide Skin button on the second screen */
 .app:has(#preview[src]) .tools > .tool[data-tool="skin"] {
-  display: flex;
-}
-
-.app:has(#preview[src]) .skinPanel .tool[data-tool="skin"] {
   display: none !important;
 }
