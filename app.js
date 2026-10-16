@@ -1916,7 +1916,7 @@ async function applyAdjustments() {
 
 
     const bright =
-      brightness * 1.2;
+      brightness * 0.5;
 
 
     r += bright;
