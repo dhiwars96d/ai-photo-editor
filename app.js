@@ -2093,7 +2093,41 @@ const clarity =
 
   }
 
+// Sharpness and Clarity processing
+const sharpData = new Uint8ClampedArray(data);
 
+const sharpAmount = sharpness / 100 * 1.5;
+const clarityAmount = clarity / 100 * 0.8;
+
+if (sharpAmount !== 0 || clarityAmount !== 0) {
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = (y * width + x) * 4;
+
+      const top = ((y - 1) * width + x) * 4;
+      const bottom = ((y + 1) * width + x) * 4;
+      const left = (y * width + x - 1) * 4;
+      const right = (y * width + x + 1) * 4;
+
+      for (let c = 0; c < 3; c++) {
+        const average =
+          (
+            sharpData[top + c] +
+            sharpData[bottom + c] +
+            sharpData[left + c] +
+            sharpData[right + c]
+          ) / 4;
+
+        const detail = sharpData[i + c] - average;
+
+        data[i + c] =
+          sharpData[i + c] +
+          detail * (sharpAmount + clarityAmount);
+      }
+    }
+  }
+   }
+   
   ctx.putImageData(
     imageData,
     0,
