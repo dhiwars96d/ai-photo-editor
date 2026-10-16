@@ -450,3 +450,45 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 }
 
 
+/* KEEP UNDO / REDO ABOVE EVERY EDITING PANEL */
+.photoHistoryControls {
+  position: fixed !important;
+  left: 12px !important;
+  bottom: calc(105px + env(safe-area-inset-bottom)) !important;
+  z-index: 2147483647 !important;
+  isolation: isolate !important;
+  display: flex !important;
+  gap: 10px !important;
+  align-items: center !important;
+  padding: 5px 8px !important;
+  border-radius: 30px !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.22) !important;
+}
+
+.photoHistoryControls button {
+  position: relative !important;
+  z-index: 2147483647 !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  flex: 0 0 40px !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  color: #222 !important;
+  font-size: 27px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Keep the controls above the adjustments panel */
+.adjustmentsPanel,
+.adjustmentsFrame,
+.smoothControl,
+.hairMenu,
+.hairColorPanel {
+  z-index: 100 !important;
+}
+
