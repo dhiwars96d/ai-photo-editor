@@ -2124,7 +2124,7 @@ if (sharpAmount !== 0 || clarityAmount !== 0) {
       ) / 4;
 
       const detail = centerLum - avgLum;
-      const clarityBoost = detail * clarityAmount * 1.8;
+      const clarityBoost = detail * clarityAmount * 2.8;
 
       for (let c = 0; c < 3; c++) {
         const average = (
@@ -2138,7 +2138,7 @@ if (sharpAmount !== 0 || clarityAmount !== 0) {
 
         data[i + c] = clamp(
           sharpData[i + c] +
-          edge * sharpAmount * 2.5 +
+          edge * sharpAmount * 3.5 +
           clarityBoost
         );
       }
