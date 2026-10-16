@@ -492,3 +492,13 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
   z-index: 100 !important;
 }
 
+
+/* Hide history controls until a photo is loaded */
+.photoHistoryControls {
+  display: none !important;
+}
+
+.app:has(#preview[src]) .photoHistoryControls {
+  display: flex !important;
+}
+
