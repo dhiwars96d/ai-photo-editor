@@ -265,3 +265,46 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
   max-height: 45dvh;
   overflow-y: auto;
 }
+
+/* FIX: Show complete Smooth Skin and Hair Color controls */
+.app:has(#preview[src]) .smoothControl {
+  position: fixed !important;
+  left: 10px !important;
+  right: 10px !important;
+  bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+  width: auto !important;
+  max-height: 38dvh !important;
+  overflow-y: auto !important;
+  z-index: 35 !important;
+  padding: 14px !important;
+}
+
+.app:has(#preview[src]) .hairColorPanel {
+  position: fixed !important;
+  left: 10px !important;
+  right: 10px !important;
+  bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+  width: auto !important;
+  max-height: 42dvh !important;
+  overflow-y: auto !important;
+  z-index: 35 !important;
+  padding: 14px !important;
+}
+
+.app:has(#preview[src]) .hairColors {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.app:has(#preview[src]) .hairColorOption {
+  display: block !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.app:has(#preview[src]) .tools {
+  z-index: 100 !important;
+}
