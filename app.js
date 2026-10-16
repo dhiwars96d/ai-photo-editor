@@ -2096,8 +2096,8 @@ const clarity =
 // Sharpness and Clarity processing
 const sharpData = new Uint8ClampedArray(data);
 
-const sharpAmount = sharpness / 100 * 1.5;
-const clarityAmount = clarity / 100 * 0.8;
+const sharpAmount = sharpness / 100;
+const clarityAmount = clarity / 100;
 
 if (sharpAmount !== 0 || clarityAmount !== 0) {
   for (let y = 1; y < height - 1; y++) {
@@ -2109,24 +2109,42 @@ if (sharpAmount !== 0 || clarityAmount !== 0) {
       const left = (y * width + x - 1) * 4;
       const right = (y * width + x + 1) * 4;
 
+      const lum = (p) =>
+        0.2126 * sharpData[p] +
+        0.7152 * sharpData[p + 1] +
+        0.0722 * sharpData[p + 2];
+
+      const centerLum = lum(i);
+
+      const avgLum = (
+        lum(top) +
+        lum(bottom) +
+        lum(left) +
+        lum(right)
+      ) / 4;
+
+      const detail = centerLum - avgLum;
+      const clarityBoost = detail * clarityAmount * 1.8;
+
       for (let c = 0; c < 3; c++) {
-        const average =
-          (
-            sharpData[top + c] +
-            sharpData[bottom + c] +
-            sharpData[left + c] +
-            sharpData[right + c]
-          ) / 4;
+        const average = (
+          sharpData[top + c] +
+          sharpData[bottom + c] +
+          sharpData[left + c] +
+          sharpData[right + c]
+        ) / 4;
 
-        const detail = sharpData[i + c] - average;
+        const edge = sharpData[i + c] - average;
 
-        data[i + c] =
+        data[i + c] = clamp(
           sharpData[i + c] +
-          detail * (sharpAmount + clarityAmount);
+          edge * sharpAmount * 2.5 +
+          clarityBoost
+        );
       }
     }
   }
-   }
+  }
    
   ctx.putImageData(
     imageData,
