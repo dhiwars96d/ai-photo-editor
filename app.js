@@ -1887,6 +1887,16 @@ async function applyAdjustments() {
       adjustmentValues.shadows
     );
 
+   const sharpness =
+  Number(
+    adjustmentValues.sharpness
+  );
+
+const clarity =
+  Number(
+    adjustmentValues.clarity
+  );
+
 
   const contrastFactor =
     (
