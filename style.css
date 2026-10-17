@@ -1542,7 +1542,7 @@ h1 {
 
 .app:has(#preview[src]) .adjustmentsPanel {
   padding: 0;
-  max-height: 48dvh;
+  max-height: 30dvh;
   overflow: auto;
   z-index: 85;
 }
