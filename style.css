@@ -826,3 +826,19 @@ h1 {
   font-size: 15px;
   border-radius: 22px;
 }
+
+/* Adjustments panel: neeche aur transparent */
+.app:has(#preview[src]) #adjustmentsPanel {
+  position: fixed !important;
+  top: auto !important;
+  bottom: 165px !important;
+  left: 6px !important;
+  right: 6px !important;
+  width: auto !important;
+  max-height: 43dvh !important;
+  overflow-y: auto !important;
+  background: rgba(255, 255, 255, 0.62) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 110 !important;
+}
