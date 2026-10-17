@@ -749,3 +749,35 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 .app:not(:has(#preview[src])) .tools {
   order: 3 !important;
 }
+
+/* FIX SECOND SCREEN: keep editor toolbar outside preview card */
+.app:has(#preview[src]) .photoCard {
+  position: fixed !important;
+  inset: 0 0 calc(94px + env(safe-area-inset-bottom)) 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #fff !important;
+  z-index: 1 !important;
+}
+
+.app:has(#preview[src]) .previewBox {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  border-radius: 0 !important;
+}
+
+.app:has(#preview[src]) .tools {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 100 !important;
+}
