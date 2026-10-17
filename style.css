@@ -812,3 +812,17 @@ h1 {
     left: 8px;
   }
 }
+
+/* Undo / Redo buttons ko bada aur spaced karna */
+.app:has(#preview[src]) .photoHistoryControls {
+  gap: 12px;
+  padding: 8px 10px;
+}
+
+.app:has(#preview[src]) .photoHistoryControls button {
+  min-width: 48px;
+  min-height: 42px;
+  padding: 8px 12px;
+  font-size: 15px;
+  border-radius: 22px;
+}
