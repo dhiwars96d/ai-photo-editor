@@ -665,3 +665,60 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
   width: 100% !important;
   margin-top: 10px !important;
 }
+
+/* EMPTY SCREEN - LAYOUT REFINEMENT */
+.app:not(:has(#preview[src])) {
+  width: 100% !important;
+  max-width: 760px !important;
+  padding: 14px 14px 28px !important;
+}
+
+.app:not(:has(#preview[src])) header {
+  margin-bottom: 22px !important;
+}
+
+.app:not(:has(#preview[src])) h1 {
+  font-size: 28px !important;
+}
+
+.app:not(:has(#preview[src])) .photoCard {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 10px !important;
+}
+
+.app:not(:has(#preview[src])) .previewBox {
+  min-height: 320px !important;
+  height: 320px !important;
+  flex: none !important;
+}
+
+.app:not(:has(#preview[src])) .placeholder {
+  padding: 20px 12px !important;
+}
+
+.app:not(:has(#preview[src])) .addButton {
+  position: static !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.app:not(:has(#preview[src])) .tools {
+  position: static !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.app:not(:has(#preview[src])) .tools > .tool {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 76px !important;
+}
+
+.app:not(:has(#preview[src])) .tools .toolName {
+  font-size: 11px !important;
+}
