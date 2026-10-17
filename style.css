@@ -842,3 +842,847 @@ h1 {
   -webkit-backdrop-filter: blur(8px);
   z-index: 110 !important;
 }
+
+/* =========================================================
+   AI PHOTO EDITOR — CLEAN MOBILE CSS
+   Pink & white theme
+   Supports existing index.html, app.js and retouch.js
+========================================================= */
+
+:root {
+  --accent: #f42f91;
+  --accent-soft: #fff0f7;
+  --accent-border: #f28ab9;
+  --text: #24202a;
+  --muted: #77717c;
+  --border: #f1d2e1;
+  --toolbar-height: 88px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #fff;
+  color: var(--text);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 18px 14px 30px;
+  background: #fff;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.logo {
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.badge {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border: 1px solid #f5b4d3;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: #c21868;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* PHOTO PREVIEW */
+
+.photoCard {
+  position: relative;
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 10px;
+  border: 1px solid #f3bfd8;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.04);
+}
+
+.previewBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 280px;
+  min-height: 280px;
+  overflow: hidden;
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+#preview {
+  display: none;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.placeholder {
+  padding: 20px 12px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.placeholderIcon {
+  margin-bottom: 10px;
+  font-size: 42px;
+}
+
+#fileInput {
+  display: none;
+}
+
+.addButton {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid #e879ac;
+  border-radius: 14px;
+  background: #fff;
+  color: #c21868;
+  box-shadow: 0 3px 10px rgba(220, 39, 119, 0.08);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.addButton:active {
+  background: var(--accent-soft);
+}
+
+.changePhotoButton {
+  display: none;
+}
+
+/* AI TOOLBAR — EMPTY SCREEN */
+
+.sectionTitle {
+  margin: 20px 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  min-height: 76px;
+  padding: 9px 4px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fff;
+  color: var(--text);
+  text-align: center;
+}
+
+.tool.active,
+.tool:active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.tool.active .toolName {
+  color: #c21868;
+}
+
+.toolIcon {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 2px;
+  object-fit: contain;
+}
+
+.tool[data-tool="hair"] .toolIcon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto;
+}
+
+.skinToolIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 32px;
+}
+
+.toolName {
+  color: #302531;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.adjustmentsToggle.tool {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  min-height: 76px;
+  margin: 0;
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.adjustmentsToggle.open {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #c21868;
+}
+
+.adjustmentsToolIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #52525b;
+  font-size: 27px;
+  line-height: 29px;
+}
+
+.adjustmentsToggle.open .adjustmentsToolIcon {
+  color: var(--accent);
+}
+
+.adjustmentsChevron {
+  display: none;
+}
+
+/* SMOOTH SKIN */
+
+.smoothControl {
+  display: none;
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.06);
+}
+
+.smoothControl.show {
+  display: block;
+}
+
+.smoothTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.smoothLabel {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+#smoothValue,
+#hairIntensityValue {
+  min-width: 38px;
+  padding: 5px 8px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: #c21868;
+  font-size: 12px;
+  text-align: center;
+}
+
+#smoothSlider,
+#hairIntensitySlider {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.smoothScale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+/* HAIR MENU */
+
+.hairMenu {
+  display: none;
+  width: 100%;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.04);
+}
+
+.hairOption {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hairOption:active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.hairOptionIcon {
+  font-size: 20px;
+}
+
+/* HAIR COLOR */
+
+.hairColorPanel {
+  display: none;
+  width: 100%;
+  margin-top: 14px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.05);
+}
+
+.hairColorTitle {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hairColors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.hairColorOption {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 6px;
+  border: 1px solid #f1c6dc;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.hairColorOption:active,
+.hairColorOption.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #c21868;
+}
+
+.hairIntensityTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ADJUSTMENTS */
+
+.adjustmentsPanel {
+  display: none;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.adjustmentsPanel.open {
+  display: block;
+}
+
+.adjustmentsFrame {
+  display: block;
+  width: 100%;
+  height: 790px;
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+}
+
+/* STATUS / DOWNLOAD / FOOTNOTE */
+
+.status {
+  display: none;
+  margin-top: 18px;
+  padding: 13px;
+  border: 1px solid #ffd0e6;
+  border-radius: 13px;
+  background: var(--accent-soft);
+  color: #b81665;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.downloadButton {
+  display: none;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.smallNote {
+  margin-top: 14px;
+  color: #9ca3af;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* GLOBAL UNDO / REDO */
+
+.photoHistoryControls {
+  display: none;
+}
+
+.photoHistoryControls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid #eee;
+  border-radius: 50%;
+  background: #fff;
+  color: #222;
+  font-size: 23px;
+  line-height: 1;
+}
+
+.photoHistoryControls button:disabled {
+  opacity: 0.4;
+}
+
+/* =========================================================
+   EDITOR SCREEN — APPLIES WHEN PHOTO HAS A SRC
+========================================================= */
+
+.app:has(#preview[src]) {
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.app:has(#preview[src]) header,
+.app:has(#preview[src]) h1,
+.app:has(#preview[src]) .subtitle,
+.app:has(#preview[src]) .sectionTitle {
+  display: none;
+}
+
+.app:has(#preview[src]) .photoCard {
+  position: fixed;
+  inset: 0 0 calc(var(--toolbar-height) + env(safe-area-inset-bottom)) 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+  z-index: 1;
+}
+
+.app:has(#preview[src]) .previewBox {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+}
+
+.app:has(#preview[src]) #preview {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.app:has(#preview[src]) .addButton {
+  display: none;
+}
+
+.app:has(#preview[src]) .changePhotoButton {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 45%;
+  min-height: 38px;
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid #e9a0c2;
+  border-radius: 999px;
+  background: #fff;
+  color: #b81665;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+}
+
+.app:has(#preview[src]) .downloadButton {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  left: auto;
+  z-index: 60;
+  width: auto;
+  max-width: 45%;
+  min-height: 38px;
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid #e9a0c2;
+  border-radius: 999px;
+  background: #fff;
+  color: #b81665;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app:has(#preview[src]) .tools {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 3px;
+  min-height: var(--toolbar-height);
+  margin: 0;
+  padding: 7px 6px calc(7px + env(safe-area-inset-bottom));
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-top: 1px solid #f4d7e5;
+  background: #fff;
+  box-shadow: 0 -5px 20px rgba(30, 20, 30, 0.06);
+  scrollbar-width: none;
+}
+
+.app:has(#preview[src]) .tools::-webkit-scrollbar {
+  display: none;
+}
+
+.app:has(#preview[src]) .tools > .tool {
+  flex: 0 0 64px;
+  width: 64px;
+  min-width: 64px;
+  min-height: 66px;
+  margin: 0;
+  padding: 7px 2px;
+  border-radius: 12px;
+}
+
+.app:has(#preview[src]) .toolIcon {
+  width: 29px;
+  height: 29px;
+  margin: 0 auto 2px;
+}
+
+.app:has(#preview[src]) .tool[data-tool="hair"] .toolIcon {
+  width: 33px;
+  height: 33px;
+  margin: 0 auto;
+}
+
+.app:has(#preview[src]) .toolName {
+  font-size: 10px;
+  line-height: 1.15;
+}
+
+/* Panels appear above the toolbar */
+
+.app:has(#preview[src]) .smoothControl,
+.app:has(#preview[src]) .hairMenu,
+.app:has(#preview[src]) .hairColorPanel,
+.app:has(#preview[src]) .adjustmentsPanel,
+.app:has(#preview[src]) #retouchPanel,
+.app:has(#preview[src]) .retouchPanel,
+.app:has(#preview[src]) [id*="retouch"][class*="panel"] {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--toolbar-height) + 8px + env(safe-area-inset-bottom));
+  top: auto;
+  width: auto;
+  max-height: 48dvh;
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #f4c5dd;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+  z-index: 80;
+}
+
+.app:has(#preview[src]) .smoothControl,
+.app:has(#preview[src]) .hairMenu,
+.app:has(#preview[src]) .hairColorPanel {
+  padding: 14px;
+}
+
+.app:has(#preview[src]) .adjustmentsPanel {
+  padding: 0;
+  max-height: 48dvh;
+  overflow: auto;
+  z-index: 85;
+}
+
+.app:has(#preview[src]) .adjustmentsFrame {
+  display: block;
+  width: 100%;
+  height: 46dvh;
+  max-height: 46dvh;
+  border: 0;
+  border-radius: 17px;
+  background: #fff;
+}
+
+.app:has(#preview[src]) .photoHistoryControls {
+  position: fixed;
+  top: 58px;
+  left: 10px;
+  bottom: auto;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  border: 1px solid #f1d2e1;
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+}
+
+.app:has(#preview[src]) .status {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--toolbar-height) + 8px + env(safe-area-inset-bottom));
+  z-index: 70;
+  margin: 0;
+  pointer-events: none;
+}
+
+.app:has(#preview[src]) .smallNote {
+  display: none;
+}
+
+/* EMPTY SCREEN SAFETY */
+
+.app:not(:has(#preview[src])) {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+.app:not(:has(#preview[src])) .photoHistoryControls {
+  display: none;
+}
+
+/* SMALL PHONES */
+
+@media (max-width: 380px) {
+  :root {
+    --toolbar-height: 84px;
+  }
+
+  .app {
+    padding: 16px 12px 28px;
+  }
+
+  .logo {
+    font-size: 19px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  .previewBox {
+    height: 260px;
+    min-height: 260px;
+  }
+
+  .tools {
+    gap: 6px;
+  }
+
+  .toolName {
+    font-size: 10.5px;
+  }
+
+  .app:has(#preview[src]) .tools > .tool {
+    flex-basis: 60px;
+    width: 60px;
+    min-width: 60px;
+  }
+
+  .app:has(#preview[src]) .changePhotoButton {
+    top: 7px;
+    left: 7px;
+    padding: 8px 9px;
+    font-size: 11px;
+  }
+
+  .app:has(#preview[src]) .downloadButton {
+    top: 7px;
+    right: 7px;
+    padding: 8px 9px;
+    font-size: 11px;
+  }
+
+  .app:has(#preview[src]) .photoHistoryControls {
+    top: 53px;
+    left: 8px;
+  }
+}
+
+/* Undo / Redo buttons ko bada aur spaced karna */
+.app:has(#preview[src]) .photoHistoryControls {
+  gap: 12px;
+  padding: 8px 10px;
+}
+
+.app:has(#preview[src]) .photoHistoryControls button {
+  min-width: 48px;
+  min-height: 42px;
+  padding: 8px 12px;
+  font-size: 15px;
+  border-radius: 22px;
+}
+
+/* Adjustments panel: neeche aur transparent */
+.app:has(#preview[src]) #adjustmentsPanel {
+  position: fixed !important;
+  top: auto !important;
+  bottom: 165px !important;
+  left: 6px !important;
+  right: 6px !important;
+  width: auto !important;
+  max-height: 33dvh !important;
+  overflow-y: auto !important;
+  background: rgba(255, 255, 255, 0.62) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 110 !important;
+}
