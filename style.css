@@ -1,377 +1,634 @@
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f6f8fb;color:#111827}
-.app{max-width:760px;margin:auto;padding:22px 16px 40px}
-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:30px}
-.logo{font-size:21px;font-weight:700}.badge{background:#eef2ff;color:#4f46e5;padding:7px 12px;border-radius:20px;font-size:12px;font-weight:700}
-h1{font-size:34px;line-height:1.12;margin:0 0 12px;letter-spacing:-1px}.subtitle{color:#6b7280;font-size:15px;line-height:1.5;margin-bottom:24px}
-.photoCard{background:#fff;border-radius:22px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,.06);margin-bottom:20px}
-.previewBox{width:100%;min-height:280px;background:#f1f3f7;border-radius:17px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-#preview{display:none;width:100%;height:auto;max-height:560px;object-fit:contain;border-radius:17px}
-.placeholder{text-align:center;color:#9ca3af;padding:40px 20px}.placeholderIcon{font-size:42px;margin-bottom:10px}
-.addButton{width:100%;border:0;background:#111827;color:#fff;padding:14px;border-radius:14px;margin-top:12px;font-size:15px;font-weight:700;cursor:pointer}
-#fileInput{display:none}.sectionTitle{font-size:16px;font-weight:700;margin:24px 0 12px}
-.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;width:100%}
-.tool{min-width:0;background:#fff;border:1px solid #e5e7eb;border-radius:17px;padding:12px 5px;cursor:pointer;text-align:center}.tool.active{border-color:#6366f1;background:#f5f3ff}
-.toolIcon{width:45px;height:45px;object-fit:contain;display:block;margin:0 auto 8px}.tool[data-tool="hair"] .toolIcon{width:53px;height:53px;margin-top:-4px;margin-bottom:4px}
-.toolName{font-size:12px;font-weight:700;color:#111827;white-space:nowrap}
-.smoothControl{display:none;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:17px;padding:14px 15px;margin-top:14px;box-shadow:0 5px 18px rgba(0,0,0,.04)}.smoothControl.show{display:block}
-.smoothTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.smoothLabel{font-size:14px;font-weight:700}
-#smoothValue{min-width:38px;text-align:center;background:#eef2ff;color:#4338ca;border-radius:10px;padding:5px 8px;font-size:13px;font-weight:700}
-#smoothSlider{width:100%;margin:0;accent-color:#6366f1}.smoothScale{display:flex;justify-content:space-between;margin-top:5px;color:#9ca3af;font-size:10px}
-.adjustmentsToggle{width:100%;margin-top:16px;border:1px solid #e5e7eb;background:#fff;color:#111827;border-radius:17px;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700}
-.adjustmentsToggle.open{border-color:#6366f1;background:#f8f7ff;color:#4338ca}.adjustmentsChevron{font-size:20px}.adjustmentsPanel{display:none;width:100%;margin-top:12px}.adjustmentsPanel.open{display:block}
-.adjustmentsFrame{width:100%;height:790px;border:0;border-radius:20px;display:block}.status{display:none;background:#eef2ff;color:#4338ca;border-radius:13px;padding:13px;margin-top:18px;text-align:center;font-size:13px;font-weight:600}
-.downloadButton{display:none;width:100%;border:0;background:#16a34a;color:#fff;padding:14px;border-radius:14px;margin-top:12px;font-size:15px;font-weight:700}.smallNote{color:#9ca3af;font-size:11px;text-align:center;margin-top:14px;line-height:1.5}
-@media(max-width:380px){.app{padding-left:12px;padding-right:12px}.tools{gap:6px}.tool{padding:11px 3px;border-radius:15px}.toolIcon{width:40px;height:40px}.tool[data-tool="hair"] .toolIcon{width:47px;height:47px}.toolName{font-size:10.5px}.adjustmentsFrame{height:820px}}
-/* Hair Menu */
-.hairMenu{
-  display:none;
-  width:100%;
-  background:#fff;
-  border:1px solid #e5e7eb;
-  border-radius:17px;
-  padding:14px;
-  margin-top:14px;
-  box-shadow:0 5px 18px rgba(0,0,0,.04);
-  gap:10px;
-}
-
-.hairOption{
-  flex:1;
-  border:1px solid #e5e7eb;
-  background:#fff;
-  color:#111827;
-  border-radius:14px;
-  padding:14px 10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  font-size:14px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.hairOption:active{
-  background:#f5f3ff;
-  border-color:#6366f1;
-}
-
-.hairOptionIcon{
-  font-size:20px;
-}
-
-/* Hair Color Panel */
-.hairColorPanel{
-  display:none;
-  width:100%;
-  background:#fff;
-  border:1px solid #e5e7eb;
-  border-radius:17px;
-  padding:15px;
-  margin-top:14px;
-  box-shadow:0 5px 18px rgba(0,0,0,.04);
-}
-
-.hairColorTitle{
-  font-size:14px;
-  font-weight:700;
-  margin-bottom:12px;
-}
-
-.hairColors{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
-  width:100%;
-}
-
-.hairColorOption{
-  border:1px solid #e5e7eb;
-  background:#fff;
-  color:#111827;
-  border-radius:12px;
-  padding:12px 8px;
-  min-height:42px;
-  font-size:13px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.hairColorOption:active{
-  border-color:#6366f1;
-  background:#f5f3ff;
-}
-
-.hairIntensityTop{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-top:16px;
-  margin-bottom:8px;
-  font-size:13px;
-  font-weight:700;
-}
-
-#hairIntensityValue{
-  min-width:38px;
-  text-align:center;
-  background:#eef2ff;
-  color:#4338ca;
-  border-radius:10px;
-  padding:5px 8px;
-  font-size:12px;
-}
-
-#hairIntensitySlider{
-  width:100%;
-  margin:0;
-  accent-color:#6366f1;
-}
-
 
 /* =========================================================
-   MOBILE EDITOR LAYOUT — full photo + fixed bottom toolbar
-   Existing JavaScript and image-processing functions remain unchanged.
+   AI PHOTO EDITOR — CLEAN MOBILE CSS
+   Pink & white theme
+   Supports existing index.html, app.js and retouch.js
 ========================================================= */
-:root{--accent:#f42f91;--accent-soft:#fff0f7;--accent-border:#ff8bc2}
-body{background:#fff}
-.tool.active,.tool:active{border-color:var(--accent);background:var(--accent-soft)}
-.tool.active .toolName{color:var(--accent)}
-#smoothSlider,#hairIntensitySlider{accent-color:var(--accent)}
-.adjustmentsToggle.open{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
 
-/* Toolbar is docked at the bottom; keep room for phone safe-area. */
-.tools{grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
-.tool{border:1px solid transparent;border-radius:13px;padding:8px 2px;background:#fff;min-height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
-.toolIcon{width:29px;height:29px;margin:0 auto 2px}
-.tool[data-tool="hair"] .toolIcon{width:33px;height:33px;margin:0 auto 0}
-.toolName{font-size:10px;white-space:normal;line-height:1.15;text-align:center}
-.adjustmentsToggle.tool{width:100%;margin:0;border-radius:13px;padding:8px 2px;display:flex;gap:3px;justify-content:center}
-.adjustmentsToolIcon{display:flex;align-items:center;justify-content:center;font-size:28px;line-height:29px;color:#52525b;font-style:normal}
-.adjustmentsToggle.open .adjustmentsToolIcon{color:var(--accent)}
-.adjustmentsToggle .adjustmentsChevron{display:none}
+:root {
+  --accent: #f42f91;
+  --accent-soft: #fff0f7;
+  --accent-border: #f28ab9;
+  --text: #24202a;
+  --muted: #77717c;
+  --border: #f1d2e1;
+  --toolbar-height: 88px;
+}
 
-/* When a photo is loaded, switch to the immersive editor view. */
-.app:has(#preview[src]){height:100vh;height:100dvh;max-width:none;margin:0;padding:0;overflow:hidden;background:#fff}
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #fff;
+  color: var(--text);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 18px 14px 30px;
+  background: #fff;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.logo {
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.badge {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border: 1px solid #f5b4d3;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: #c21868;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* PHOTO PREVIEW */
+
+.photoCard {
+  position: relative;
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 10px;
+  border: 1px solid #f3bfd8;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.04);
+}
+
+.previewBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 280px;
+  min-height: 280px;
+  overflow: hidden;
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+#preview {
+  display: none;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.placeholder {
+  padding: 20px 12px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.placeholderIcon {
+  margin-bottom: 10px;
+  font-size: 42px;
+}
+
+#fileInput {
+  display: none;
+}
+
+.addButton {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid #e879ac;
+  border-radius: 14px;
+  background: #fff;
+  color: #c21868;
+  box-shadow: 0 3px 10px rgba(220, 39, 119, 0.08);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.addButton:active {
+  background: var(--accent-soft);
+}
+
+.changePhotoButton {
+  display: none;
+}
+
+/* AI TOOLBAR — EMPTY SCREEN */
+
+.sectionTitle {
+  margin: 20px 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  min-height: 76px;
+  padding: 9px 4px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fff;
+  color: var(--text);
+  text-align: center;
+}
+
+.tool.active,
+.tool:active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.tool.active .toolName {
+  color: #c21868;
+}
+
+.toolIcon {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 2px;
+  object-fit: contain;
+}
+
+.tool[data-tool="hair"] .toolIcon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto;
+}
+
+.skinToolIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 32px;
+}
+
+.toolName {
+  color: #302531;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.adjustmentsToggle.tool {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  min-height: 76px;
+  margin: 0;
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.adjustmentsToggle.open {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #c21868;
+}
+
+.adjustmentsToolIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #52525b;
+  font-size: 27px;
+  line-height: 29px;
+}
+
+.adjustmentsToggle.open .adjustmentsToolIcon {
+  color: var(--accent);
+}
+
+.adjustmentsChevron {
+  display: none;
+}
+
+/* SMOOTH SKIN */
+
+.smoothControl {
+  display: none;
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.06);
+}
+
+.smoothControl.show {
+  display: block;
+}
+
+.smoothTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.smoothLabel {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+#smoothValue,
+#hairIntensityValue {
+  min-width: 38px;
+  padding: 5px 8px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: #c21868;
+  font-size: 12px;
+  text-align: center;
+}
+
+#smoothSlider,
+#hairIntensitySlider {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.smoothScale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+/* HAIR MENU */
+
+.hairMenu {
+  display: none;
+  width: 100%;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.04);
+}
+
+.hairOption {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hairOption:active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.hairOptionIcon {
+  font-size: 20px;
+}
+
+/* HAIR COLOR */
+
+.hairColorPanel {
+  display: none;
+  width: 100%;
+  margin-top: 14px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.05);
+}
+
+.hairColorTitle {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hairColors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.hairColorOption {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 6px;
+  border: 1px solid #f1c6dc;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.hairColorOption:active,
+.hairColorOption.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #c21868;
+}
+
+.hairIntensityTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ADJUSTMENTS */
+
+.adjustmentsPanel {
+  display: none;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.adjustmentsPanel.open {
+  display: block;
+}
+
+.adjustmentsFrame {
+  display: block;
+  width: 100%;
+  height: 790px;
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+}
+
+/* STATUS / DOWNLOAD / FOOTNOTE */
+
+.status {
+  display: none;
+  margin-top: 18px;
+  padding: 13px;
+  border: 1px solid #ffd0e6;
+  border-radius: 13px;
+  background: var(--accent-soft);
+  color: #b81665;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.downloadButton {
+  display: none;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.smallNote {
+  margin-top: 14px;
+  color: #9ca3af;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* GLOBAL UNDO / REDO */
+
+.photoHistoryControls {
+  display: none;
+}
+
+.photoHistoryControls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid #eee;
+  border-radius: 50%;
+  background: #fff;
+  color: #222;
+  font-size: 23px;
+  line-height: 1;
+}
+
+.photoHistoryControls button:disabled {
+  opacity: 0.4;
+}
+
+/* =========================================================
+   EDITOR SCREEN — APPLIES WHEN PHOTO HAS A SRC
+========================================================= */
+
+.app:has(#preview[src]) {
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
 .app:has(#preview[src]) header,
 .app:has(#preview[src]) h1,
 .app:has(#preview[src]) .subtitle,
-.app:has(#preview[src]) .sectionTitle{display:none}
-.app:has(#preview[src]) .photoCard{position:fixed;inset:0 0 calc(82px + env(safe-area-inset-bottom)) 0;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#fff;display:flex;min-height:0;z-index:1}
-.app:has(#preview[src]) .previewBox{width:100%;height:100%;min-height:0;border:2px solid var(--accent-border);border-radius:0;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.app:has(#preview[src]) #preview{width:100%;height:100%;max-height:none;object-fit:contain;border-radius:0}
-.app:has(#preview[src]) .addButton{display:none}
-.app:has(#preview[src]) .tools{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:7px 7px calc(7px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #f4d7e5;box-shadow:0 -5px 20px rgba(30,20,30,.06);}
-.app:has(#preview[src]) .tool{min-height:62px}
-.app:has(#preview[src]) .smoothControl,
-.app:has(#preview[src]) .hairMenu,
-.app:has(#preview[src]) .hairColorPanel{position:fixed;left:10px;right:10px;bottom:calc(83px + env(safe-area-inset-bottom));width:auto;max-height:45dvh;overflow:auto;z-index:30;margin:0;border:1px solid #f4c5dd;border-radius:20px;box-shadow:0 10px 35px rgba(0,0,0,.15);background:#fff}
+.app:has(#preview[src]) .sectionTitle {
+  display: none;
+}
 
-.app:has(#preview[src]) .adjustmentsPanel {
+.app:has(#preview[src]) .photoCard {
   position: fixed;
-  left: 10px;
-  right: 10px;
-  bottom: calc(75px + env(safe-area-inset-bottom));
-  z-index: 35;
-  width: auto;
-  max-height: 35dvh;
-  overflow: hidden;
+  inset: 0 0 calc(var(--toolbar-height) + env(safe-area-inset-bottom)) 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   margin: 0;
-  border: 1px solid rgba(242, 138, 185, 0.55);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.10);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.10);
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+  z-index: 1;
 }
 
-.app:has(#preview[src]) .adjustmentsFrame {
-  height: 46dvh;
-  max-height: 46dvh;
-  border-radius: 18px;
-  background: transparent;
+.app:has(#preview[src]) .previewBox {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
 }
 
-.app:has(#preview[src]) .status{position:fixed;left:12px;right:12px;bottom:calc(158px + env(safe-area-inset-bottom));z-index:40;margin:0;background:#fff0f7;color:#b81665;border:1px solid #ffd0e6;box-shadow:0 4px 16px rgba(0,0,0,.08)}
-.app:has(#preview[src]) .downloadButton{position:fixed;top:10px;right:10px;left:auto;bottom:auto;z-index:50;width:auto;max-width:48%;padding:9px 12px;margin:0;background:#fff;color:#b81665;border:1px solid #e9a0c2;border-radius:999px;font-size:12px;box-shadow:0 3px 12px rgba(0,0,0,.10)}
-.app:has(#preview[src]) .smallNote{display:none}
-
-/* Empty state remains scrollable and keeps Add Photo accessible. */
-@media(max-width:420px){
-  .app{padding:18px 12px 110px}
-  .tools{gap:1px}
-  .toolName{font-size:9.5px}
-  .app:has(#preview[src]) .tool{padding-left:1px;padding-right:1px}
+.app:has(#preview[src]) #preview {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+  border-radius: 0;
 }
 
-
-/* Mobile panel refinements: keep every hair-color choice visible. */
-.app:has(#preview[src]) .hairColorPanel{max-height:52dvh;padding:16px;overflow-y:auto;overscroll-behavior:contain}
-.app:has(#preview[src]) .hairColors{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.app:has(#preview[src]) .hairColorOption{min-height:44px;padding:12px 8px;font-size:13px;white-space:normal}
-.app:has(#preview[src]) .hairColorTitle{margin-bottom:14px}
-
-
-/* FINAL MOBILE UI POLISH: consistent white/pink and non-overlapping controls */
-:root{--accent:#f42f91;--accent-soft:#fff0f7;--accent-border:#f28ab9}
-body{background:#fff;color:#24202a}
-.app{background:#fff}
-header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
-.photoCard{border:1px solid #f3bfd8;background:#fff}
-.previewBox{border:1px solid #f28ab9;background:#fff}
-.addButton{background:#fff;color:#c21868;border:1px solid #e879ac;box-shadow:0 3px 10px rgba(220,39,119,.08)}
-.addButton:active{background:#fce7f3}
-.tool{border:1px solid #f1d2e1;color:#302531}
-.tool.active,.tool:active{border-color:#f42f91;background:#fff0f7}
-.tool.active .toolName{color:#c21868}
-.adjustmentsToggle{border-color:#f1d2e1;background:#fff;color:#302531}
-.adjustmentsToggle.open{border-color:#f42f91;background:#fff0f7;color:#c21868}
-.hairOption,.hairColorOption{border-color:#f1c6dc;color:#302531;background:#fff}
-.hairOption:active,.hairColorOption:active,.hairColorOption.selected{border-color:#f42f91;background:#fff0f7;color:#c21868}
-#smoothSlider,#hairIntensitySlider{accent-color:#f42f91}
-#smoothValue,#hairIntensityValue{background:#fff0f7;color:#c21868}
-/* Change Photo stays fully visible in the upper-left; Download stays upper-right. */
-.app:has(#preview[src]) .previewBox{position:relative}
-.changePhotoButton{display:none}
-.app:has(#preview[src]) .changePhotoButton{display:inline-flex;position:absolute;top:10px;left:10px;right:auto;bottom:auto;z-index:60;align-items:center;justify-content:center;max-width:45%;min-height:38px;padding:9px 12px;margin:0;border:1px solid #e9a0c2;border-radius:999px;background:#fff;color:#b81665;font-size:12px;font-weight:700;line-height:1.2;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.10);cursor:pointer}
-.app:has(#preview[src]) .downloadButton{top:10px;right:10px;left:auto;bottom:auto;z-index:60;max-width:45%;min-height:38px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* Panels must sit above the status toast, never behind it. */
-.app:has(#preview[src]) .status{z-index:25;pointer-events:none}
-.app:has(#preview[src]) .smoothControl,
-.app:has(#preview[src]) .hairMenu,
-.app:has(#preview[src]) .hairColorPanel,
-.app:has(#preview[src]) .adjustmentsPanel{z-index:35}
-.app:has(#preview[src]) .hairColorPanel{max-height:min(52dvh,430px);padding:14px;overflow-y:auto;overscroll-behavior:contain}
-.app:has(#preview[src]) .hairColors{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.app:has(#preview[src]) .hairColorOption{width:100%;min-width:0;min-height:44px;padding:10px 6px;font-size:13px;line-height:1.2;overflow-wrap:anywhere}
-@media(max-width:360px){
- .app:has(#preview[src]) .changePhotoButton{left:7px;top:7px;padding:8px 9px;font-size:11px;max-width:43%}
- .app:has(#preview[src]) .downloadButton{right:7px;top:7px;padding:8px 9px;font-size:11px;max-width:43%}
- .app:has(#preview[src]) .hairColorPanel{left:7px;right:7px;padding:12px}
- .app:has(#preview[src]) .hairColorOption{font-size:12px;padding:9px 4px}
-}
-/* FIX: Keep bottom toolbar visible above editor panels */
-.app:has(#preview[src]) .tools {
-  z-index: 100 !important;
+.app:has(#preview[src]) .addButton {
+  display: none;
 }
 
-.app:has(#preview[src]) .smoothControl,
-.app:has(#preview[src]) .hairMenu,
-.app:has(#preview[src]) .hairColorPanel,
-.app:has(#preview[src]) .adjustmentsPanel {
-  z-index: 35;
-  bottom: calc(78px + env(safe-area-inset-bottom));
-  max-height: 45dvh;
-  overflow-y: auto;
+.app:has(#preview[src]) .changePhotoButton {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 45%;
+  min-height: 38px;
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid #e9a0c2;
+  border-radius: 999px;
+  background: #fff;
+  color: #b81665;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* FIX: Show complete Smooth Skin and Hair Color controls */
-.app:has(#preview[src]) .smoothControl {
-  position: fixed !important;
-  left: 10px !important;
-  right: 10px !important;
-  bottom: calc(90px + env(safe-area-inset-bottom)) !important;
-  width: auto !important;
-  max-height: 38dvh !important;
-  overflow-y: auto !important;
-  z-index: 35 !important;
-  padding: 14px !important;
-}
-
-.app:has(#preview[src]) .hairColorPanel {
-  position: fixed !important;
-  left: 10px !important;
-  right: 10px !important;
-  bottom: calc(90px + env(safe-area-inset-bottom)) !important;
-  width: auto !important;
-  max-height: 42dvh !important;
-  overflow-y: auto !important;
-  z-index: 35 !important;
-  padding: 14px !important;
-}
-
-.app:has(#preview[src]) .hairColors {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 8px !important;
-}
-
-.app:has(#preview[src]) .hairColorOption {
-  display: block !important;
-  width: 100% !important;
-  min-height: 44px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+.app:has(#preview[src]) .downloadButton {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  left: auto;
+  z-index: 60;
+  width: auto;
+  max-width: 45%;
+  min-height: 38px;
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid #e9a0c2;
+  border-radius: 999px;
+  background: #fff;
+  color: #b81665;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app:has(#preview[src]) .tools {
-  z-index: 100 !important;
-}
-
-/* FINAL FIX: Raise panels well above the bottom toolbar */
-.app:has(#preview[src]) .smoothControl,
-.app:has(#preview[src]) .hairMenu,
-.app:has(#preview[src]) .hairColorPanel,
-.app:has(#preview[src]) .adjustmentsPanel {
-  position: fixed !important;
-  left: 8px !important;
-  right: 8px !important;
-  bottom: calc(105px + env(safe-area-inset-bottom)) !important;
-  width: auto !important;
-  max-height: 50dvh !important;
-  overflow-y: auto !important;
-  z-index: 35 !important;
-  background: #fff !important;
-  box-sizing: border-box !important;
-}
-
-.app:has(#preview[src]) .smoothControl {
-  padding: 16px !important;
-}
-
-.app:has(#preview[src]) .smoothControl input[type="range"],
-.app:has(#preview[src]) #smoothSlider,
-.app:has(#preview[src]) #hairIntensitySlider {
-  display: block !important;
-  width: 100% !important;
-  min-height: 24px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.app:has(#preview[src]) .hairColorPanel {
-  max-height: 50dvh !important;
-}
-
-.app:has(#preview[src]) .hairColors {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-}
-
-.app:has(#preview[src]) .hairColorOption {
-  display: block !important;
-  min-height: 44px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Hide Skin button on the second screen */
-.app:has(#preview[src]) .tools > .tool[data-tool="skin"] {
-  display: none !important;
-}
-
-/* BEAUTYPLUS-STYLE TOOLBAR SPACE */
-.app:has(#preview[src]) .tools {
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  gap: 3px !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  justify-content: flex-start !important;
-  align-items: stretch !important;
-  min-height: 82px !important;
-  padding: 7px 6px calc(7px + env(safe-area-inset-bottom)) !important;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 3px;
+  min-height: var(--toolbar-height);
+  margin: 0;
+  padding: 7px 6px calc(7px + env(safe-area-inset-bottom));
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-top: 1px solid #f4d7e5;
+  background: #fff;
+  box-shadow: 0 -5px 20px rgba(30, 20, 30, 0.06);
   scrollbar-width: none;
 }
 
@@ -380,457 +637,178 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 }
 
 .app:has(#preview[src]) .tools > .tool {
-  flex: 0 0 64px !important;
-  width: 64px !important;
-  min-width: 64px !important;
-  min-height: 66px !important;
-  padding: 7px 2px !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
+  flex: 0 0 64px;
+  width: 64px;
+  min-width: 64px;
+  min-height: 66px;
+  margin: 0;
+  padding: 7px 2px;
+  border-radius: 12px;
 }
 
-/* Skin button stays available in the editor */
-.app:has(#preview[src]) .tools > .tool[data-tool="skin"] {
-  display: flex !important;
-  flex-direction: column !important;
+.app:has(#preview[src]) .toolIcon {
+  width: 29px;
+  height: 29px;
+  margin: 0 auto 2px;
 }
 
-/* Keep panels above the taller toolbar */
+.app:has(#preview[src]) .tool[data-tool="hair"] .toolIcon {
+  width: 33px;
+  height: 33px;
+  margin: 0 auto;
+}
+
+.app:has(#preview[src]) .toolName {
+  font-size: 10px;
+  line-height: 1.15;
+}
+
+/* Panels appear above the toolbar */
+
 .app:has(#preview[src]) .smoothControl,
 .app:has(#preview[src]) .hairMenu,
 .app:has(#preview[src]) .hairColorPanel,
-.app:has(#preview[src]) .adjustmentsPanel {
-  bottom: calc(94px + env(safe-area-inset-bottom)) !important;
-  max-height: 45dvh !important;
-  z-index: 35 !important;
-}
-
-/* Retouch and other panels should not cover the toolbar */
-.app:has(#preview[src]) .tools {
-  z-index: 100 !important;
-}
-
-
-
-/* UNDO / REDO - ABOVE ALL TOOL PANELS */
-.photoHistoryControls {
-  position: fixed !important;
-  left: 12px !important;
-  bottom: calc(100px + env(safe-area-inset-bottom)) !important;
-  z-index: 9999 !important;
-
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-
-  padding: 5px 8px !important;
-  border-radius: 28px !important;
-  background: rgba(255, 255, 255, 0.96) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
-}
-
-.photoHistoryControls button {
-  width: 40px !important;
-  height: 40px !important;
-  border: none !important;
-  border-radius: 50% !important;
-  background: #fff !important;
-  color: #333 !important;
-  font-size: 28px !important;
-  line-height: 1 !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
-}
-
-.photoHistoryControls button:disabled {
-  opacity: 0.4 !important;
-}
-
-
-/* KEEP UNDO / REDO ABOVE EVERY EDITING PANEL */
-.photoHistoryControls {
-  position: fixed !important;
-  left: 12px !important;
-  bottom: calc(105px + env(safe-area-inset-bottom)) !important;
-  z-index: 2147483647 !important;
-  isolation: isolate !important;
-  display: flex !important;
-  gap: 10px !important;
-  align-items: center !important;
-  padding: 5px 8px !important;
-  border-radius: 30px !important;
-  background: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,.22) !important;
-}
-
-.photoHistoryControls button {
-  position: relative !important;
-  z-index: 2147483647 !important;
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  flex: 0 0 40px !important;
-  border: 0 !important;
-  border-radius: 50% !important;
-  background: #fff !important;
-  color: #222 !important;
-  font-size: 27px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Keep the controls above the adjustments panel */
-.adjustmentsPanel,
-.adjustmentsFrame,
-.smoothControl,
-.hairMenu,
-.hairColorPanel {
-  z-index: 100 !important;
-}
-
-
-/* Hide history controls until a photo is loaded */
-.photoHistoryControls {
-  display: none !important;
-}
-
-.app:has(#preview[src]) .photoHistoryControls {
-  display: flex !important;
-}
-
-
-/* FIX: EMPTY SCREEN + RETOUCH + GLOBAL UNDO/REDO */
-
-/* Photo load hone par undo/redo ko sabhi panels ke upar rakho */
-.app:has(#preview[src]) .photoHistoryControls {
-  position: fixed !important;
-  left: 12px !important;
-  bottom: calc(94px + env(safe-area-inset-bottom)) !important;
-  z-index: 9999 !important;
-  display: flex !important;
-  gap: 8px !important;
-  padding: 5px !important;
-  background: rgba(255,255,255,.96) !important;
-  border-radius: 24px !important;
-  box-shadow: 0 2px 10px rgba(0,0,0,.18) !important;
-}
-
-.app:has(#preview[src]) .photoHistoryControls button {
-  width: 34px !important;
-  height: 34px !important;
-  border: 1px solid #eee !important;
-  border-radius: 50% !important;
-  background: #fff !important;
-  font-size: 23px !important;
-  line-height: 1 !important;
-}
-
-/* Retouch panel ko toolbar ke upar rakho */
+.app:has(#preview[src]) .adjustmentsPanel,
 .app:has(#preview[src]) #retouchPanel,
 .app:has(#preview[src]) .retouchPanel,
 .app:has(#preview[src]) [id*="retouch"][class*="panel"] {
-  position: fixed !important;
-  left: 6px !important;
-  right: 6px !important;
-  bottom: calc(82px + env(safe-area-inset-bottom)) !important;
-  max-height: 48dvh !important;
-  overflow-y: auto !important;
-  z-index: 80 !important;
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--toolbar-height) + 8px + env(safe-area-inset-bottom));
+  top: auto;
+  width: auto;
+  max-height: 48dvh;
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #f4c5dd;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+  z-index: 80;
 }
 
-/* Photo na ho to original page layout ko na bigaado */
+.app:has(#preview[src]) .smoothControl,
+.app:has(#preview[src]) .hairMenu,
+.app:has(#preview[src]) .hairColorPanel {
+  padding: 14px;
+}
+
+.app:has(#preview[src]) .adjustmentsPanel {
+  padding: 0;
+  max-height: 48dvh;
+  overflow: auto;
+  z-index: 85;
+}
+
+.app:has(#preview[src]) .adjustmentsFrame {
+  display: block;
+  width: 100%;
+  height: 46dvh;
+  max-height: 46dvh;
+  border: 0;
+  border-radius: 17px;
+  background: #fff;
+}
+
+.app:has(#preview[src]) .photoHistoryControls {
+  position: fixed;
+  top: 58px;
+  left: 10px;
+  bottom: auto;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  border: 1px solid #f1d2e1;
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+}
+
+.app:has(#preview[src]) .status {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--toolbar-height) + 8px + env(safe-area-inset-bottom));
+  z-index: 70;
+  margin: 0;
+  pointer-events: none;
+}
+
+.app:has(#preview[src]) .smallNote {
+  display: none;
+}
+
+/* EMPTY SCREEN SAFETY */
+
 .app:not(:has(#preview[src])) {
-  height: auto !important;
-  max-width: 1100px !important;
-  margin: 0 auto !important;
-  padding: 18px 12px 110px !important;
-  overflow: visible !important;
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
 }
 
 .app:not(:has(#preview[src])) .photoHistoryControls {
-  display: none !important;
+  display: none;
 }
 
-/* Keep global Undo/Redo above every editing panel */
-.app:has(#preview[src]) .photoHistoryControls {
-  position: fixed !important;
-  left: 10px !important;
-  bottom: calc(94px + env(safe-area-inset-bottom)) !important;
-  top: auto !important;
-  z-index: 9999 !important;
-  display: flex !important;
-  gap: 8px !important;
-  padding: 5px !important;
-  border-radius: 24px !important;
-  background: rgba(255, 255, 255, 0.96) !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18) !important;
+/* SMALL PHONES */
+
+@media (max-width: 380px) {
+  :root {
+    --toolbar-height: 84px;
+  }
+
+  .app {
+    padding: 16px 12px 28px;
+  }
+
+  .logo {
+    font-size: 19px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  .previewBox {
+    height: 260px;
+    min-height: 260px;
+  }
+
+  .tools {
+    gap: 6px;
+  }
+
+  .toolName {
+    font-size: 10.5px;
+  }
+
+  .app:has(#preview[src]) .tools > .tool {
+    flex-basis: 60px;
+    width: 60px;
+    min-width: 60px;
+  }
+
+  .app:has(#preview[src]) .changePhotoButton {
+    top: 7px;
+    left: 7px;
+    padding: 8px 9px;
+    font-size: 11px;
+  }
+
+  .app:has(#preview[src]) .downloadButton {
+    top: 7px;
+    right: 7px;
+    padding: 8px 9px;
+    font-size: 11px;
+  }
+
+  .app:has(#preview[src]) .photoHistoryControls {
+    top: 53px;
+    left: 8px;
+  }
 }
-
-.app:has(#preview[src]) .photoHistoryControls button {
-  position: relative !important;
-  z-index: 10000 !important;
-  width: 38px !important;
-  height: 38px !important;
-  border-radius: 50% !important;
-  background: #fff !important;
-  border: 1px solid #eee !important;
-  font-size: 23px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Retouch panel should not cover the history controls */
-.app:has(#preview[src]) .retouchPanel,
-.app:has(#preview[src]) #retouchPanel {
-  z-index: 100 !important;
-}
-
-/* FIRST SCREEN LAYOUT FIX */
-.app:not(:has(#preview[src])) {
-  max-width: 760px !important;
-  margin: 0 auto !important;
-  padding: 18px 12px 30px !important;
-  height: auto !important;
-  min-height: 100vh;
-  overflow: visible !important;
-}
-
-.app:not(:has(#preview[src])) header {
-  margin-bottom: 22px !important;
-}
-
-.app:not(:has(#preview[src])) h1 {
-  font-size: 28px !important;
-  line-height: 1.2 !important;
-  margin-bottom: 8px !important;
-}
-
-.app:not(:has(#preview[src])) .subtitle {
-  font-size: 13px !important;
-  margin-bottom: 18px !important;
-}
-
-.app:not(:has(#preview[src])) .photoCard {
-  position: relative !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 10px !important;
-  margin-bottom: 16px !important;
-  overflow: visible !important;
-}
-
-.app:not(:has(#preview[src])) .previewBox {
-  min-height: 260px !important;
-  width: 100% !important;
-  position: relative !important;
-  border-radius: 14px !important;
-}
-
-.app:not(:has(#preview[src])) .tools {
-  position: static !important;
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 8px !important;
-  width: 100% !important;
-  padding: 10px 0 0 !important;
-  overflow: visible !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  background: transparent !important;
-}
-
-.app:not(:has(#preview[src])) .tools > .tool {
-  width: 100% !important;
-  min-width: 0 !important;
-  min-height: 72px !important;
-  flex: initial !important;
-  border: 1px solid #f1d2e1 !important;
-  border-radius: 12px !important;
-  padding: 9px 4px !important;
-}
-
-.app:not(:has(#preview[src])) .tools .toolName {
-  font-size: 11px !important;
-  white-space: normal !important;
-  line-height: 1.2 !important;
-}
-
-.app:not(:has(#preview[src])) .addButton {
-  display: block !important;
-  width: 100% !important;
-  margin-top: 10px !important;
-}
-
-/* EMPTY SCREEN - LAYOUT REFINEMENT */
-.app:not(:has(#preview[src])) {
-  width: 100% !important;
-  max-width: 760px !important;
-  padding: 14px 14px 28px !important;
-}
-
-.app:not(:has(#preview[src])) header {
-  margin-bottom: 22px !important;
-}
-
-.app:not(:has(#preview[src])) h1 {
-  font-size: 28px !important;
-}
-
-.app:not(:has(#preview[src])) .photoCard {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
-  padding: 10px !important;
-}
-
-.app:not(:has(#preview[src])) .previewBox {
-  min-height: 320px !important;
-  height: 320px !important;
-  flex: none !important;
-}
-
-.app:not(:has(#preview[src])) .placeholder {
-  padding: 20px 12px !important;
-}
-
-.app:not(:has(#preview[src])) .addButton {
-  position: static !important;
-  width: 100% !important;
-  margin: 0 !important;
-}
-
-.app:not(:has(#preview[src])) .tools {
-  position: static !important;
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 8px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.app:not(:has(#preview[src])) .tools > .tool {
-  width: 100% !important;
-  min-width: 0 !important;
-  min-height: 76px !important;
-}
-
-.app:not(:has(#preview[src])) .tools .toolName {
-  font-size: 11px !important;
-}
-
-/* Correct empty-screen structure */
-.app:not(:has(#preview[src])) .photoCard {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  gap: 12px !important;
-}
-
-.app:not(:has(#preview[src])) .previewBox {
-  flex: none !important;
-  width: 100% !important;
-  height: 280px !important;
-  min-height: 280px !important;
-}
-
-.app:not(:has(#preview[src])) .addButton {
-  order: 2 !important;
-}
-
-.app:not(:has(#preview[src])) .sectionTitle {
-  margin: 20px 0 10px !important;
-}
-
-.app:not(:has(#preview[src])) .tools {
-  order: 3 !important;
-}
-
-/* FIX SECOND SCREEN: keep editor toolbar outside preview card */
-.app:has(#preview[src]) .photoCard {
-  position: fixed !important;
-  inset: 0 0 calc(94px + env(safe-area-inset-bottom)) 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: visible !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  background: #fff !important;
-  z-index: 1 !important;
-}
-
-.app:has(#preview[src]) .previewBox {
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  flex: 1 1 auto !important;
-  border-radius: 0 !important;
-}
-
-.app:has(#preview[src]) .tools {
-  position: fixed !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: 100 !important;
-}
-
-/* FIX: EDITOR TOOLBAR, ADJUSTMENTS AND HISTORY BUTTONS */
-
-.app:has(#preview[src]) .photoCard {
-  position: fixed !important;
-  inset: 0 0 90px 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: visible !important;
-  z-index: 1 !important;
-}
-
-.app:has(#preview[src]) .previewBox {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  height: auto !important;
-}
-
-.app:has(#preview[src]) .tools {
-  position: fixed !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  top: auto !important;
-  z-index: 100 !important;
-}
-
-/* Adjustments panel: open ABOVE the bottom toolbar */
-.app:has(#preview[src]) .adjustmentsPanel {
-  position: fixed !important;
-  left: 8px !important;
-  right: 8px !important;
-  bottom: calc(95px + env(safe-area-inset-bottom)) !important;
-  top: auto !important;
-  max-height: 45dvh !important;
-  overflow-y: auto !important;
-  z-index: 110 !important;
-  background: #fff !important;
-}
-
-/* Keep global Undo/Redo visible */
-.app:has(#preview[src]) .photoHistoryControls {
-  display: flex !important;
-  position: fixed !important;
-  left: 10px !important;
-  top: 10px !important;
-  bottom: auto !important;
-  z-index: 9999 !important;
-}
-
-/* Do not alter the working Retouch panel */
