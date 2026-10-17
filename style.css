@@ -722,3 +722,30 @@ header .badge{background:#fff0f7;color:#c21868;border:1px solid #f5b4d3}
 .app:not(:has(#preview[src])) .tools .toolName {
   font-size: 11px !important;
 }
+
+/* Correct empty-screen structure */
+.app:not(:has(#preview[src])) .photoCard {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 12px !important;
+}
+
+.app:not(:has(#preview[src])) .previewBox {
+  flex: none !important;
+  width: 100% !important;
+  height: 280px !important;
+  min-height: 280px !important;
+}
+
+.app:not(:has(#preview[src])) .addButton {
+  order: 2 !important;
+}
+
+.app:not(:has(#preview[src])) .sectionTitle {
+  margin: 20px 0 10px !important;
+}
+
+.app:not(:has(#preview[src])) .tools {
+  order: 3 !important;
+}
