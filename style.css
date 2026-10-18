@@ -1696,6 +1696,6 @@ h1 {
   max-height: 30dvh !important;
   border: 0;
   border-radius: 18px;
-  background: transparent;
-}
+  background: transparent !important;
+background-color: transparent !important;
 
