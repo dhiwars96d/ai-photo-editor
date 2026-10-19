@@ -142,6 +142,7 @@
   }
 
   function connectButton() {
+     console.log("Skin button connection check");
     const tool = document.querySelector('.tool[data-tool="skin"]');
 
     if (!tool || tool.dataset.skinConnected) return;
@@ -151,6 +152,7 @@
     tool.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopImmediatePropagation();
+       console.log("Skin button clicked");
       open();
     }, true);
   }
@@ -163,6 +165,7 @@
     });
   } else {
     connectButton();
+     say("Skin button connected!");
   }
 })();
 ￼Enter
