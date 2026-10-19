@@ -101,6 +101,53 @@ Enhance your photos and improve skin appearance with simple AI-powered tools.
   </div>
 </div>
 
+
+<!-- Skin Finish Panel -->
+<div class="skinPanel" id="skinPanel" style="display:none;">
+  <div class="skinPanelTop">
+    <div class="skinPanelTitle">Skin Finish</div>
+    <button type="button" id="skinCancel" class="skinActionIcon" aria-label="Cancel Skin edits">×</button>
+  </div>
+
+  <div class="skinPresets" id="skinPresets">
+    <button type="button" class="skinPreset selected" data-skin-preset="none">
+      <span class="skinSwatch skinSwatchNone">○</span><span>None</span>
+    </button>
+    <button type="button" class="skinPreset" data-skin-preset="refined">
+      <span class="skinSwatch skinSwatchRefined">✦</span><span>Refined</span>
+    </button>
+    <button type="button" class="skinPreset" data-skin-preset="glowy">
+      <span class="skinSwatch skinSwatchGlowy">☼</span><span>Glowy</span>
+    </button>
+    <button type="button" class="skinPreset" data-skin-preset="tanned">
+      <span class="skinSwatch skinSwatchTanned">●</span><span>Tanned</span>
+    </button>
+    <button type="button" class="skinPreset" data-skin-preset="glass">
+      <span class="skinSwatch skinSwatchGlass">◇</span><span>Glass</span>
+    </button>
+    <button type="button" class="skinPreset" data-skin-preset="foundation">
+      <span class="skinSwatch skinSwatchFoundation">●</span><span>Foundation</span>
+    </button>
+    <button type="button" class="skinPreset" data-skin-preset="porcelain">
+      <span class="skinSwatch skinSwatchPorcelain">✧</span><span>Porcelain</span>
+    </button>
+    <button type="button" class="skinPreset" data-skin-preset="dewy">
+      <span class="skinSwatch skinSwatchDewy">💧</span><span>Dewy</span>
+    </button>
+  </div>
+
+  <div class="skinIntensityTop">
+    <span>Intensity</span>
+    <span id="skinIntensityValue">50</span>
+  </div>
+  <input type="range" id="skinIntensitySlider" min="1" max="100" value="50">
+
+  <div class="skinPanelActions">
+    <button type="button" id="skinApply" class="skinApplyButton">Apply ✓</button>
+  </div>
+  <div class="skinPanelNote">Preview effects are processed on this device.</div>
+</div>
+
 <!-- Hair Menu -->
 <div class="hairMenu" id="hairMenu" style="display:none;">
 
