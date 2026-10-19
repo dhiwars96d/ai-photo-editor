@@ -1699,3 +1699,81 @@ h1 {
   background: transparent !important;
 background-color: transparent !important;
 
+
+
+
+/* SKIN FINISH PANEL */
+.skinPanel {
+  display: none;
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(0,0,0,.06);
+}
+.skinPanelTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.skinPanelTitle { font-size: 14px; font-weight: 700; }
+.skinActionIcon {
+  width: 32px; height: 32px; border: 1px solid var(--border);
+  border-radius: 50%; background: #fff; color: var(--text);
+  font-size: 23px; line-height: 1;
+}
+.skinPresets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.skinPreset {
+  min-width: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 5px; padding: 8px 3px;
+  border: 1px solid #f1d2e1; border-radius: 12px; background: #fff;
+  color: var(--text); font-size: 10px; font-weight: 700;
+}
+.skinPreset.selected, .skinPreset:active {
+  border-color: var(--accent); background: var(--accent-soft); color: #c21868;
+}
+.skinSwatch {
+  width: 32px; height: 32px; display: flex; align-items: center;
+  justify-content: center; border-radius: 50%; font-size: 19px;
+  border: 1px solid rgba(150,80,110,.16);
+}
+.skinSwatchNone { background: #fff; color: #777; }
+.skinSwatchRefined { background: linear-gradient(135deg,#f5d4c7,#f9e8e0); color: #9f5b78; }
+.skinSwatchGlowy { background: linear-gradient(135deg,#fff3cf,#eeb8a7); color: #b06d55; }
+.skinSwatchTanned { background: linear-gradient(135deg,#d6a078,#9d6045); color: #fff; }
+.skinSwatchGlass { background: linear-gradient(135deg,#fff,#e8d8f8,#f5cfe0); color: #9e76b7; }
+.skinSwatchFoundation { background: linear-gradient(135deg,#f4d0b6,#c98f6d); color: #fff; }
+.skinSwatchPorcelain { background: linear-gradient(135deg,#fff,#f5e5e8); color: #ba91a1; }
+.skinSwatchDewy { background: linear-gradient(135deg,#e5f4ff,#f6d8e8); color: #4d9bc9; }
+.skinIntensityTop {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 14px 0 7px; font-size: 13px; font-weight: 700;
+}
+#skinIntensityValue {
+  min-width: 38px; padding: 5px 8px; border-radius: 10px;
+  background: var(--accent-soft); color: #c21868; font-size: 12px; text-align: center;
+}
+#skinIntensitySlider { display: block; width: 100%; min-height: 24px; margin: 0; accent-color: var(--accent); }
+.skinPanelActions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.skinApplyButton {
+  min-height: 40px; padding: 10px 18px; border: 0; border-radius: 12px;
+  background: var(--accent); color: #fff; font-size: 13px; font-weight: 700;
+}
+.skinPanelNote { margin-top: 8px; color: #9ca3af; font-size: 10px; text-align: center; }
+
+.app:has(#preview[src]) .skinPanel {
+  position: fixed; left: 8px; right: 8px;
+  bottom: calc(var(--toolbar-height) + 8px + env(safe-area-inset-bottom));
+  top: auto; width: auto; max-height: 48dvh; margin: 0;
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  border: 1px solid #f4c5dd; border-radius: 18px; background: #fff;
+  box-shadow: 0 8px 28px rgba(0,0,0,.14); z-index: 90;
+}
