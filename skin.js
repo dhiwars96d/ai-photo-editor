@@ -37,8 +37,23 @@
     const adjustments = $("adjustmentsPanel");
     if (adjustments) adjustments.classList.remove("open");
 
-    panel.style.setProperty("display", "block", "important");
-    say("Skin panel open ho gaya.");
+    
+panel.style.setProperty("display", "block", "important");
+panel.style.setProperty("position", "fixed", "important");
+panel.style.setProperty("left", "10px", "important");
+panel.style.setProperty("right", "10px", "important");
+panel.style.setProperty("bottom", "calc(145px + env(safe-area-inset-bottom))", "important");
+panel.style.setProperty("width", "auto", "important");
+panel.style.setProperty("max-height", "55dvh", "important");
+panel.style.setProperty("overflow-y", "auto", "important");
+panel.style.setProperty("z-index", "999999", "important");
+panel.style.setProperty("background", "#fff", "important");
+panel.style.setProperty("color", "#302531", "important");
+panel.style.setProperty("visibility", "visible", "important");
+panel.style.setProperty("opacity", "1", "important");
+
+say("Skin panel open ho gaya.");
+
   }
 
   function close() {
