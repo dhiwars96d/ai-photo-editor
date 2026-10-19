@@ -45,6 +45,13 @@ const smoothSlider =
 const smoothValue =
   document.getElementById("smoothValue");
 
+const skinPanel = document.getElementById("skinPanel");
+const skinIntensitySlider = document.getElementById("skinIntensitySlider");
+const skinIntensityValue = document.getElementById("skinIntensityValue");
+const skinApplyButton = document.getElementById("skinApply");
+const skinCancelButton = document.getElementById("skinCancel");
+
+
 const hairMenu =
   document.getElementById("hairMenu");
 
@@ -79,6 +86,10 @@ let adjustmentTimer = null;
 let smoothTimer = null;
 
 let smoothBaseBlob = null;
+let skinBaseBlob = null;
+let selectedSkinPreset = "none";
+let skinPreviewTimer = null;
+let skinPreviewSequence = 0;
 
 function getCurrentPhotoBlob() {
   return window.__editedPhotoBlob || editedBlob || selectedFile;
@@ -213,6 +224,7 @@ function resetToOriginalPhoto() {
   if (smoothControl) smoothControl.classList.remove("show");
   if (hairMenu) hairMenu.style.display = "none";
   if (hairColorPanel) hairColorPanel.style.display = "none";
+  if (skinPanel) skinPanel.style.display = "none";
 
   if (window.Retouch && typeof window.Retouch.close === "function") {
     window.Retouch.close();
@@ -398,6 +410,8 @@ if (fileInput) {
 
 
     hideSmoothControl();
+    if (skinPanel) skinPanel.style.display = "none";
+    skinBaseBlob = null;
 
     resetSmoothSlider();
 
@@ -3467,6 +3481,161 @@ if (hairIntensitySlider) {
 }
 
 
+
+/* =========================================================
+   SKIN FINISH — LOCAL BROWSER PRESETS
+   This is a global color/finish effect, not AI face segmentation.
+========================================================= */
+
+const skinPresetSettings = {
+  none:       { brightness: 0, contrast: 0, saturation: 0, warmth: 0, blur: 0 },
+  refined:    { brightness: 2, contrast: 2, saturation: -3, warmth: 1, blur: 0.10 },
+  glowy:      { brightness: 7, contrast: -3, saturation: 5, warmth: 3, blur: 0.35 },
+  tanned:     { brightness: -2, contrast: 5, saturation: 8, warmth: 12, blur: 0.05 },
+  glass:      { brightness: 6, contrast: 4, saturation: 2, warmth: -1, blur: 0.18 },
+  foundation: { brightness: 3, contrast: -5, saturation: -7, warmth: 2, blur: 0.55 },
+  porcelain:  { brightness: 10, contrast: -4, saturation: -10, warmth: -2, blur: 0.30 },
+  dewy:       { brightness: 5, contrast: -1, saturation: 4, warmth: 2, blur: 0.25 }
+};
+
+function openSkinPanel() {
+  skinBaseBlob = getCurrentPhotoBlob();
+  selectedSkinPreset = "none";
+  if (skinIntensitySlider) skinIntensitySlider.value = "50";
+  if (skinIntensityValue) skinIntensityValue.textContent = "50";
+  document.querySelectorAll(".skinPreset").forEach(btn => {
+    btn.classList.toggle("selected", btn.dataset.skinPreset === "none");
+  });
+  if (skinPanel) skinPanel.style.display = "block";
+  if (statusBox) statusBox.style.display = "none";
+}
+
+function closeSkinPanel(restoreBase = true) {
+  clearTimeout(skinPreviewTimer);
+  skinPreviewSequence++;
+  if (restoreBase && skinBaseBlob && preview) {
+    preview.src = URL.createObjectURL(skinBaseBlob);
+  }
+  if (skinPanel) skinPanel.style.display = "none";
+  skinBaseBlob = null;
+}
+
+async function renderSkinFinish(file, presetName, intensity) {
+  const img = await loadImage(file);
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const cfg = skinPresetSettings[presetName] || skinPresetSettings.none;
+  const f = Math.max(0, Math.min(1, (Number(intensity) || 50) / 100));
+  const mix = presetName === "none" ? 0 : f;
+  const brightness = cfg.brightness * mix;
+  const contrast = 1 + (cfg.contrast / 100) * mix;
+  const saturation = 1 + (cfg.saturation / 100) * mix;
+  const warmth = cfg.warmth * mix;
+  ctx.filter = `brightness(${Math.max(.5, 1 + brightness / 100)}) contrast(${contrast}) saturate(${saturation})`;
+  ctx.drawImage(img, 0, 0, w, h);
+  ctx.filter = "none";
+
+  if (warmth !== 0 || cfg.blur > 0) {
+    const source = document.createElement("canvas");
+    source.width = w; source.height = h;
+    source.getContext("2d").drawImage(canvas, 0, 0);
+    const out = ctx.createImageData(w, h);
+    const src = source.getContext("2d", {willReadFrequently:true}).getImageData(0,0,w,h).data;
+    const dst = out.data;
+    const warm = warmth * 0.55;
+    for (let i = 0; i < src.length; i += 4) {
+      dst[i] = Math.max(0, Math.min(255, src[i] + warm));
+      dst[i+1] = Math.max(0, Math.min(255, src[i+1] + warm * 0.20));
+      dst[i+2] = Math.max(0, Math.min(255, src[i+2] - warm * 0.45));
+      dst[i+3] = src[i+3];
+    }
+    ctx.putImageData(out, 0, 0);
+    const blurAmount = cfg.blur * mix;
+    if (blurAmount > 0) {
+      const softened = document.createElement("canvas");
+      softened.width = w; softened.height = h;
+      const sc = softened.getContext("2d");
+      sc.filter = `blur(${blurAmount}px)`;
+      sc.drawImage(canvas, 0, 0);
+      ctx.globalAlpha = Math.min(0.22, blurAmount * 0.16);
+      ctx.drawImage(softened, 0, 0);
+      ctx.globalAlpha = 1;
+    }
+  }
+  return await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.94));
+}
+
+function queueSkinPreview() {
+  if (!skinBaseBlob) return;
+  const seq = ++skinPreviewSequence;
+  clearTimeout(skinPreviewTimer);
+  const preset = selectedSkinPreset;
+  const intensity = Number(skinIntensitySlider?.value || 50);
+  if (skinIntensityValue) skinIntensityValue.textContent = String(intensity);
+  skinPreviewTimer = setTimeout(async () => {
+    try {
+      const blob = await renderSkinFinish(skinBaseBlob, preset, intensity);
+      if (!blob || seq !== skinPreviewSequence) return;
+      if (preview) preview.src = URL.createObjectURL(blob);
+      window.__skinPreviewBlob = blob;
+    } catch (error) {
+      console.error("Skin preview error:", error);
+      showStatus("Skin preview failed. Please try again.");
+    }
+  }, 90);
+}
+
+document.querySelectorAll(".skinPreset").forEach(button => {
+  button.addEventListener("click", () => {
+    selectedSkinPreset = button.dataset.skinPreset || "none";
+    document.querySelectorAll(".skinPreset").forEach(btn => {
+      btn.classList.toggle("selected", btn === button);
+    });
+    queueSkinPreview();
+  });
+});
+
+if (skinIntensitySlider) {
+  skinIntensitySlider.addEventListener("input", queueSkinPreview);
+}
+
+if (skinCancelButton) {
+  skinCancelButton.addEventListener("click", () => {
+    closeSkinPanel(true);
+    showStatus("Skin edits cancelled.");
+  });
+}
+
+if (skinApplyButton) {
+  skinApplyButton.addEventListener("click", async () => {
+    if (!skinBaseBlob) {
+      showStatus("Please select a photo first.");
+      return;
+    }
+    try {
+      skinApplyButton.disabled = true;
+      showStatus("Applying Skin finish...");
+      const blob = await renderSkinFinish(
+        skinBaseBlob,
+        selectedSkinPreset,
+        Number(skinIntensitySlider?.value || 50)
+      );
+      if (!blob) throw new Error("Could not create edited photo");
+      showResult(blob);
+      closeSkinPanel(false);
+      showStatus("Skin finish applied ✓");
+    } catch (error) {
+      console.error("Skin apply error:", error);
+      showStatus("Skin effect failed: " + (error.message || "Please try again."));
+    } finally {
+      skinApplyButton.disabled = false;
+    }
+  });
+}
+
+
 /* =========================================================
    AI TOOL BUTTONS
 ========================================================= */
@@ -3554,6 +3723,12 @@ smoothBaseBlob = getCurrentPhotoBlob();
 
           hideSmoothControl();
 
+          if (type === "skin") {
+            if (hairMenu) hairMenu.style.display = "none";
+            if (hairColorPanel) hairColorPanel.style.display = "none";
+            openSkinPanel();
+            return;
+          }
 
           if (
             type === "enhance"
