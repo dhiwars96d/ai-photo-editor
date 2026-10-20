@@ -3523,10 +3523,6 @@ function closeSkinPanel(restoreBase = true) {
 
 async function renderRefinedSkin(file, intensity = 50) {
   
-if (presetName === "refined") {
-  return await renderRefinedSkin(file, intensity);
-}
-
    const img = await loadImage(file);
   const w = img.naturalWidth;
   const h = img.naturalHeight;
