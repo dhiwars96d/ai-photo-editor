@@ -3592,8 +3592,9 @@ async function renderRefinedSkin(file, intensity = 50) {
       const greens = [];
       const blues = [];
       const lights = [];
-
-      for (let dy = -1; dy <= 1; dy++) {
+const rednesses = [];
+     
+       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
 
@@ -3606,26 +3607,35 @@ async function renderRefinedSkin(file, intensity = 50) {
           greens.push(ng);
           blues.push(nb);
           lights.push(luminance(nr, ng, nb));
+           rednesses.push(nr - ng);
         }
       }
 
-      const centerLight = luminance(r, g, b);
-      const localMedian = median(lights.slice());
-      const localSpread = Math.max(...lights) - Math.min(...lights);
+      
+const centerLight = luminance(r, g, b);
+const localMedian = median(lights.slice());
+const localSpread = Math.max(...lights) - Math.min(...lights);
 
-      // Correct only small isolated spots, not strong edges or all texture.
-      const difference = Math.abs(centerLight - localMedian);
-      if (difference < 12 || difference > 65 || localSpread > 55) continue;
+// Compare redness against the surrounding pixels.
+const localRedness = median(rednesses.slice());
+const redExcess = (r - g) - localRedness;
 
-      const mr = median(reds);
-      const mg = median(greens);
-      const mb = median(blues);
+// Avoid strong edges, shadows and major colour differences.
+if (
+  redExcess < 5 ||
+  redExcess > 35 ||
+  Math.abs(centerLight - localMedian) > 65 ||
+  localSpread > 55
+) continue;
 
-      const correction = Math.min(0.62, strength * 0.62);
+// Gently reduce excess red while retaining texture.
+const correction = Math.min(0.60, strength * 0.60);
+const redReduction = Math.min(22, redExcess) * correction;
 
-      out[i]     = Math.round(r * (1 - correction) + mr * correction);
-      out[i + 1] = Math.round(g * (1 - correction) + mg * correction);
-      out[i + 2] = Math.round(b * (1 - correction) + mb * correction);
+out[i] = Math.round(r - redReduction);
+out[i + 1] = Math.round(g + redReduction * 0.30);
+out[i + 2] = Math.round(b + redReduction * 0.12);
+
     }
   }
 
