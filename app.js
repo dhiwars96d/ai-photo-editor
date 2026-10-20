@@ -3651,52 +3651,100 @@ async function renderRefinedSkin(file, intensity = 50) {
 }
 
 
-async function renderSkinFinish(file, presetName, intensity) {
-  const img = await loadImage(file);
-  const w = img.naturalWidth, h = img.naturalHeight;
-  const canvas = document.createElement("canvas");
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  const cfg = skinPresetSettings[presetName] || skinPresetSettings.none;
-  const f = Math.max(0, Math.min(1, (Number(intensity) || 50) / 100));
-  const mix = presetName === "none" ? 0 : f;
-  const brightness = cfg.brightness * mix;
-  const contrast = 1 + (cfg.contrast / 100) * mix;
-  const saturation = 1 + (cfg.saturation / 100) * mix;
-  const warmth = cfg.warmth * mix;
-  ctx.filter = `brightness(${Math.max(.5, 1 + brightness / 100)}) contrast(${contrast}) saturate(${saturation})`;
-  ctx.drawImage(img, 0, 0, w, h);
-  ctx.filter = "none";
 
-  if (warmth !== 0 || cfg.blur > 0) {
-    const source = document.createElement("canvas");
-    source.width = w; source.height = h;
-    source.getContext("2d").drawImage(canvas, 0, 0);
-    const out = ctx.createImageData(w, h);
-    const src = source.getContext("2d", {willReadFrequently:true}).getImageData(0,0,w,h).data;
-    const dst = out.data;
-    const warm = warmth * 0.55;
-    for (let i = 0; i < src.length; i += 4) {
-      dst[i] = Math.max(0, Math.min(255, src[i] + warm));
-      dst[i+1] = Math.max(0, Math.min(255, src[i+1] + warm * 0.20));
-      dst[i+2] = Math.max(0, Math.min(255, src[i+2] - warm * 0.45));
-      dst[i+3] = src[i+3];
-    }
-    ctx.putImageData(out, 0, 0);
-    const blurAmount = cfg.blur * mix;
-    if (blurAmount > 0) {
-      const softened = document.createElement("canvas");
-      softened.width = w; softened.height = h;
-      const sc = softened.getContext("2d");
-      sc.filter = `blur(${blurAmount}px)`;
-      sc.drawImage(canvas, 0, 0);
-      ctx.globalAlpha = Math.min(0.22, blurAmount * 0.16);
-      ctx.drawImage(softened, 0, 0);
-      ctx.globalAlpha = 1;
+async function renderSkinFinish(file, presetName, intensity) {
+  // Refined uses selective blemish correction.
+  if (presetName === "refined") {
+    return await renderRefinedSkin(file, intensity);
+  }
+
+  const img = await loadImage(file);
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+
+  const ctx = canvas.getContext("2d", {
+    willReadFrequently: true
+  });
+
+  if (!ctx) throw new Error("Canvas is not supported");
+
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+  const cfg = skinPresetSettings[presetName] ||
+              skinPresetSettings.none;
+
+  const f = Math.max(
+    0,
+    Math.min(1, (Number(intensity) || 50) / 100)
+  );
+
+  if (presetName === "none" || f === 0) {
+    return file;
+  }
+
+  // Approximate face area; this is not AI face detection.
+  const rx = w * 0.36;
+  const ry = h * 0.43;
+  const cx = w * 0.50;
+  const cy = h * 0.46;
+
+  const brightness = (cfg.brightness || 0) * f;
+  const contrast = 1 + ((cfg.contrast || 0) / 100) * f;
+  const saturation = 1 + ((cfg.saturation || 0) / 100) * f;
+  const warmth = (cfg.warmth || 0) * f;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const dx = (x - cx) / rx;
+      const dy = (y - cy) / ry;
+
+      // Outside approximate face oval: leave unchanged.
+      if (dx * dx + dy * dy > 1) continue;
+
+      const i = (y * w + x) * 4;
+      let r = data[i];
+      let g = data[i + 1];
+      let b = data[i + 2];
+
+      // Conservative skin-colour estimate.
+      if (!(r > 45 && g > 25 &&
+            r >= g * 0.92 && g >= b * 0.78)) {
+        continue;
+      }
+
+      // Apply the selected preset to estimated skin pixels only.
+      r = ((r - 128) * contrast + 128) + brightness;
+      g = ((g - 128) * contrast + 128) + brightness;
+      b = ((b - 128) * contrast + 128) + brightness;
+
+      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+      r = gray + (r - gray) * saturation + warmth * 0.55;
+      g = gray + (g - gray) * saturation + warmth * 0.20;
+      b = gray + (b - gray) * saturation - warmth * 0.45;
+
+      data[i] = Math.max(0, Math.min(255, r));
+      data[i + 1] = Math.max(0, Math.min(255, g));
+      data[i + 2] = Math.max(0, Math.min(255, b));
     }
   }
-  return await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.94));
+
+  ctx.putImageData(imageData, 0, 0);
+
+  return await new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (blob) resolve(blob);
+      else reject(new Error("Could not export skin finish"));
+    }, "image/jpeg", 0.94);
+  });
 }
+
 
 function queueSkinPreview() {
   if (!skinBaseBlob) return;
