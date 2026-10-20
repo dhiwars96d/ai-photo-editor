@@ -3520,6 +3520,141 @@ function closeSkinPanel(restoreBase = true) {
   skinBaseBlob = null;
 }
 
+
+async function renderRefinedSkin(file, intensity = 50) {
+  
+if (presetName === "refined") {
+  return await renderRefinedSkin(file, intensity);
+}
+
+   const img = await loadImage(file);
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
+
+  const strength = Math.max(0, Math.min(100, Number(intensity))) / 100;
+  if (strength === 0) return file;
+
+  // Work at a smaller resolution for mobile performance.
+  const scale = Math.min(1, 900 / w);
+  const sw = Math.max(1, Math.round(w * scale));
+  const sh = Math.max(1, Math.round(h * scale));
+
+  const work = document.createElement("canvas");
+  work.width = sw;
+  work.height = sh;
+
+  const ctx = work.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Canvas is not supported");
+
+  ctx.drawImage(img, 0, 0, sw, sh);
+
+  const source = ctx.getImageData(0, 0, sw, sh);
+  const src = source.data;
+  const out = new Uint8ClampedArray(src);
+
+  const ellipseContains = (x, y, cx, cy, rx, ry) => {
+    const dx = (x - cx) / rx;
+    const dy = (y - cy) / ry;
+    return dx * dx + dy * dy <= 1;
+  };
+
+  const isProtectedFeature = (x, y) => {
+    // Approximate eye and eyebrow protection.
+    if (ellipseContains(x, y, sw * 0.405, sh * 0.395, sw * 0.095, sh * 0.050)) return true;
+    if (ellipseContains(x, y, sw * 0.595, sh * 0.395, sw * 0.095, sh * 0.050)) return true;
+    if (ellipseContains(x, y, sw * 0.405, sh * 0.345, sw * 0.105, sh * 0.027)) return true;
+    if (ellipseContains(x, y, sw * 0.595, sh * 0.345, sw * 0.105, sh * 0.027)) return true;
+
+    // Protect the mouth/lips region.
+    if (ellipseContains(x, y, sw * 0.50, sh * 0.655, sw * 0.19, sh * 0.070)) return true;
+
+    return false;
+  };
+
+  const luminance = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+  const median = values => {
+    values.sort((a, b) => a - b);
+    return values[Math.floor(values.length / 2)];
+  };
+
+  for (let y = 2; y < sh - 2; y++) {
+    for (let x = 2; x < sw - 2; x++) {
+      const i = (y * sw + x) * 4;
+
+      // Approximate central face area; not a true AI face/skin mask.
+      if (!ellipseContains(x, y, sw * 0.50, sh * 0.465, sw * 0.405, sh * 0.475)) continue;
+      if (isProtectedFeature(x, y)) continue;
+
+      const r = src[i];
+      const g = src[i + 1];
+      const b = src[i + 2];
+
+      // Conservative skin-colour heuristic.
+      if (!(r > 45 && g > 25 && r >= g * 0.92 && g >= b * 0.78)) continue;
+
+      const reds = [];
+      const greens = [];
+      const blues = [];
+      const lights = [];
+
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+
+          const ni = ((y + dy) * sw + (x + dx)) * 4;
+          const nr = src[ni];
+          const ng = src[ni + 1];
+          const nb = src[ni + 2];
+
+          reds.push(nr);
+          greens.push(ng);
+          blues.push(nb);
+          lights.push(luminance(nr, ng, nb));
+        }
+      }
+
+      const centerLight = luminance(r, g, b);
+      const localMedian = median(lights.slice());
+      const localSpread = Math.max(...lights) - Math.min(...lights);
+
+      // Correct only small isolated spots, not strong edges or all texture.
+      const difference = Math.abs(centerLight - localMedian);
+      if (difference < 12 || difference > 65 || localSpread > 55) continue;
+
+      const mr = median(reds);
+      const mg = median(greens);
+      const mb = median(blues);
+
+      const correction = Math.min(0.62, strength * 0.62);
+
+      out[i]     = Math.round(r * (1 - correction) + mr * correction);
+      out[i + 1] = Math.round(g * (1 - correction) + mg * correction);
+      out[i + 2] = Math.round(b * (1 - correction) + mb * correction);
+    }
+  }
+
+  source.data.set(out);
+  ctx.putImageData(source, 0, 0);
+
+  // Return at the original photo dimensions.
+  const output = document.createElement("canvas");
+  output.width = w;
+  output.height = h;
+
+  const outCtx = output.getContext("2d");
+  if (!outCtx) throw new Error("Could not create output canvas");
+
+  outCtx.drawImage(work, 0, 0, w, h);
+
+  return await new Promise((resolve, reject) => {
+    output.toBlob(blob => {
+      if (blob) resolve(blob);
+      else reject(new Error("Could not export refined photo"));
+    }, "image/jpeg", 0.94);
+  });
+}
+
+
 async function renderSkinFinish(file, presetName, intensity) {
   const img = await loadImage(file);
   const w = img.naturalWidth, h = img.naturalHeight;
