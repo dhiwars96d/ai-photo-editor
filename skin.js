@@ -343,3 +343,70 @@
   // app.js calls renderSkinFinish by name; replace it globally.
   window.renderSkinFinish = renderSkinFinish;
 })();
+
+
+
+/* =========================================================
+   RETOUCH PANEL STYLING HOOK
+   retouch.js builds #retouchPanel itself; we only tag it with
+   classes so style.css (.rtPanel) can give it the pink look + icons.
+========================================================= */
+(() => {
+  "use strict";
+
+  const BY_ID = {
+    rtAuto: "auto", rtCompare: "compare", rtTap: "tap", rtUndo: "undo",
+    rtReset: "reset", rtZoomOut: "zoomout", rtZoomReset: "zoomreset",
+    rtZoomIn: "zoomin", rtDownload: "download", rtClose: "close"
+  };
+
+  function paintSlider(input) {
+    const min = Number(input.min || 0);
+    const max = Number(input.max || 100);
+    const pct = ((Number(input.value) - min) / (max - min || 1)) * 100;
+    input.style.setProperty("--p", pct + "%");
+  }
+
+  function decorate() {
+    const panel = document.getElementById("retouchPanel");
+    if (!panel) return;
+
+    panel.classList.add("rtPanel");
+    const title = panel.querySelector("strong");
+    if (title) title.classList.add("rtTitle");
+
+    panel.querySelectorAll("button").forEach(btn => {
+      const k = BY_ID[btn.id];
+      if (!k) return;
+      btn.dataset.rt = k;
+      if (k === "tap") {
+        btn.dataset.on = /:\s*on/i.test(btn.textContent) ? "1" : "0";
+      }
+    });
+
+    panel.querySelectorAll('input[type="range"]').forEach(input => {
+      paintSlider(input);
+      const box = input.parentElement;
+      if (box && box !== panel) box.classList.add("rtSliderBox");
+    });
+  }
+
+  let queued = false;
+  function queue() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; decorate(); });
+  }
+
+  document.addEventListener("input", e => {
+    if (e.target && e.target.id === "rtTapSize") paintSlider(e.target);
+  });
+
+  new MutationObserver(queue).observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true
+  });
+
+  queue();
+})();
