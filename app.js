@@ -3531,7 +3531,7 @@ async function renderRefinedSkin(file, intensity = 50) {
   if (strength === 0) return file;
 
   // Work at a smaller resolution for mobile performance.
-  const scale = Math.min(1, 900 / w);
+  const scale = Math.min(1, 1600 / w);
   const sw = Math.max(1, Math.round(w * scale));
   const sh = Math.max(1, Math.round(h * scale));
 
@@ -3622,18 +3622,18 @@ const redExcess = (r - g) - localRedness;
 
 // Avoid strong edges, shadows and major colour differences.
 if (
-  redExcess < 5 ||
-  redExcess > 35 ||
-  Math.abs(centerLight - localMedian) > 65 ||
-  localSpread > 55
+  redExcess < 3 ||
+  redExcess > 45 ||
+  Math.abs(centerLight - localMedian) > 75 ||
+  localSpread > 70
 ) continue;
 
 // Gently reduce excess red while retaining texture.
-const correction = Math.min(0.60, strength * 0.60);
-const redReduction = Math.min(22, redExcess) * correction;
+const correction = strength * 0.90;
+const redReduction = Math.min(28, redExcess) * correction;
 
 out[i] = Math.round(r - redReduction);
-out[i + 1] = Math.round(g + redReduction * 0.30);
+out[i + 1] = Math.round(g + redReduction * 0.35);
 out[i + 2] = Math.round(b + redReduction * 0.12);
 
     }
