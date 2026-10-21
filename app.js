@@ -3544,6 +3544,25 @@ async function renderRefinedSkin(file, intensity = 50) {
 
   ctx.drawImage(img, 0, 0, sw, sh);
 
+  // Create a very subtle skin-colour smoothing layer.
+  const softCanvas = document.createElement("canvas");
+  softCanvas.width = sw;
+  softCanvas.height = sh;
+
+  const softCtx = softCanvas.getContext("2d", {
+    willReadFrequently: true
+  });
+
+  if (!softCtx) {
+    throw new Error("Could not create skin texture layer");
+  }
+
+  softCtx.filter = "blur(1.2px)";
+  softCtx.drawImage(work, 0, 0, sw, sh);
+  softCtx.filter = "none";
+
+  const softData = softCtx.getImageData(0, 0, sw, sh).data;
+
   const source = ctx.getImageData(0, 0, sw, sh);
   const src = source.data;
   const out = new Uint8ClampedArray(src);
@@ -3628,14 +3647,36 @@ if (
   localSpread > 70
 ) continue;
 
-// Gently reduce excess red while retaining texture.
-const correction = strength * 0.90;
-const redReduction = Math.min(28, redExcess) * correction;
 
-out[i] = Math.round(r - redReduction);
-out[i + 1] = Math.round(g + redReduction * 0.35);
-out[i + 2] = Math.round(b + redReduction * 0.12);
+  // Subtle colour smoothing while preserving fine skin detail.
+  const sr = softData[i];
+  const sg = softData[i + 1];
+  const sb = softData[i + 2];
 
+  const originalLight = luminance(r, g, b);
+  const softLight = luminance(sr, sg, sb);
+
+  // Blend colour gently; retain most original texture.
+  const colourBlend = strength * 0.22;
+  const detailStrength = 0.90;
+
+  const detail = (originalLight - softLight) * detailStrength;
+
+  out[i] = Math.round(
+    r * (1 - colourBlend) +
+    sr * colourBlend + detail
+  );
+
+  out[i + 1] = Math.round(
+    g * (1 - colourBlend) +
+    sg * colourBlend + detail
+  );
+
+  out[i + 2] = Math.round(
+    b * (1 - colourBlend) +
+    sb * colourBlend + detail
+  );
+   
     }
   }
 
