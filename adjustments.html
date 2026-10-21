@@ -3,340 +3,317 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Adjustments</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
-      background: transparent;
-      font-family: Arial, sans-serif;
-      color: #111827;
+      background: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #2b1d25;
+      overflow: hidden;
     }
 
-    
-
-.adjustmentsCard {
-  width: 100%;
-  background: rgba(35, 20, 30, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.40);
-  border-radius: 18px;
-  padding: 7px 12px;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-
-
-    .adjustmentTitle {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      color: #ffffff;
+    .sheet {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
     }
 
-    
-.control {
-  margin-bottom: 9px;
-}
-
-.control:last-of-type {
-  margin-bottom: 8px;
-}
-
-
-    .controlTop {
+    /* ---------- top: name, value, reset ---------- */
+    .head {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
+      gap: 10px;
+      padding: 12px 16px 0;
     }
 
-    .controlName {
-      font-size: 15px;
-      font-weight: 600;
-      color: #ffffff;
+    .curName {
+      flex: 1;
+      min-width: 0;
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .controlValue {
-      min-width: 38px;
-      text-align: right;
-      font-size: 15px;
-      font-weight: 600;
-      color: #ffffff;
+    .curValue {
+      min-width: 42px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #fff0f7;
+      color: #c21868;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
     }
 
-    input[type="range"] {
+    .resetBtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border: 1.5px solid #f28ab9;
+      border-radius: 999px;
+      background: #fff;
+      color: #c21868;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .resetBtn:active { background: #fff0f7; }
+    .resetBtn svg { width: 14px; height: 14px; }
+
+    /* ---------- slider ---------- */
+    .sliderWrap { padding: 12px 20px 6px; }
+
+    #mainSlider {
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
       width: 100%;
-      height: 5px;
+      height: 6px;
       margin: 0;
       padding: 0;
-      accent-color: #6366f1;
+      border: 0;
+      border-radius: 99px;
+      outline: 0;
+      background: #f3dce8;
+      touch-action: pan-y;
+      cursor: pointer;
+    }
+    #mainSlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #f42f91;
+      border: 4px solid #fff;
+      box-shadow: 0 2px 9px rgba(244, 47, 145, .55);
+    }
+    #mainSlider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #f42f91;
+      border: 4px solid #fff;
+      box-shadow: 0 2px 9px rgba(244, 47, 145, .55);
+    }
+
+    /* ---------- tabs ---------- */
+    .tabs {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+      padding: 8px 8px 6px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x proximity;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab {
+      position: relative;
+      flex: 0 0 auto;
+      width: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 0;
+      border: 0;
+      background: transparent;
+      color: #5d4a55;
+      font-size: 11px;
+      font-weight: 600;
+      scroll-snap-align: center;
       cursor: pointer;
     }
 
-    
-.resetButton {
-  width: 100%;
-  margin-top: 4px;
-  padding: 12px 14px;
-  border: 1px solid #f1c6dc;
-  border-radius: 12px;
-  background: rgba(255, 240, 247, 0.30);
-  color: #c21868;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-}
+    .tabIcon {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid #f1d2e1;
+      border-radius: 50%;
+      background: #fff;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .tabIcon svg { width: 22px; height: 22px; }
 
-
-    .resetButton:active {
-      transform: scale(0.99);
+    .tab.active { color: #c21868; }
+    .tab.active .tabIcon {
+      background: linear-gradient(135deg, #f42f91, #ff6fb5);
+      border-color: #f42f91;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(244, 47, 145, .35);
     }
 
-    @media (max-width: 380px) {
-      .adjustmentsCard {
-        padding: 14px;
-      }
-
-      .control {
-        margin-bottom: 16px;
-      }
+    /* small dot when a tool has been changed */
+    .tab.changed::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      right: 14px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #f42f91;
+      border: 2px solid #fff;
     }
-    
-.adjustmentTitle,
-.controlName,
-.controlValue {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
-}
-
+    .tab.active.changed::after { background: #fff; border-color: #f42f91; }
   </style>
 </head>
 
 <body>
 
-  <div class="adjustmentsCard">
+  <div class="sheet">
 
-    <div class="adjustmentTitle">
-      Photo Adjustments
+    <div class="head">
+      <span class="curName" id="curName">Brightness</span>
+      <span class="curValue" id="curValue">0</span>
+      <button class="resetBtn" id="resetAdjustments" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        Reset
+      </button>
     </div>
 
-    <!-- Brightness -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Brightness</span>
-        <span class="controlValue" id="brightnessValue">0</span>
-      </div>
-      <input id="brightness" type="range" min="-100" max="100" value="0">
+    <div class="sliderWrap">
+      <input id="mainSlider" type="range" min="-100" max="100" value="0" step="1">
     </div>
 
-    <!-- Contrast -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Contrast</span>
-        <span class="controlValue" id="contrastValue">0</span>
-      </div>
-      <input id="contrast" type="range" min="-100" max="100" value="0">
-    </div>
-
-    <!-- Warmth -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Warmth</span>
-        <span class="controlValue" id="warmthValue">0</span>
-      </div>
-      <input id="warmth" type="range" min="-100" max="100" value="0">
-    </div>
-
-    <!-- Saturation -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Saturation</span>
-        <span class="controlValue" id="saturationValue">0</span>
-      </div>
-      <input id="saturation" type="range" min="-100" max="100" value="0">
-    </div>
-
-    <!-- Sharpness -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Sharpness</span>
-        <span class="controlValue" id="sharpnessValue">0</span>
-      </div>
-      <input id="sharpness" type="range" min="-100" max="100" value="0">
-    </div>
-
-    <!-- Color Temp -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Color Temp</span>
-        <span class="controlValue" id="temperatureValue">0</span>
-      </div>
-      <input id="temperature" type="range" min="-100" max="100" value="0">
-    </div>
-
-    <!-- Vibrance -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Vibrance</span>
-        <span class="controlValue" id="vibranceValue">0</span>
-      </div>
-      <input id="vibrance" type="range" min="-100" max="100" value="0">
-    </div>
-
-    <!-- Tint -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Tint</span>
-        <span class="controlValue" id="tintValue">0</span>
-      </div>
-      <input id="tint" type="range" min="-100" max="100" value="0">
-    </div>
-
-    <!-- Shadows -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Shadows</span>
-        <span class="controlValue" id="shadowsValue">0</span>
-      </div>
-      <input id="shadows" type="range" min="-100" max="100" value="0">
-    </div>
-
-    <!-- Clarity -->
-    <div class="control">
-      <div class="controlTop">
-        <span class="controlName">Clarity</span>
-        <span class="controlValue" id="clarityValue">0</span>
-      </div>
-      <input id="clarity" type="range" min="-100" max="100" value="0">
-    </div>
-
-    <button class="resetButton" id="resetAdjustments">
-      Reset Adjustments
-    </button>
+    <div class="tabs" id="tabs"></div>
 
   </div>
 
   <script>
-    const adjustmentIds = [
-      "brightness",
-      "contrast",
-      "warmth",
-      "saturation",
-      "sharpness",
-      "temperature",
-      "vibrance",
-      "tint",
-      "shadows",
-      "clarity"
+    const TOOLS = [
+      { id: "brightness",  name: "Brightness",
+        icon: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>' },
+      { id: "contrast",    name: "Contrast",
+        icon: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>' },
+      { id: "warmth",      name: "Warmth",
+        icon: '<path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .5 1 1 1.5 2 1.5 0-3-1-5 1-7.5z"/>' },
+      { id: "saturation",  name: "Saturation",
+        icon: '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>' },
+      { id: "sharpness",   name: "Sharpness",
+        icon: '<path d="M12 3l9 16H3z"/><path d="M12 10v4"/>' },
+      { id: "temperature", name: "Color Temp",
+        icon: '<path d="M10 14.5V5a2 2 0 1 1 4 0v9.5a4 4 0 1 1-4 0z"/>' },
+      { id: "vibrance",    name: "Vibrance",
+        icon: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>' },
+      { id: "tint",        name: "Tint",
+        icon: '<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>' },
+      { id: "shadows",     name: "Shadows",
+        icon: '<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z"/>' },
+      { id: "clarity",     name: "Clarity",
+        icon: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>' }
     ];
 
     const values = {};
+    TOOLS.forEach(t => { values[t.id] = 0; });
+
+    let current = TOOLS[0].id;
+
+    const slider   = document.getElementById("mainSlider");
+    const curName  = document.getElementById("curName");
+    const curValue = document.getElementById("curValue");
+    const tabsBox  = document.getElementById("tabs");
+    const tabEls   = {};
 
     function sendMessage(message) {
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage(
-          message,
-          window.location.origin
-        );
+        window.parent.postMessage(message, window.location.origin);
       }
     }
 
-    adjustmentIds.forEach(id => {
-
-      const slider = document.getElementById(id);
-      const valueElement = document.getElementById(id + "Value");
-
-      values[id] = 0;
-
-      slider.addEventListener("input", () => {
-
-        const value = Number(slider.value);
-
-        values[id] = value;
-
-        valueElement.textContent = value;
-
-        sendMessage({
-          type: "adjustmentChange",
-          id: id,
-          value: value
-        });
-
-      });
-
+    /* build tabs */
+    TOOLS.forEach(tool => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tab";
+      btn.innerHTML =
+        '<span class="tabIcon"><svg viewBox="0 0 24 24" fill="none" ' +
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+        'stroke-linejoin="round">' + tool.icon + '</svg></span>' +
+        '<span>' + tool.name + '</span>';
+      btn.addEventListener("click", () => select(tool.id, true));
+      tabsBox.appendChild(btn);
+      tabEls[tool.id] = btn;
     });
 
+    function paintSlider() {
+      const min = Number(slider.min), max = Number(slider.max);
+      const p = ((Number(slider.value) - min) / (max - min)) * 100;
+      const a = Math.min(50, p), b = Math.max(50, p);
+      slider.style.background =
+        "linear-gradient(90deg, #f3dce8 0%, #f3dce8 " + a + "%, " +
+        "#f42f91 " + a + "%, #f42f91 " + b + "%, " +
+        "#f3dce8 " + b + "%, #f3dce8 100%)";
+    }
 
-    document
-      .getElementById("resetAdjustments")
-      .addEventListener("click", () => {
-
-        adjustmentIds.forEach(id => {
-
-          const slider = document.getElementById(id);
-          const valueElement =
-            document.getElementById(id + "Value");
-
-          slider.value = 0;
-          valueElement.textContent = "0";
-
-          values[id] = 0;
-
-        });
-
-        sendMessage({
-          type: "resetAdjustments"
-        });
-
+    function refreshTabs() {
+      TOOLS.forEach(t => {
+        tabEls[t.id].classList.toggle("active", t.id === current);
+        tabEls[t.id].classList.toggle("changed", values[t.id] !== 0);
       });
+    }
 
+    function refreshCurrent() {
+      const tool = TOOLS.find(t => t.id === current);
+      curName.textContent = tool.name;
+      slider.value = values[current];
+      curValue.textContent = values[current];
+      paintSlider();
+      refreshTabs();
+    }
 
+    function select(id, scroll) {
+      current = id;
+      refreshCurrent();
+      if (scroll && tabEls[id].scrollIntoView) {
+        tabEls[id].scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+      }
+    }
+
+    slider.addEventListener("input", () => {
+      const value = Number(slider.value);
+      values[current] = value;
+      curValue.textContent = value;
+      paintSlider();
+      tabEls[current].classList.toggle("changed", value !== 0);
+      sendMessage({ type: "adjustmentChange", id: current, value: value });
+    });
+
+    document.getElementById("resetAdjustments").addEventListener("click", () => {
+      TOOLS.forEach(t => { values[t.id] = 0; });
+      refreshCurrent();
+      sendMessage({ type: "resetAdjustments" });
+    });
+
+    /* values pushed from index.html (new photo, undo, reset ...) */
     window.addEventListener("message", event => {
-
-      if (event.source !== window.parent) {
-        return;
-      }
-
+      if (event.source !== window.parent) return;
       const data = event.data || {};
+      if (data.type !== "setValues" || !data.values) return;
 
-      if (
-        data.type !== "setValues" ||
-        !data.values
-      ) {
-        return;
-      }
-
-      adjustmentIds.forEach(id => {
-
-        const slider = document.getElementById(id);
-        const valueElement =
-          document.getElementById(id + "Value");
-
-        const value =
-          Number(data.values[id] ?? 0);
-
-        slider.value = value;
-        valueElement.textContent = value;
-
-        values[id] = value;
-
-      });
-
+      TOOLS.forEach(t => { values[t.id] = Number(data.values[t.id] ?? 0); });
+      refreshCurrent();
     });
 
-
-    // Tell index.html that this file is ready
-    sendMessage({
-      type: "adjustmentReady"
-    });
-
+    refreshCurrent();
+    sendMessage({ type: "adjustmentReady" });
   </script>
 
 </body>
