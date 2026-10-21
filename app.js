@@ -3765,7 +3765,8 @@ function queueSkinPreview() {
   if (skinIntensityValue) skinIntensityValue.textContent = String(intensity);
   skinPreviewTimer = setTimeout(async () => {
     try {
-      const blob = await renderSkinFinish(skinBaseBlob, preset, intensity);
+       console.log("Skin preview:", preset, intensity);
+       const blob = await renderSkinFinish(skinBaseBlob, preset, intensity);
       if (!blob || seq !== skinPreviewSequence) return;
       if (preview) preview.src = URL.createObjectURL(blob);
       window.__skinPreviewBlob = blob;
