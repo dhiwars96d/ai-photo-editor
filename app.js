@@ -3682,6 +3682,7 @@ if (
 
   source.data.set(out);
   ctx.putImageData(source, 0, 0);
+   console.log("Refined processing finished", sw, sh);
 
   // Return at the original photo dimensions.
   const output = document.createElement("canvas");
