@@ -1941,3 +1941,122 @@ h1 {
 .app:has(#preview[src]) .previewBox {
   padding-top: 90px;
 }
+
+
+/* =========================================================
+   RETOUCH PANEL — white/pink style (classes added by skin.js)
+========================================================= */
+#retouchPanel.rtPanel {
+  background: #fff !important;
+  border: 1px solid #f1d2e1 !important;
+  border-radius: 22px !important;
+  padding: 16px !important;
+  box-shadow: 0 8px 28px rgba(244,47,145,.14) !important;
+  color: #2b1d25 !important;
+}
+#retouchPanel .rtTitle {
+  display: block;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #2b1d25 !important;
+}
+#retouchPanel button[data-rt] {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 46px;
+  padding: 11px 16px !important;
+  border: 1.5px solid #f28ab9 !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: #c21868 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(244,47,145,.08);
+  -webkit-tap-highlight-color: transparent;
+}
+#retouchPanel button[data-rt]::before {
+  content: "";
+  width: 19px;
+  height: 19px;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: var(--rt-icon) center / contain no-repeat;
+  mask: var(--rt-icon) center / contain no-repeat;
+}
+#retouchPanel button[data-rt]:active { background: #fff0f7 !important; transform: scale(.98); }
+#retouchPanel button[data-rt="auto"],
+#retouchPanel button[data-rt="download"],
+#retouchPanel button[data-rt="tap"][data-on="1"] {
+  background: linear-gradient(135deg, #f42f91, #ff6fb5) !important;
+  border-color: #f42f91 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(244,47,145,.35);
+}
+#retouchPanel button[data-rt="close"] {
+  background: #f7f1f4 !important;
+  border-color: #e7d6de !important;
+  color: #6b5560 !important;
+}
+#retouchPanel button[data-rt]:disabled { opacity: .55; }
+#retouchPanel .rtSliderBox {
+  border: 1px solid #f1d2e1 !important;
+  border-radius: 16px !important;
+  background: #fff7fb !important;
+  color: #6b5560 !important;
+}
+#retouchPanel input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px !important;
+  min-height: 0 !important;
+  border-radius: 99px;
+  border: 0 !important;
+  outline: 0;
+  accent-color: #f42f91 !important;
+  background: linear-gradient(90deg, #f42f91 var(--p, 50%), #f6dbe8 var(--p, 50%)) !important;
+}
+#retouchPanel input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #f42f91;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(244,47,145,.5);
+}
+#retouchPanel input[type="range"]::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #f42f91;
+  border: 3px solid #fff;
+}
+#retouchPanel button[data-rt="auto"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z'/%3E%3C/svg%3E"); }
+#retouchPanel button[data-rt="compare"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5h18v14H3z M12 5v14 M7 10l-2 2 2 2 M17 10l2 2-2 2'/%3E%3C/svg%3E"); }
+#retouchPanel button[data-rt="tap"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0 M12 3v3 M12 18v3 M3 12h3 M18 12h3'/%3E%3C/svg%3E"); }
+#retouchPanel button[data-rt="undo"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14L4 9l5-5 M4 9h10a6 6 0 0 1 0 12h-3'/%3E%3C/svg%3E"); }
+#retouchPanel button[data-rt="reset"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 3-6.7 M3 4v5h5'/%3E%3C/svg%3E"); }
+#retouchPanel button[data-rt="zoomout"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 11m-7 0a7 7 0 1 0 14 0a7 7 0 1 0-14 0 M21 21l-4.3-4.3 M8 11h6'/%3E%3C/svg%3E"); }
+#retouchPanel button[data-rt="zoomin"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 11m-7 0a7 7 0 1 0 14 0a7 7 0 1 0-14 0 M21 21l-4.3-4.3 M8 11h6 M11 8v6'/%3E%3C/svg%3E"); }
+#retouchPanel button[data-rt="zoomreset"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5'/%3E%3C/svg%3E"); }
+#retouchPanel button[data-rt="download"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12 M7 10l5 5 5-5 M4 21h16'/%3E%3C/svg%3E"); }
+#retouchPanel button[data-rt="close"] { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6l12 12 M18 6L6 18'/%3E%3C/svg%3E"); }
+
+/* Retouch panel: compact size */
+#retouchPanel.rtPanel { padding: 11px 12px !important; border-radius: 18px !important; }
+#retouchPanel .rtTitle { font-size: 14px !important; }
+#retouchPanel .rt-row { gap: 6px !important; margin-top: 7px !important; }
+#retouchPanel button[data-rt] {
+  min-height: 38px;
+  padding: 7px 10px !important;
+  gap: 6px;
+  font-size: 12.5px !important;
+  border-radius: 12px !important;
+}
+#retouchPanel button[data-rt]::before { width: 16px; height: 16px; }
+#retouchPanel .rt-size-control { margin-top: 8px !important; padding: 8px 10px !important; }
+#retouchPanel .rt-size-label { margin-bottom: 4px !important; font-size: 12px !important; }
+#retouchPanel .rt-size-control .rt-size-label:last-child { display: none; }
+#retouchPanel .rt-help { display: none; }
