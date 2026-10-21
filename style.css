@@ -1780,9 +1780,6 @@ h1 {
   box-shadow: 0 8px 28px rgba(0,0,0,.14); z-index: 90;
 }
 
-/* FIX: Close the adjustments frame rule */
-  background-color: transparent !important;
-}
 
 /* =====================================
    SKIN FINISH PANEL — MOBILE UI UPGRADE
@@ -1924,4 +1921,23 @@ h1 {
     min-height: 46px;
     font-size: 14px;
   }
+}
+
+/* Editor: keep photo clear of top buttons and bottom panel */
+.app:has(#preview[src]) .previewBox {
+  align-items: flex-start;
+  padding-top: 96px;
+}
+.app:has(#preview[src]) #preview {
+  height: 100%;
+  object-position: center top;
+}
+.skinCancelButton { display: none; }
+
+/* Photo area shrinks above open panels (value set by skin.js) */
+.app:has(#preview[src]) .photoCard {
+  bottom: var(--photo-bottom, calc(var(--toolbar-height) + env(safe-area-inset-bottom)));
+}
+.app:has(#preview[src]) .previewBox {
+  padding-top: 90px;
 }
