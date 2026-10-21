@@ -3762,6 +3762,7 @@ function queueSkinPreview() {
   clearTimeout(skinPreviewTimer);
   const preset = selectedSkinPreset;
   const intensity = Number(skinIntensitySlider?.value || 50);
+   showStatus("Preset: " + preset + " | Intensity: " + intensity);
   if (skinIntensityValue) skinIntensityValue.textContent = String(intensity);
   skinPreviewTimer = setTimeout(async () => {
     try {
