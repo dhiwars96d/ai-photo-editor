@@ -2069,8 +2069,8 @@ h1 {
   right: 8px !important;
   bottom: calc(var(--toolbar-height, 88px) + 8px + env(safe-area-inset-bottom)) !important;
   width: auto !important;
-  height: 182px !important;
-  max-height: 182px !important;
+  height: 214px !important;
+  max-height: 214px !important;
   padding: 0 !important;
   overflow: hidden !important;
   background: #fff !important;
@@ -2084,8 +2084,8 @@ h1 {
 .app:has(#preview[src]) #adjustmentsFrame {
   display: block;
   width: 100% !important;
-  height: 182px !important;
-  max-height: 182px !important;
+  height: 214px !important;
+  max-height: 214px !important;
   border: 0 !important;
   border-radius: 22px !important;
   background: #fff !important;
