@@ -2091,3 +2091,85 @@ h1 {
   background: #fff !important;
   background-color: #fff !important;
 }
+
+
+/* =========================================================
+   RETOUCH PANEL — final pink style, selectors by id/class
+   (works even if skin.js hook does not run)
+========================================================= */
+#retouchPanel {
+  background: #fff !important;
+  border: 1px solid #f1d2e1 !important;
+  border-radius: 18px !important;
+  padding: 11px 12px !important;
+  box-shadow: 0 8px 28px rgba(244,47,145,.14) !important;
+  color: #2b1d25 !important;
+}
+#retouchPanel > strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #2b1d25;
+}
+#retouchPanel .rt-row button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-height: 38px;
+  padding: 7px 10px !important;
+  border: 1.5px solid #f28ab9 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: #c21868 !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(244,47,145,.08);
+}
+#retouchPanel .rt-row button::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: var(--rt-icon) center / contain no-repeat;
+  mask: var(--rt-icon) center / contain no-repeat;
+}
+#retouchPanel .rt-row button:active { background: #fff0f7 !important; }
+#retouchPanel #rtAuto,
+#retouchPanel #rtDownload,
+#retouchPanel .rt-row button.rt-active {
+  background: linear-gradient(135deg, #f42f91, #ff6fb5) !important;
+  border-color: #f42f91 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(244,47,145,.35);
+}
+#retouchPanel #rtClose {
+  background: #f7f1f4 !important;
+  border-color: #e7d6de !important;
+  color: #6b5560 !important;
+}
+#retouchPanel .rt-size-control {
+  border: 1px solid #f1d2e1 !important;
+  border-radius: 14px !important;
+  background: #fff7fb !important;
+  color: #6b5560 !important;
+}
+#retouchPanel input[type="range"] {
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+  height: auto !important;
+  background: none !important;
+  accent-color: #f42f91 !important;
+}
+#retouchPanel #rtAuto { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z'/%3E%3C/svg%3E"); }
+#retouchPanel #rtCompare { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5h18v14H3z M12 5v14 M7 10l-2 2 2 2 M17 10l2 2-2 2'/%3E%3C/svg%3E"); }
+#retouchPanel #rtTap { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0 M12 3v3 M12 18v3 M3 12h3 M18 12h3'/%3E%3C/svg%3E"); }
+#retouchPanel #rtUndo { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14L4 9l5-5 M4 9h10a6 6 0 0 1 0 12h-3'/%3E%3C/svg%3E"); }
+#retouchPanel #rtReset { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 3-6.7 M3 4v5h5'/%3E%3C/svg%3E"); }
+#retouchPanel #rtZoomOut { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 11m-7 0a7 7 0 1 0 14 0a7 7 0 1 0-14 0 M21 21l-4.3-4.3 M8 11h6'/%3E%3C/svg%3E"); }
+#retouchPanel #rtZoomIn { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 11m-7 0a7 7 0 1 0 14 0a7 7 0 1 0-14 0 M21 21l-4.3-4.3 M8 11h6 M11 8v6'/%3E%3C/svg%3E"); }
+#retouchPanel #rtZoomReset { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5'/%3E%3C/svg%3E"); }
+#retouchPanel #rtDownload { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12 M7 10l5 5 5-5 M4 21h16'/%3E%3C/svg%3E"); }
+#retouchPanel #rtClose { --rt-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6l12 12 M18 6L6 18'/%3E%3C/svg%3E"); }
