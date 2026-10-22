@@ -97,6 +97,8 @@
   const c255 = v => (v < 0 ? 0 : v > 255 ? 255 : v);
 
   const PRESETS = {
+    charm:      { blem: 1.2, smooth: 0.78, tex: 0.30, bright: 22, contrast: -4, sat: 4, warm: -1, glow: 0.4, pink: 10 },
+    natural:    { blem: 1.0, smooth: 0.50, tex: 0.55, bright: 14, contrast: -2, sat: 3, warm: 0, glow: 0.2, pink: 6 },
     beauty:     { blem: 1.2, smooth: 0.70, tex: 0.5, bright: 3, contrast: -2, sat: 0, warm: 1, glow: 0.1 },
     refined:    { blem: 1.0, smooth: 0.30, tex: 1.0, bright: 2,  contrast: 0,  sat: -2,  warm: 1,  glow: 0 },
     glowy:      { blem: 0.6, smooth: 0.35, tex: 0,   bright: 9,  contrast: -4, sat: 6,   warm: 4,  glow: 0.5 },
@@ -289,6 +291,12 @@
         r = gray + (r - gray) * sat + cfg.warm * t * 0.55 * 0.5;
         g = gray + (g - gray) * sat + cfg.warm * t * 0.20 * 0.5;
         b = gray + (b - gray) * sat - cfg.warm * t * 0.45 * 0.5;
+
+        if (cfg.pink) {
+          r += cfg.pink * t * 0.5;
+          g -= cfg.pink * t * 0.3;
+          b += cfg.pink * t * 0.1;
+        }
 
         if (cfg.glow) {
           const lum = 0.299 * r + 0.587 * g + 0.114 * b;
@@ -549,13 +557,26 @@
   const MODEL_URL =
     "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
+  // skin = which skin engine setting to use (see skin.js), style = makeup look.
+  // makeup slider 50 = the style exactly as written, 100 = twice as strong.
   const PRESETS = [
-    { id: "auto",    name: "Auto",    retouch: 55, reshape: 20, makeup: 35, lip: [217, 96, 127] },
-    { id: "classic", name: "Classic", retouch: 45, reshape: 0,  makeup: 55, lip: [199, 47, 79] },
-    { id: "daily",   name: "Daily",   retouch: 40, reshape: 10, makeup: 25, lip: [229, 138, 150] },
-    { id: "charm",   name: "Charm",   retouch: 65, reshape: 35, makeup: 60, lip: [201, 58, 106] },
-    { id: "natural", name: "Natural", retouch: 30, reshape: 0,  makeup: 15, lip: [227, 154, 138] }
+    { id: "auto", name: "Auto", retouch: 55, reshape: 15, makeup: 40, skin: "beauty",
+      style: { lip: [217, 96, 127], lipA: 0.60, blush: [236, 110, 135], blushA: 0.28,
+               eye: [170, 105, 105], eyeA: 0.30, liner: 0.30 } },
+    { id: "classic", name: "Classic", retouch: 45, reshape: 0, makeup: 55, skin: "beauty",
+      style: { lip: [199, 47, 79], lipA: 0.70, blush: [232, 100, 115], blushA: 0.22,
+               eye: [120, 80, 75], eyeA: 0.25, liner: 0.35 } },
+    { id: "daily", name: "Daily", retouch: 40, reshape: 5, makeup: 30, skin: "beauty",
+      style: { lip: [229, 138, 150], lipA: 0.55, blush: [240, 130, 140], blushA: 0.22,
+               eye: [190, 140, 125], eyeA: 0.22, liner: 0.15 } },
+    { id: "charm", name: "Charm", retouch: 50, reshape: 0, makeup: 50, skin: "charm",
+      style: { lip: [214, 100, 112], lipA: 0.65, blush: [238, 112, 135], blushA: 0.34,
+               eye: [165, 100, 95], eyeA: 0.45, liner: 0.40 } },
+    { id: "natural", name: "Natural", retouch: 50, reshape: 0, makeup: 40, skin: "natural",
+      style: { lip: [226, 128, 128], lipA: 0.55, blush: [240, 140, 140], blushA: 0.26,
+               eye: [195, 135, 120], eyeA: 0.28, liner: 0.20 } }
   ];
+  const DEFAULT_STYLE = PRESETS[0].style;
 
   const LIP_OUTER = [61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146];
   const LIP_INNER = [78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95];
@@ -611,6 +632,13 @@
 
   /* ---------------- Makeup ---------------- */
 
+  const R_EYE_OUT = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
+  const L_EYE_OUT = [263, 466, 388, 387, 386, 385, 384, 398, 362, 382, 381, 380, 374, 373, 390, 249];
+  const R_SHADOW  = [33, 246, 161, 160, 159, 158, 157, 173, 133, 190, 56, 28, 27, 29, 30, 247];
+  const L_SHADOW  = [263, 466, 388, 387, 386, 385, 384, 398, 362, 414, 286, 258, 257, 259, 260, 467];
+  const R_LINER   = [33, 246, 161, 160, 159, 158, 157, 173, 133];
+  const L_LINER   = [263, 466, 388, 387, 386, 385, 384, 398, 362];
+
   function polyPath(ctx, pts, idxs, w, h) {
     ctx.beginPath();
     idxs.forEach((i, k) => {
@@ -620,16 +648,18 @@
     ctx.closePath();
   }
 
-  function applyLips(ctx, w, h, pts, amt, lip) {
+  // Paints `color` through a soft mask drawn by draw(ctx) (absolute image coordinates).
+  function paintRegion(ctx, w, h, pts, idxs, draw, color, alpha, blurPx, keepLight) {
+    if (alpha <= 0.003) return;
     let minX = w, minY = h, maxX = 0, maxY = 0;
-    LIP_OUTER.forEach(i => {
+    idxs.forEach(i => {
       const x = pts[i].x * w, y = pts[i].y * h;
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
       if (y < minY) minY = y;
       if (y > maxY) maxY = y;
     });
-    const pad = Math.max(6, (maxX - minX) * 0.15);
+    const pad = Math.max(8, (maxX - minX) * 0.2);
     const bx = Math.floor(clamp(minX - pad, 0, w - 1));
     const by = Math.floor(clamp(minY - pad, 0, h - 1));
     const bw = Math.min(w - bx, Math.ceil(maxX - minX + pad * 2));
@@ -637,44 +667,43 @@
     if (bw < 2 || bh < 2) return;
 
     const m = document.createElement("canvas");
-    m.width = w;
-    m.height = h;
+    m.width = bw;
+    m.height = bh;
     const mc = m.getContext("2d");
-    mc.fillStyle = "#fff";
-    polyPath(mc, pts, LIP_OUTER, w, h);
-    mc.fill();
-    mc.globalCompositeOperation = "destination-out";
-    polyPath(mc, pts, LIP_INNER, w, h);
-    mc.fill();
-    mc.globalCompositeOperation = "source-over";
+    mc.translate(-bx, -by);
+    draw(mc);
 
     const m2 = document.createElement("canvas");
-    m2.width = w;
-    m2.height = h;
+    m2.width = bw;
+    m2.height = bh;
     const m2c = m2.getContext("2d", { willReadFrequently: true });
-    m2c.filter = "blur(" + Math.max(0.8, w * 0.0015) + "px)";
+    m2c.filter = "blur(" + blurPx + "px)";
     m2c.drawImage(m, 0, 0);
     m2c.filter = "none";
 
-    const mask = m2c.getImageData(bx, by, bw, bh).data;
+    const mask = m2c.getImageData(0, 0, bw, bh).data;
     const region = ctx.getImageData(bx, by, bw, bh);
     const d = region.data;
 
     for (let p = 0, i = 0; p < bw * bh; p++, i += 4) {
-      const a = (mask[i + 3] / 255) * amt * 0.65;
+      const a = (mask[i + 3] / 255) * alpha;
       if (a <= 0.003) continue;
-      const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-      const k = 0.65 + 0.55 * (lum / 255);
-      d[i]     = c255(d[i]     * (1 - a) + lip[0] * k * a);
-      d[i + 1] = c255(d[i + 1] * (1 - a) + lip[1] * k * a);
-      d[i + 2] = c255(d[i + 2] * (1 - a) + lip[2] * k * a);
+      let k = 1;
+      if (keepLight) {
+        const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        k = 0.65 + 0.55 * (lum / 255);
+      }
+      d[i]     = c255(d[i]     * (1 - a) + color[0] * k * a);
+      d[i + 1] = c255(d[i + 1] * (1 - a) + color[1] * k * a);
+      d[i + 2] = c255(d[i + 2] * (1 - a) + color[2] * k * a);
     }
     ctx.putImageData(region, bx, by);
   }
 
-  function applyBlush(ctx, w, h, pts, amt) {
+  function applyBlush(ctx, w, h, pts, color, alpha) {
+    if (alpha <= 0.003) return;
     const fw = Math.hypot((pts[454].x - pts[234].x) * w, (pts[454].y - pts[234].y) * h);
-    const R = fw * 0.16;
+    const R = fw * 0.17;
     [50, 280].forEach(idx => {
       const cx = pts[idx].x * w, cy = pts[idx].y * h;
       const bx = Math.floor(clamp(cx - R, 0, w - 1));
@@ -688,15 +717,65 @@
         for (let x = 0; x < bw; x++) {
           const dist = Math.hypot(bx + x - cx, by + y - cy) / R;
           if (dist >= 1) continue;
-          const a = (1 - dist) * (1 - dist) * amt * 0.28;
+          const a = (1 - dist) * (1 - dist) * alpha;
           const i = (y * bw + x) * 4;
-          d[i]     = c255(d[i]     * (1 - a) + 236 * a);
-          d[i + 1] = c255(d[i + 1] * (1 - a) + 110 * a);
-          d[i + 2] = c255(d[i + 2] * (1 - a) + 135 * a);
+          d[i]     = c255(d[i]     * (1 - a) + color[0] * a);
+          d[i + 1] = c255(d[i + 1] * (1 - a) + color[1] * a);
+          d[i + 2] = c255(d[i + 2] * (1 - a) + color[2] * a);
         }
       }
       ctx.putImageData(region, bx, by);
     });
+  }
+
+  // makeup: slider 0..100 (50 = style as written)
+  function applyMakeup(ctx, w, h, pts, makeup, style) {
+    const m = makeup / 50;
+    const A = v => Math.min(0.9, v * m);
+
+    applyBlush(ctx, w, h, pts, style.blush, A(style.blushA));
+
+    // eyeshadow on the lid (eye opening is cut out)
+    [[R_SHADOW, R_EYE_OUT], [L_SHADOW, L_EYE_OUT]].forEach(([shadow, eye]) => {
+      paintRegion(ctx, w, h, pts, shadow, mc => {
+        mc.fillStyle = "#fff";
+        polyPath(mc, pts, shadow, w, h);
+        mc.fill();
+        mc.globalCompositeOperation = "destination-out";
+        polyPath(mc, pts, eye, w, h);
+        mc.fill();
+        mc.globalCompositeOperation = "source-over";
+      }, style.eye, A(style.eyeA), Math.max(1.5, w * 0.004), true);
+    });
+
+    // eyeliner along the upper lash line
+    [R_LINER, L_LINER].forEach(line => {
+      const a = pts[line[0]], b = pts[line[line.length - 1]];
+      const eyeW = Math.hypot((a.x - b.x) * w, (a.y - b.y) * h);
+      paintRegion(ctx, w, h, pts, line, mc => {
+        mc.strokeStyle = "#fff";
+        mc.lineWidth = Math.max(1.2, eyeW * 0.06);
+        mc.lineJoin = "round";
+        mc.lineCap = "round";
+        mc.beginPath();
+        line.forEach((i, k) => {
+          const x = pts[i].x * w, y = pts[i].y * h;
+          if (k) mc.lineTo(x, y); else mc.moveTo(x, y);
+        });
+        mc.stroke();
+      }, [45, 28, 28], A(style.liner), Math.max(0.6, w * 0.0012), false);
+    });
+
+    // lips (mouth opening is cut out)
+    paintRegion(ctx, w, h, pts, LIP_OUTER, mc => {
+      mc.fillStyle = "#fff";
+      polyPath(mc, pts, LIP_OUTER, w, h);
+      mc.fill();
+      mc.globalCompositeOperation = "destination-out";
+      polyPath(mc, pts, LIP_INNER, w, h);
+      mc.fill();
+      mc.globalCompositeOperation = "source-over";
+    }, style.lip, A(style.lipA), Math.max(0.8, w * 0.0015), true);
   }
 
   /* ---------------- Reshape (slim jaw + bigger eyes) ---------------- */
@@ -805,7 +884,7 @@
     let out = blob;
 
     if (p.retouch > 0 && typeof window.renderSkinFinish === "function") {
-      out = await window.renderSkinFinish(blob, "beauty", p.retouch);
+      out = await window.renderSkinFinish(blob, p.skin || "beauty", p.retouch);
     }
     if (p.reshape <= 0 && p.makeup <= 0) return out;
 
@@ -820,11 +899,7 @@
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(img, 0, 0, w, h);
 
-    if (p.makeup > 0) {
-      const amt = p.makeup / 100;
-      applyBlush(ctx, w, h, pts, amt);
-      applyLips(ctx, w, h, pts, amt, p.lip);
-    }
+    if (p.makeup > 0) applyMakeup(ctx, w, h, pts, p.makeup, p.style || DEFAULT_STYLE);
     if (p.reshape > 0) warpFace(ctx, w, h, pts, p.reshape / 100);
 
     return await toBlob(canvas);
@@ -862,7 +937,7 @@
 
   /* ---------------- UI ---------------- */
 
-  const state = { preset: "none", retouch: 0, reshape: 0, makeup: 0, lip: [217, 96, 127] };
+  const state = { preset: "none", retouch: 0, reshape: 0, makeup: 0, skin: "beauty", style: DEFAULT_STYLE };
 
   let base = null;          // photo the preview is computed from
   let dirty = false;        // preview differs from base
@@ -1019,7 +1094,8 @@
       state.retouch = p.retouch;
       state.reshape = p.reshape;
       state.makeup = p.makeup;
-      state.lip = p.lip;
+      state.skin = p.skin;
+      state.style = p.style;
     }
     syncSliders();
     markSelected();
