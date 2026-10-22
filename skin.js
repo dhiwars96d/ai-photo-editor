@@ -3,7 +3,7 @@
 (() => {
   "use strict";
 
-  const PANEL_IDS = ["skinPanel", "smoothControl", "hairMenu", "hairColorPanel", "adjustmentsPanel"];
+  const PANEL_IDS = ["skinPanel", "smoothControl", "hairMenu", "hairColorPanel", "hairStylePanel", "adjustmentsPanel"];
   let queued = false;
 
   function updatePhotoSpace() {
@@ -1240,5 +1240,421 @@
     document.addEventListener("DOMContentLoaded", init, { once: true });
   } else {
     init();
+  }
+})();
+
+
+/* =========================================================
+   HAIR STYLE  (Hair -> Style)
+   Looks applied only on the hair (uses the same hair mask as Hair Color):
+   Shine, Silky, Rich, Highlights, Ombre, Rose Gold.
+   Needs from app.js: getHairSegmenter, getCurrentPhotoBlob, loadImage,
+   showResult, showStatus.
+========================================================= */
+(() => {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const c255 = v => (v < 0 ? 0 : v > 255 ? 255 : v);
+  const sstep = (a, b, x) => {
+    const t = clamp((x - a) / (b - a), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+
+  const STYLES = [
+    { id: "shine",  name: "Shine",     kind: "shine",
+      sw: "linear-gradient(135deg,#15110f 0%,#8a8480 45%,#15110f 70%)" },
+    { id: "silky",  name: "Silky",     kind: "silky",
+      sw: "linear-gradient(160deg,#241915 0%,#5c4a42 55%,#2b1f1a 100%)" },
+    { id: "rich",   name: "Rich",      kind: "rich",
+      sw: "linear-gradient(135deg,#1a0b10 0%,#4a1424 100%)" },
+    { id: "streak", name: "Highlights", kind: "streak", color: [200, 140, 70],
+      sw: "repeating-linear-gradient(90deg,#20150f 0 6px,#c88c46 6px 10px,#20150f 10px 18px)" },
+    { id: "ombre",  name: "Ombre",     kind: "ombre", color: [201, 139, 61],
+      sw: "linear-gradient(180deg,#20150f 0%,#20150f 35%,#c98b3d 100%)" },
+    { id: "rose",   name: "Rose Gold", kind: "ombre", color: [217, 145, 143],
+      sw: "linear-gradient(180deg,#20150f 0%,#20150f 35%,#d9918f 100%)" }
+  ];
+
+  const st = { style: null, level: 60 };
+  let base = null, dirty = false, lastBlob = null, previewUrl = "";
+  let timer = null, seq = 0;
+  const maskCache = new WeakMap();
+
+  function say(m) { if (typeof showStatus === "function") showStatus(m); }
+  function hideSay() { const s = $("status"); if (s) s.style.display = "none"; }
+
+  /* ---------- hair mask ---------- */
+
+  async function hairAlpha(blob, w, h) {
+    const hit = maskCache.get(blob);
+    if (hit && hit.w === w && hit.h === h) return hit;
+
+    const segmenter = await getHairSegmenter();
+    const img = await loadImage(blob);
+    const result = segmenter.segment(img);
+
+    let values = null, mw = 0, mh = 0;
+    if (result.confidenceMasks && result.confidenceMasks.length > 1) {
+      const m = result.confidenceMasks[1];
+      values = new Float32Array(m.getAsFloat32Array());
+      mw = m.width;
+      mh = m.height;
+    } else if (result.categoryMask) {
+      const cat = result.categoryMask.getAsUint8Array();
+      mw = result.categoryMask.width;
+      mh = result.categoryMask.height;
+      values = new Float32Array(mw * mh);
+      for (let i = 0; i < values.length; i++) values[i] = cat[i] === 1 ? 1 : 0;
+    }
+    if (result.close) result.close();
+    if (!values) throw new Error("Hair mask was not returned");
+
+    const small = document.createElement("canvas");
+    small.width = mw;
+    small.height = mh;
+    const sctx = small.getContext("2d");
+    const simg = sctx.createImageData(mw, mh);
+    for (let i = 0; i < mw * mh; i++) {
+      const v = clamp(values[i], 0, 1);
+      simg.data[i * 4] = simg.data[i * 4 + 1] = simg.data[i * 4 + 2] = 255;
+      simg.data[i * 4 + 3] = Math.round((v < 0.35 ? 0 : v) * 255);
+    }
+    sctx.putImageData(simg, 0, 0);
+
+    const big = document.createElement("canvas");
+    big.width = w;
+    big.height = h;
+    const bctx = big.getContext("2d", { willReadFrequently: true });
+    bctx.filter = "blur(1.2px)";
+    bctx.drawImage(small, 0, 0, w, h);
+    bctx.filter = "none";
+    const raw = bctx.getImageData(0, 0, w, h).data;
+
+    const alpha = new Float32Array(w * h);
+    let minY = h, maxY = 0;
+    for (let p = 0; p < w * h; p++) {
+      const a = raw[p * 4 + 3] / 255;
+      const v = a < 0.30 ? 0 : clamp((a - 0.30) / 0.70, 0, 1);
+      alpha[p] = v;
+      if (v > 0.5) {
+        const y = (p / w) | 0;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+    const out = { w, h, alpha, minY, maxY: Math.max(maxY, minY + 1) };
+    maskCache.set(blob, out);
+    return out;
+  }
+
+  /* ---------- noise for highlight streaks ---------- */
+
+  function hash2(ix, iy) {
+    let h = Math.imul(ix * 374761393 + iy * 668265263, 1274126177);
+    h ^= h >>> 13;
+    h = Math.imul(h, 1274126177);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  function vnoise(x, y) {
+    const ix = Math.floor(x), iy = Math.floor(y);
+    const fx = x - ix, fy = y - iy;
+    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    const a = hash2(ix, iy), b = hash2(ix + 1, iy);
+    const c = hash2(ix, iy + 1), d = hash2(ix + 1, iy + 1);
+    return (a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sy;
+  }
+
+  /* ---------- render ---------- */
+
+  async function renderHair(blob, style, level) {
+    const f = clamp(level / 100, 0, 1);
+    const img = await loadImage(blob);
+    const scale = Math.min(1, 1400 / img.naturalWidth);
+    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+
+    const mask = await hairAlpha(blob, w, h);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, w, h);
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const d = imageData.data;
+
+    let bl = null;
+    if (style.kind === "silky") {
+      const t = document.createElement("canvas");
+      t.width = w;
+      t.height = h;
+      const tc = t.getContext("2d", { willReadFrequently: true });
+      tc.filter = "blur(" + Math.max(1.5, w * 0.002) + "px)";
+      tc.drawImage(canvas, 0, 0);
+      tc.filter = "none";
+      bl = tc.getImageData(0, 0, w, h).data;
+    }
+
+    const span = Math.max(1, mask.maxY - mask.minY);
+    const alpha = mask.alpha;
+    const cellW = Math.max(6, w * 0.012);
+    const cellH = Math.max(20, h * 0.18);
+
+    for (let y = 0, p = 0; y < h; y++) {
+      const hn = (y - mask.minY) / span;
+      const band = Math.exp(-Math.pow((hn - 0.30) / 0.10, 2)) +
+                   0.6 * Math.exp(-Math.pow((hn - 0.62) / 0.08, 2));
+      for (let x = 0; x < w; x++, p++) {
+        const al = alpha[p];
+        if (al < 0.01) continue;
+        const i = p * 4;
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        let nr = r, ng = g, nb = b;
+
+        if (style.kind === "shine" || style.kind === "silky") {
+          const lw = sstep(6, 50, lum) * (1 - sstep(150, 230, lum));
+          let add;
+          if (style.kind === "shine") {
+            add = f * (26 * lw + 70 * band * lw);
+          } else {
+            add = f * (12 * lw + 30 * band * lw);
+            nr = r + (bl[i] - r) * 0.75 * f;
+            ng = g + (bl[i + 1] - g) * 0.75 * f;
+            nb = b + (bl[i + 2] - b) * 0.75 * f;
+          }
+          nr += add;
+          ng += add;
+          nb += add * 1.08;
+        } else if (style.kind === "rich") {
+          const sat = 1 + 0.6 * f;
+          nr = lum + (r - lum) * sat;
+          ng = lum + (g - lum) * sat;
+          nb = lum + (b - lum) * sat;
+          const k = 1 + 0.3 * f;
+          nr = (nr - 90) * k + 90 - 5 * f + 12 * f * sstep(0, 60, lum);
+          ng = (ng - 90) * k + 90 - 5 * f - 2 * f * sstep(0, 60, lum);
+          nb = (nb - 90) * k + 90 - 5 * f + 4 * f * sstep(0, 60, lum);
+        } else if (style.kind === "streak") {
+          const n = vnoise(x / cellW, y / cellH) * 0.7 +
+                    vnoise(x / (cellW * 0.5), y / (cellH * 0.7)) * 0.3;
+          const a = f * sstep(0.58, 0.74, n) * 0.8;
+          const k = 0.45 + 0.7 * clamp(lum / 80, 0, 1.2);
+          nr = r * (1 - a) + style.color[0] * k * a;
+          ng = g * (1 - a) + style.color[1] * k * a;
+          nb = b * (1 - a) + style.color[2] * k * a;
+        } else if (style.kind === "ombre") {
+          const a = f * sstep(0.35, 1.0, hn) * 0.85;
+          const k = 0.5 + 0.6 * clamp(lum / 70, 0, 1.2);
+          nr = r * (1 - a) + style.color[0] * k * a;
+          ng = g * (1 - a) + style.color[1] * k * a;
+          nb = b * (1 - a) + style.color[2] * k * a;
+        }
+
+        d[i]     = c255(r + (nr - r) * al);
+        d[i + 1] = c255(g + (ng - g) * al);
+        d[i + 2] = c255(b + (nb - b) * al);
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob(v => (v ? resolve(v) : reject(new Error("Export failed"))), "image/jpeg", 0.94);
+    });
+  }
+
+  /* ---------- preview / apply ---------- */
+
+  function currentBase() {
+    const cur = typeof getCurrentPhotoBlob === "function" ? getCurrentPhotoBlob() : null;
+    if (cur) base = cur;
+    return base;
+  }
+
+  function setPreview(blob) {
+    const p = $("preview");
+    if (!p) return;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = URL.createObjectURL(blob);
+    p.src = previewUrl;
+  }
+
+  function restoreBase() {
+    if (!dirty) return;
+    const p = $("preview");
+    if (p && base) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = URL.createObjectURL(base);
+      p.src = previewUrl;
+    }
+    dirty = false;
+    lastBlob = null;
+  }
+
+  function setNote(t) { const n = $("hsNote"); if (n) n.textContent = t || ""; }
+
+  async function runPreview() {
+    const b = currentBase();
+    if (!b) { say("Please select a photo first."); return; }
+    if (!st.style) return;
+
+    const mine = ++seq;
+    say("Applying hair style...");
+    try {
+      const blob = await renderHair(b, st.style, st.level);
+      if (mine !== seq) return;
+      lastBlob = blob;
+      dirty = true;
+      setPreview(blob);
+      hideSay();
+      setNote("");
+    } catch (err) {
+      console.error(err);
+      say("Hair style failed. Please try again.");
+      setNote("Baal detect nahi hue. Baalon wali saaf photo try karein.");
+    }
+  }
+
+  function schedule(delay) {
+    clearTimeout(timer);
+    timer = setTimeout(runPreview, delay);
+  }
+
+  function markCards() {
+    document.querySelectorAll("#hairStylePanel .hsCard").forEach(c => {
+      c.classList.toggle("sel", !!st.style && c.dataset.id === st.style.id);
+    });
+  }
+
+  function closePanel(cancel) {
+    const panel = $("hairStylePanel");
+    clearTimeout(timer);
+    seq++;
+    if (cancel) restoreBase();
+    st.style = null;
+    markCards();
+    if (panel) panel.style.display = "none";
+  }
+
+  function applyStyle() {
+    if (!dirty || !lastBlob) { say("Pehle koi style chunein."); return; }
+    const blob = lastBlob;
+    dirty = false;
+    lastBlob = null;
+    if (typeof showResult === "function") showResult(blob);
+    if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ""; }
+    closePanel(false);
+    say("Hair style applied ✓");
+  }
+
+  /* ---------- UI ---------- */
+
+  function addCss() {
+    if ($("hsStyle")) return;
+    const s = document.createElement("style");
+    s.id = "hsStyle";
+    s.textContent = `
+      #hairStylePanel .hsHead { font-size: 14px; font-weight: 800; color: #2b1d25; margin-bottom: 10px; }
+      #hairStylePanel .hsCards { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
+      #hairStylePanel .hsCards::-webkit-scrollbar { display: none; }
+      #hairStylePanel .hsCard { flex: 0 0 auto; width: 72px; text-align: center; cursor: pointer;
+        font-size: 12px; font-weight: 600; color: #5d4a55; }
+      #hairStylePanel .hsSw { width: 56px; height: 56px; margin: 0 auto 5px; border-radius: 50%;
+        border: 2px solid #f1d2e1; box-sizing: border-box; }
+      #hairStylePanel .hsCard.sel { color: #c21868; }
+      #hairStylePanel .hsCard.sel .hsSw { border-color: #f42f91; box-shadow: 0 3px 10px rgba(244,47,145,.35); }
+      #hairStylePanel .hsRow { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+      #hairStylePanel .hsRow label { width: 70px; font-size: 13px; font-weight: 700; color: #2b1d25; }
+      #hairStylePanel .hsRow input { flex: 1; min-width: 0; accent-color: #f42f91; }
+      #hairStylePanel .hsRow span { width: 30px; text-align: right; font-size: 12px; font-weight: 700; color: #c21868; }
+      #hairStylePanel .hsActions { display: flex; gap: 8px; margin-top: 10px; }
+      #hairStylePanel .hsBtn { flex: 1; min-height: 40px; border: 1.5px solid #f28ab9; border-radius: 12px;
+        background: #fff; color: #c21868; font-size: 13px; font-weight: 700; }
+      #hairStylePanel .hsBtn.hsPrimary { background: linear-gradient(135deg,#f42f91,#ff6fb5);
+        border-color: #f42f91; color: #fff; }
+      #hairStylePanel .hsNote { font-size: 11px; color: #8a7480; margin-top: 6px; line-height: 1.5; }
+    `;
+    document.head.appendChild(s);
+  }
+
+  function build() {
+    const menu = $("hairMenu");
+    const colorPanel = $("hairColorPanel");
+    if (!menu || !colorPanel || $("hairStylePanel")) return;
+    addCss();
+
+    // Style button next to Color
+    const btn = document.createElement("button");
+    btn.className = "hairOption";
+    btn.id = "hairStyleBtn";
+    btn.type = "button";
+    btn.innerHTML = '<span class="hairOptionIcon">💇</span><span>Style</span>';
+    menu.appendChild(btn);
+
+    // Style panel (same position/look as the Color panel)
+    const panel = document.createElement("div");
+    panel.id = "hairStylePanel";
+    panel.className = "hairColorPanel hairStylePanel";
+    panel.style.display = "none";
+    panel.innerHTML =
+      '<div class="hsHead">Hair Style</div>' +
+      '<div class="hsCards">' +
+        STYLES.map(s => '<div class="hsCard" data-id="' + s.id + '"><div class="hsSw" style="background:' +
+          s.sw + '"></div>' + s.name + '</div>').join("") +
+      '</div>' +
+      '<div class="hsRow"><label for="hsSlider">Intensity</label>' +
+        '<input id="hsSlider" type="range" min="0" max="100" value="60"><span id="hsVal">60</span></div>' +
+      '<div class="hsActions"><button type="button" class="hsBtn" id="hsCancel">Cancel</button>' +
+        '<button type="button" class="hsBtn hsPrimary" id="hsApply">Apply ✓</button></div>' +
+      '<div class="hsNote" id="hsNote"></div>';
+    colorPanel.insertAdjacentElement("afterend", panel);
+
+    btn.addEventListener("click", () => {
+      if (typeof getCurrentPhotoBlob !== "function" || !getCurrentPhotoBlob()) {
+        say("Please select a photo first.");
+        return;
+      }
+      menu.style.display = "none";
+      colorPanel.style.display = "none";
+      panel.style.display = "block";
+      hideSay();
+    });
+
+    panel.querySelectorAll(".hsCard").forEach(card => {
+      card.addEventListener("click", () => {
+        st.style = STYLES.find(s => s.id === card.dataset.id);
+        markCards();
+        schedule(0);
+      });
+    });
+
+    $("hsSlider").addEventListener("input", e => {
+      st.level = Number(e.target.value);
+      $("hsVal").textContent = st.level;
+      if (st.style) schedule(150);
+    });
+    $("hsApply").addEventListener("click", applyStyle);
+    $("hsCancel").addEventListener("click", () => { closePanel(true); hideSay(); });
+
+    // Hair menu shown again (Hair tool tapped) -> close the style panel
+    new MutationObserver(() => {
+      if (menu.style.display !== "none" && panel.style.display !== "none") closePanel(true);
+    }).observe(menu, { attributes: true, attributeFilter: ["style"] });
+
+    // Any other tool -> close the style panel
+    document.querySelectorAll(".tool").forEach(tool => {
+      tool.addEventListener("click", () => {
+        if (panel.style.display !== "none") closePanel(true);
+      }, true);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", build, { once: true });
+  } else {
+    build();
   }
 })();
