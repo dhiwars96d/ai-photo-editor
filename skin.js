@@ -1270,7 +1270,7 @@
     { id: "rich",   name: "Rich",      kind: "rich",
       sw: "linear-gradient(135deg,#1a0b10 0%,#4a1424 100%)" },
     { id: "streak", name: "Highlights", kind: "streak", color: [200, 140, 70],
-      sw: "repeating-linear-gradient(90deg,#20150f 0 6px,#c88c46 6px 10px,#20150f 10px 18px)" },
+      sw: "linear-gradient(135deg,#20150f 0%,#6b4a2a 30%,#20150f 45%,#9a6a36 62%,#20150f 80%)" },
     { id: "ombre",  name: "Ombre",     kind: "ombre", color: [201, 139, 61],
       sw: "linear-gradient(180deg,#20150f 0%,#20150f 35%,#c98b3d 100%)" },
     { id: "rose",   name: "Rose Gold", kind: "ombre", color: [217, 145, 143],
@@ -1387,12 +1387,13 @@
     const d = imageData.data;
 
     let bl = null;
-    if (style.kind === "silky") {
+    if (style.kind === "silky" || style.kind === "streak") {
       const t = document.createElement("canvas");
       t.width = w;
       t.height = h;
       const tc = t.getContext("2d", { willReadFrequently: true });
-      tc.filter = "blur(" + Math.max(1.5, w * 0.002) + "px)";
+      tc.filter = "blur(" + (style.kind === "streak"
+        ? Math.max(2, w * 0.004) : Math.max(1.5, w * 0.002)) + "px)";
       tc.drawImage(canvas, 0, 0);
       tc.filter = "none";
       bl = tc.getImageData(0, 0, w, h).data;
@@ -1400,8 +1401,7 @@
 
     const span = Math.max(1, mask.maxY - mask.minY);
     const alpha = mask.alpha;
-    const cellW = Math.max(6, w * 0.012);
-    const cellH = Math.max(20, h * 0.18);
+    const cellBig = Math.max(24, w * 0.07);
 
     for (let y = 0, p = 0; y < h; y++) {
       const hn = (y - mask.minY) / span;
@@ -1439,10 +1439,17 @@
           ng = (ng - 90) * k + 90 - 5 * f - 2 * f * sstep(0, 60, lum);
           nb = (nb - 90) * k + 90 - 5 * f + 4 * f * sstep(0, 60, lum);
         } else if (style.kind === "streak") {
-          const n = vnoise(x / cellW, y / cellH) * 0.7 +
-                    vnoise(x / (cellW * 0.5), y / (cellH * 0.7)) * 0.3;
-          const a = f * sstep(0.58, 0.74, n) * 0.8;
-          const k = 0.45 + 0.7 * clamp(lum / 80, 0, 1.2);
+          // natural highlights: tint the strands that are brighter than their
+          // surroundings, only inside soft irregular sections, more toward the ends
+          const blum = 0.299 * bl[i] + 0.587 * bl[i + 1] + 0.114 * bl[i + 2];
+          const s1 = sstep(0.06, 0.30, (lum - blum) / (blum + 10));
+          const sec = sstep(0.35, 0.65,
+            vnoise(x / cellBig, y / cellBig) * 0.75 +
+            vnoise(x / (cellBig * 0.4), y / (cellBig * 0.4)) * 0.25);
+          const ends = 0.5 + 0.5 * sstep(0.1, 0.6, hn);
+          const lw = sstep(10, 60, lum);
+          const a = f * lw * sec * ends * (0.18 + 0.82 * s1) * 0.95;
+          const k = 0.55 + 0.9 * clamp(lum / 90, 0, 1.2);
           nr = r * (1 - a) + style.color[0] * k * a;
           ng = g * (1 - a) + style.color[1] * k * a;
           nb = b * (1 - a) + style.color[2] * k * a;
