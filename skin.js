@@ -963,14 +963,16 @@
     st.textContent = `
       #bpBlock { margin: 8px 0 10px; padding-bottom: 10px; border-bottom: 1px solid #f1d2e1; }
       #bpBlock .bpHead { font-size: 14px; font-weight: 800; color: #2b1d25; margin: 8px 0 6px; }
-      #bpBlock .bpCards { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
-      #bpBlock .bpCards::-webkit-scrollbar { display: none; }
-      #bpBlock .bpCard { flex: 0 0 auto; width: 68px; text-align: center; cursor: pointer;
-        font-size: 12px; font-weight: 600; color: #5d4a55; }
+      #bpBlock .bpCards { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px; padding: 2px 0 10px; }
+      #bpBlock .bpCard { min-width: 0; text-align: center; cursor: pointer;
+        font-size: 12px; font-weight: 600; line-height: 1.2; color: #5d4a55; }
       #bpBlock .bpThumb { display: flex; align-items: center; justify-content: center;
-        width: 68px; height: 84px; border-radius: 12px; object-fit: cover; margin-bottom: 4px;
-        background: linear-gradient(135deg, #fde4ef, #fff); border: 2px solid transparent; box-sizing: border-box; }
-      #bpBlock .bpThumb svg { width: 26px; height: 26px; color: #c21868; }
+        width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: 14px; object-fit: cover;
+        margin-bottom: 5px; background: linear-gradient(135deg, #fde4ef, #fff);
+        border: 2px solid transparent; box-sizing: border-box; }
+      #bpBlock img.bpThumb { display: block; }
+      #bpBlock .bpThumb svg { width: 30%; height: auto; color: #c21868; }
       #bpBlock .bpCard.sel .bpThumb { border-color: #f42f91; box-shadow: 0 3px 10px rgba(244,47,145,.3); }
       #bpBlock .bpCard.sel { color: #c21868; }
       #bpBlock .bpRow { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
@@ -1565,12 +1567,12 @@
     s.id = "hsStyle";
     s.textContent = `
       #hairStylePanel .hsHead { font-size: 14px; font-weight: 800; color: #2b1d25; margin-bottom: 10px; }
-      #hairStylePanel .hsCards { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
-      #hairStylePanel .hsCards::-webkit-scrollbar { display: none; }
-      #hairStylePanel .hsCard { flex: 0 0 auto; width: 72px; text-align: center; cursor: pointer;
-        font-size: 12px; font-weight: 600; color: #5d4a55; }
-      #hairStylePanel .hsSw { width: 56px; height: 56px; margin: 0 auto 5px; border-radius: 50%;
-        border: 2px solid #f1d2e1; box-sizing: border-box; }
+      #hairStylePanel .hsCards { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 8px; padding: 2px 0 10px; }
+      #hairStylePanel .hsCard { min-width: 0; text-align: center; cursor: pointer;
+        font-size: 12px; font-weight: 600; line-height: 1.2; color: #5d4a55; }
+      #hairStylePanel .hsSw { width: 100%; max-width: 88px; height: auto; aspect-ratio: 1 / 1;
+        margin: 0 auto 6px; border-radius: 50%; border: 2px solid #f1d2e1; box-sizing: border-box; }
       #hairStylePanel .hsCard.sel { color: #c21868; }
       #hairStylePanel .hsCard.sel .hsSw { border-color: #f42f91; box-shadow: 0 3px 10px rgba(244,47,145,.35); }
       #hairStylePanel .hsRow { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
