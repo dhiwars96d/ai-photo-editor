@@ -1667,3 +1667,36 @@
     build();
   }
 })();
+
+
+/* =========================================================
+   HOME SCREEN extras (feature chips + 3 steps)
+   Shown only before a photo is chosen (CSS hides it in the editor).
+========================================================= */
+(() => {
+  function build() {
+    const add = document.getElementById("addPhoto");
+    if (!add || document.getElementById("homeExtras")) return;
+
+    const box = document.createElement("section");
+    box.id = "homeExtras";
+    box.className = "homeExtras";
+    box.innerHTML =
+      '<div class="homeChips">' +
+        '<span>✨ Beauty Retouch</span><span>🌸 Skin Finish</span><span>💇 Hair Style</span>' +
+        '<span>🎛 Adjustments</span><span>🔍 AI Enhance</span><span>🪄 Smooth Skin</span>' +
+      '</div>' +
+      '<div class="homeSteps">' +
+        '<div class="homeStep"><b>1</b>Add a photo</div>' +
+        '<div class="homeStep"><b>2</b>Pick a tool</div>' +
+        '<div class="homeStep"><b>3</b>Download it</div>' +
+      '</div>';
+    add.insertAdjacentElement("afterend", box);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", build, { once: true });
+  } else {
+    build();
+  }
+})();
