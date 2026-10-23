@@ -2237,3 +2237,178 @@ h1 {
   line-height: 1.15 !important;
   overflow-wrap: anywhere;
 }
+
+/* =========================================================
+   HOME SCREEN (no photo yet): beauty-style layout
+   Tool buttons are hidden here; they appear in the editor.
+========================================================= */
+html:has(#preview:not([src])) {
+  background: linear-gradient(165deg, #fff3f8 0%, #ffe1ee 38%, #f6e6ff 76%, #fff6fa 100%) fixed;
+  min-height: 100%;
+}
+body:has(#preview:not([src])) { background: transparent !important; }
+
+.app:not(:has(#preview[src]))::before,
+.app:not(:has(#preview[src]))::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.app:not(:has(#preview[src]))::before {
+  top: -130px;
+  right: -110px;
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(circle, rgba(244, 47, 145, .26), transparent 70%);
+}
+.app:not(:has(#preview[src]))::after {
+  bottom: -140px;
+  left: -120px;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(155, 93, 229, .24), transparent 70%);
+}
+
+.app:not(:has(#preview[src])) .sectionTitle,
+.app:not(:has(#preview[src])) .tools {
+  display: none !important;
+}
+
+.app:not(:has(#preview[src])) .logo::before {
+  content: "✦";
+  margin-right: 8px;
+  color: #f42f91;
+}
+.app:not(:has(#preview[src])) .badge {
+  background: rgba(255, 255, 255, .8);
+  box-shadow: 0 4px 14px rgba(244, 47, 145, .15);
+}
+
+.app:not(:has(#preview[src])) h1 {
+  margin: 22px 0 8px;
+  font-size: clamp(32px, 8.5vw, 46px);
+  line-height: 1.1;
+  font-weight: 800;
+  background: linear-gradient(90deg, #d81b7a, #f42f91 45%, #9b5de5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.app:not(:has(#preview[src])) .subtitle {
+  margin-bottom: 20px;
+  color: #7a6572;
+  font-size: clamp(14px, 3.6vw, 17px);
+  line-height: 1.5;
+}
+
+.app:not(:has(#preview[src])) .photoCard {
+  padding: 14px !important;
+  border: 1px solid rgba(244, 47, 145, .18) !important;
+  border-radius: 28px !important;
+  background: rgba(255, 255, 255, .72) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 50px rgba(244, 47, 145, .16) !important;
+}
+.app:not(:has(#preview[src])) .previewBox {
+  height: 300px !important;
+  min-height: 300px !important;
+  border: 2px dashed #f28ab9 !important;
+  border-radius: 22px !important;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .92), rgba(255, 232, 244, .75)) !important;
+}
+.app:not(:has(#preview[src])) .placeholder {
+  color: #8d6e7e;
+  font-size: clamp(14px, 3.6vw, 17px);
+  font-weight: 600;
+}
+.app:not(:has(#preview[src])) .placeholderIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffe0ef, #fff);
+  box-shadow: 0 10px 30px rgba(244, 47, 145, .25);
+  font-size: 42px;
+}
+
+.app:not(:has(#preview[src])) .addButton {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  margin-top: 18px !important;
+  border: 1.5px solid #f28ab9 !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  color: #c21868 !important;
+  font-size: clamp(16px, 4.2vw, 19px) !important;
+  font-weight: 800 !important;
+  box-shadow: 0 10px 26px rgba(244, 47, 145, .18);
+}
+.app:not(:has(#preview[src])) .addButton::before {
+  content: "+";
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f42f91, #ff6fb5);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
+  text-align: center;
+}
+
+/* extra blocks injected by skin.js */
+.homeExtras { margin-top: 22px; }
+.app:has(#preview[src]) .homeExtras { display: none !important; }
+
+.homeChips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.homeChips span {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .8);
+  box-shadow: 0 4px 14px rgba(244, 47, 145, .12);
+  color: #a3145f;
+  font-size: clamp(12px, 3.2vw, 14px);
+  font-weight: 700;
+}
+
+.homeSteps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+.homeStep {
+  text-align: center;
+  color: #6b5560;
+  font-size: clamp(12px, 3.2vw, 14px);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.homeStep b {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f42f91, #ff6fb5);
+  color: #fff;
+  font-size: 16px;
+  box-shadow: 0 6px 16px rgba(244, 47, 145, .35);
+}
