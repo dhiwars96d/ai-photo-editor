@@ -2412,3 +2412,84 @@ body:has(#preview:not([src])) { background: transparent !important; }
   font-size: 16px;
   box-shadow: 0 6px 16px rgba(244, 47, 145, .35);
 }
+
+/* =========================================================
+   HOME SCREEN — spread over the full screen height
+   (heading top, upload card, Add Photo, features lower down)
+   Only before a photo is chosen; editor screen is untouched.
+========================================================= */
+.app:not(:has(#preview[src])) {
+  display: flex !important;
+  flex-direction: column;
+  width: 100% !important;
+  max-width: 1200px !important;
+  min-height: 100dvh;
+  margin: 0 auto !important;
+  padding: 1.5dvh 6vw calc(3dvh + env(safe-area-inset-bottom)) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+/* header row stays at the very top */
+.app:not(:has(#preview[src])) header {
+  width: 100%;
+}
+
+/* box 1: heading + subtitle across the full width */
+.app:not(:has(#preview[src])) h1 {
+  margin: 2.5dvh 0 1.2dvh !important;
+  text-align: center;
+  font-size: clamp(30px, 7.2vw, 84px) !important;
+  text-wrap: balance;
+}
+.app:not(:has(#preview[src])) .subtitle {
+  margin: 0 !important;
+  text-align: center;
+  font-size: clamp(12px, 2.1vw, 22px) !important;
+}
+
+/* box 2: big upload card */
+.app:not(:has(#preview[src])) .photoCard {
+  display: flex !important;
+  flex-direction: column;
+  width: 100%;
+  height: max(260px, 22.5dvh);
+  margin-top: 9dvh !important;
+}
+.app:not(:has(#preview[src])) .previewBox {
+  flex: 1;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+/* box 3: Add Photo */
+.app:not(:has(#preview[src])) .addButton {
+  width: 96%;
+  align-self: center;
+  height: max(54px, 5.6dvh);
+  min-height: 0 !important;
+  margin-top: 4.4dvh !important;
+}
+
+/* box 4: feature chips + steps */
+.app:not(:has(#preview[src])) .homeExtras {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 100%;
+  max-width: min(70vw, 760px);
+  min-height: 19dvh;
+  margin: 7.8dvh auto 0;
+}
+.app:not(:has(#preview[src])) .homeSteps { margin-top: 0; }
+
+/* status + small note stay at the bottom */
+.app:not(:has(#preview[src])) #status {
+  margin-top: 2dvh;
+}
+.app:not(:has(#preview[src])) .smallNote {
+  margin-top: auto;
+  padding-top: 3dvh;
+  text-align: center;
+}
