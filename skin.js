@@ -1700,3 +1700,77 @@
     build();
   }
 })();
+
+
+/* =========================================================
+   PWA: manifest link, theme colour, service worker, Install button
+   (works without editing index.html)
+========================================================= */
+(() => {
+  "use strict";
+
+  function addHead() {
+    const head = document.head;
+    const add = (tag, attrs) => {
+      const sel = tag + Object.keys(attrs).filter(k => k === "rel" || k === "name")
+        .map(k => "[" + k + '="' + attrs[k] + '"]').join("");
+      if (document.querySelector(sel)) return;
+      const el = document.createElement(tag);
+      Object.keys(attrs).forEach(k => el.setAttribute(k, attrs[k]));
+      head.appendChild(el);
+    };
+    add("link", { rel: "manifest", href: "./manifest.json" });
+    add("link", { rel: "apple-touch-icon", href: "./apple-touch-icon.png" });
+    add("meta", { name: "theme-color", content: "#f42f91" });
+    add("meta", { name: "mobile-web-app-capable", content: "yes" });
+    add("meta", { name: "apple-mobile-web-app-capable", content: "yes" });
+    add("meta", { name: "apple-mobile-web-app-title", content: "Photo Editor" });
+  }
+
+  function registerSW() {
+    if (!("serviceWorker" in navigator)) return;
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(err => {
+        console.warn("Service worker not registered:", err);
+      });
+    });
+  }
+
+  function installButton() {
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+    if (standalone) return;
+
+    let deferred = null;
+    window.addEventListener("beforeinstallprompt", e => {
+      e.preventDefault();
+      deferred = e;
+
+      const host = document.getElementById("homeExtras");
+      if (!host || document.getElementById("installApp")) return;
+
+      const btn = document.createElement("button");
+      btn.id = "installApp";
+      btn.type = "button";
+      btn.textContent = "📲 Install App";
+      btn.addEventListener("click", async () => {
+        if (!deferred) return;
+        deferred.prompt();
+        try { await deferred.userChoice; } catch (_) {}
+        deferred = null;
+        btn.remove();
+      });
+      host.appendChild(btn);
+    });
+
+    window.addEventListener("appinstalled", () => {
+      const b = document.getElementById("installApp");
+      if (b) b.remove();
+    });
+  }
+
+  addHead();
+  registerSW();
+  installButton();
+})();
