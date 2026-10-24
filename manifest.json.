@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "AI Photo Editor",
+  "short_name": "Photo Editor",
+  "description": "Beauty retouch, skin finish, hair style and photo adjustments.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff0f7",
+  "theme_color": "#f42f91",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
