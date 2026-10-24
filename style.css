@@ -2493,3 +2493,18 @@ body:has(#preview:not([src])) { background: transparent !important; }
   padding-top: 3dvh;
   text-align: center;
 }
+
+/* PWA install button (home screen only, appears when the browser allows install) */
+#installApp {
+  align-self: center;
+  margin-top: 16px;
+  padding: 11px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f42f91, #ff6fb5);
+  color: #fff;
+  font-size: clamp(13px, 3.4vw, 16px);
+  font-weight: 800;
+  box-shadow: 0 8px 22px rgba(244, 47, 145, .35);
+}
+.app:has(#preview[src]) #installApp { display: none !important; }
