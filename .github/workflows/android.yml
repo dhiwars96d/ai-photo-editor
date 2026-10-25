@@ -1,0 +1,95 @@
+name: Build Android APK
+
+# Manual button: Actions -> "Build Android APK" -> Run workflow
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Copy web files
+        run: |
+          mkdir -p cap-build/www
+          rsync -a \
+            --exclude='.git' --exclude='.github' --exclude='api' \
+            --exclude='cap-build' --exclude='node_modules' \
+            --exclude='README.md' --exclude='cloudflare-test.html' \
+            --exclude='package.json' --exclude='package-lock.json' \
+            ./ cap-build/www/
+          ls -la cap-build/www
+
+      - name: Create Capacitor project
+        working-directory: cap-build
+        run: |
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/share@6
+          cat > capacitor.config.json <<'EOF'
+          {
+            "appId": "com.aiphotoeditor.app",
+            "appName": "AI Photo Editor",
+            "webDir": "www",
+            "backgroundColor": "#fff0f7",
+            "server": { "androidScheme": "https" }
+          }
+          EOF
+          npx cap add android
+          npx cap sync android
+
+      - name: App icon
+        working-directory: cap-build
+        run: |
+          pip install pillow
+          python3 - <<'PY'
+          from PIL import Image
+          import os, shutil
+          src = Image.open("www/icon-512.png").convert("RGBA")
+          sizes = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
+          res = "android/app/src/main/res"
+          shutil.rmtree(res + "/mipmap-anydpi-v26", ignore_errors=True)
+          for name, size in sizes.items():
+              folder = res + "/mipmap-" + name
+              os.makedirs(folder, exist_ok=True)
+              im = src.resize((size, size), Image.LANCZOS)
+              im.save(folder + "/ic_launcher.png")
+              im.save(folder + "/ic_launcher_round.png")
+          PY
+
+      - name: Build APK
+        working-directory: cap-build/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Name the APK
+        run: cp cap-build/android/app/build/outputs/apk/debug/app-debug.apk AI-Photo-Editor.apk
+
+      - name: Save APK as download
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Photo-Editor-APK
+          path: AI-Photo-Editor.apk
+
+      - name: Publish APK on Releases page
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: AI Photo Editor APK #${{ github.run_number }}
+          files: AI-Photo-Editor.apk
