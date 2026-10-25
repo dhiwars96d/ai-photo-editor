@@ -1770,9 +1770,14 @@
     });
   }
 
+  const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform &&
+    window.Capacitor.isNativePlatform());
+
   addHead();
-  registerSW();
-  installButton();
+  if (!isNativeApp) {          // inside the Android app the files are already bundled
+    registerSW();
+    installButton();
+  }
 })();
 
 
@@ -2141,4 +2146,76 @@
       return enhanced;
     }
   };
+})();
+
+
+
+/* =========================================================
+   ANDROID APP (Capacitor): Download button
+   A WebView cannot download blob links, so inside the app we save the photo
+   to the cache and open the Android share sheet (Save / Gallery / WhatsApp ...).
+   In a normal browser nothing here runs.
+========================================================= */
+(() => {
+  "use strict";
+
+  const cap = window.Capacitor;
+  const native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+  if (!native) return;
+
+  function say(m) { if (typeof showStatus === "function") showStatus(m); }
+
+  function currentBlob() {
+    if (window.__editedPhotoBlob) return window.__editedPhotoBlob;
+    if (typeof editedBlob !== "undefined" && editedBlob) return editedBlob;
+    return window.__selectedPhotoFile || null;
+  }
+
+  function toBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result).split(",")[1]);
+      fr.onerror = () => reject(new Error("Could not read photo"));
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  async function saveAndShare() {
+    const blob = currentBlob();
+    if (!blob) { say("Please edit the photo first."); return; }
+
+    const plugins = cap.Plugins || {};
+    if (!plugins.Filesystem || !plugins.Share) {
+      say("Save feature is not available in this build.");
+      return;
+    }
+
+    try {
+      say("Preparing photo...");
+      const data = await toBase64(blob);
+      const name = "AI-Photo-" + Date.now() + ".jpg";
+      const file = await plugins.Filesystem.writeFile({
+        path: name,
+        data: data,
+        directory: "CACHE"
+      });
+      await plugins.Share.share({
+        title: "AI Photo Editor",
+        url: file.uri,
+        dialogTitle: "Save or share photo"
+      });
+      say("Photo ready ✓");
+    } catch (err) {
+      console.error(err);
+      if (!/cancel/i.test(String(err && err.message))) say("Could not save the photo.");
+    }
+  }
+
+  document.addEventListener("click", e => {
+    const hit = e.target && e.target.closest && e.target.closest("#downloadButton, #rtDownload");
+    if (!hit) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    saveAndShare();
+  }, true);
 })();
