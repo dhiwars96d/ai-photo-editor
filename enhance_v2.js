@@ -397,36 +397,55 @@ function renderEnhanceToCanvas(st, s) {
 
 /* ---------- 4) panel + preview ---------- */
 
+function addEnhanceCss() {
+  if (document.getElementById("enStyle")) return;
+  const st = document.createElement("style");
+  st.id = "enStyle";
+  st.textContent =
+    "#enhancePanel .enHead{font-size:14px;font-weight:800;color:#2b1d25;margin-bottom:4px}" +
+    "#enhancePanel .enInfo{font-size:11px;color:#8a7480;margin-bottom:6px}" +
+    "#enhancePanel .enRow{display:flex;align-items:center;gap:10px;margin:6px 0}" +
+    "#enhancePanel .enRow label{width:70px;font-size:13px;font-weight:700;color:#2b1d25}" +
+    "#enhancePanel .enRow input{flex:1;min-width:0;accent-color:#f42f91}" +
+    "#enhancePanel .enRow span{width:30px;text-align:right;font-size:12px;font-weight:700;color:#c21868}" +
+    "#enhancePanel .enHint{display:flex;justify-content:space-between;font-size:11px;color:#8a7480;margin:0 40px 0 80px}" +
+    "#enhancePanel .enActions{display:flex;gap:8px;margin-top:10px}" +
+    "#enhancePanel .enBtn{flex:1;min-height:40px;border:1.5px solid #f28ab9;border-radius:12px;" +
+      "background:#fff;color:#c21868;font-size:13px;font-weight:700}" +
+    "#enhancePanel .enBtn.enPrimary{background:linear-gradient(135deg,#f42f91,#ff6fb5);" +
+      "border-color:#f42f91;color:#fff}";
+  document.head.appendChild(st);
+}
+
 function ensureEnhancePanel() {
   let panel = document.getElementById("enhancePanel");
-  if (panel) return panel;
+  if (panel && panel.querySelector("#enhanceSlider")) return panel;
+  if (panel) panel.remove();   // purana (skin.js wala) panel ho to hata do
+
+  addEnhanceCss();
 
   panel = document.createElement("div");
   panel.id = "enhancePanel";
-  panel.style.cssText =
-    "display:none;margin:10px 12px;padding:14px;border-radius:18px;" +
-    "background:#fff;border:1px solid #f4c6dc;box-shadow:0 2px 10px rgba(0,0,0,.06);";
+  // Hair Color panel wali hi class: app ki CSS isse bottom sheet banati hai
+  // aur skin.js photo ko panel ke upar visible rakhta hai.
+  panel.className = "hairColorPanel enhancePanel";
+  panel.style.display = "none";
 
   panel.innerHTML =
-    '<div id="enhanceInfo" style="font-size:12px;opacity:.7;margin-bottom:8px"></div>' +
-    '<div style="display:flex;align-items:center;gap:10px">' +
-      '<b style="font-size:15px">Enhance</b>' +
-      '<span style="font-size:11px;opacity:.7">Natural</span>' +
-      '<input id="enhanceSlider" type="range" min="0" max="100" value="50" ' +
-        'style="flex:1;accent-color:#f0348f">' +
-      '<span style="font-size:11px;opacity:.7">Strong</span>' +
-      '<b id="enhanceValue" style="min-width:24px;text-align:right">50</b>' +
-    '</div>' +
-    '<div style="display:flex;gap:10px;margin-top:12px">' +
-      '<button id="enhanceKeep" type="button" style="flex:1;padding:12px;border-radius:14px;' +
-        'border:1px solid #f0348f;background:#fff;color:#c2185b;font-weight:600">Keep first</button>' +
-      '<button id="enhanceApply" type="button" style="flex:1;padding:12px;border-radius:14px;' +
-        'border:0;background:#f0348f;color:#fff;font-weight:600">Apply ✓</button>' +
+    '<div class="enHead">Enhance</div>' +
+    '<div class="enInfo" id="enhanceInfo"></div>' +
+    '<div class="enRow"><label for="enhanceSlider">Strength</label>' +
+      '<input id="enhanceSlider" type="range" min="0" max="100" value="50">' +
+      '<span id="enhanceValue">50</span></div>' +
+    '<div class="enHint"><span>Natural</span><span>Strong</span></div>' +
+    '<div class="enActions">' +
+      '<button type="button" class="enBtn" id="enhanceKeep">Keep first</button>' +
+      '<button type="button" class="enBtn enPrimary" id="enhanceApply">Apply ✓</button>' +
     '</div>';
 
-  const anchor = document.getElementById("smoothControl");
+  const anchor = document.getElementById("hairColorPanel");
   if (anchor && anchor.parentNode) {
-    anchor.parentNode.insertBefore(panel, anchor.nextSibling);
+    anchor.insertAdjacentElement("afterend", panel);
   } else {
     document.body.appendChild(panel);
   }
@@ -463,7 +482,17 @@ function setEnhanceInfo() {
 
 function showEnhancePanel() {
   const panel = ensureEnhancePanel();
+
+  // dusre panel/slider band karo taaki upar na chipkein
+  const smoothBox = document.getElementById("smoothControl");
+  if (smoothBox) smoothBox.classList.remove("show");
+  ["hairMenu", "hairColorPanel", "hairStylePanel", "skinPanel"].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+
   panel.style.display = "block";
+
   const slider = document.getElementById("enhanceSlider");
   const value = document.getElementById("enhanceValue");
   if (slider) slider.value = "50";
