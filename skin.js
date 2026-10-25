@@ -3,7 +3,7 @@
 (() => {
   "use strict";
 
-  const PANEL_IDS = ["skinPanel", "smoothControl", "hairMenu", "hairColorPanel", "hairStylePanel", "adjustmentsPanel"];
+  const PANEL_IDS = ["skinPanel", "smoothControl", "hairMenu", "hairColorPanel", "hairStylePanel", "enhancePanel", "adjustmentsPanel"];
   let queued = false;
 
   function updatePhotoSpace() {
@@ -1773,4 +1773,372 @@
   addHead();
   registerSW();
   installButton();
+})();
+
+
+/* =========================================================
+   ENHANCE, more natural (less "painting" look)
+   - sends a max 1400px copy and asks for x2 (falls back to x4)
+   - blends the AI result with a plain upscale of your original,
+     adds light sharpening + fine grain
+   - "AI Strength" slider appears after Enhance: 0 = plain upscale,
+     100 = full AI result
+   Replaces runHockmanX2() from app.js. Needs getHockmanApp, handle_file,
+   loadImage, showResult, showStatus from app.js.
+========================================================= */
+(() => {
+  "use strict";
+
+  if (typeof getHockmanApp !== "function" || typeof showResult !== "function") return;
+
+  const $ = id => document.getElementById(id);
+  const DEFAULT_LEVEL = 55;
+
+  let cache = null;          // { origImg, esrImg }
+  let pendingPanel = false;
+  let appliedBlob = null;    // what Enhance first put on screen
+  let lastBlob = null;
+  let dirty = false;
+  let previewUrl = "";
+  let timer = null;
+  let seq = 0;
+
+  const originalShowResult = window.showResult;
+
+  function say(m) { if (typeof showStatus === "function") showStatus(m); }
+
+  /* ---------- helpers ---------- */
+
+  async function shrink(file, maxSide) {
+    const img = await loadImage(file);
+    const s = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    if (s === 1) return { blob: file, img };
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.naturalWidth * s);
+    c.height = Math.round(img.naturalHeight * s);
+    const ctx = c.getContext("2d");
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.95));
+    return { blob, img: await loadImage(blob) };
+  }
+
+  async function blend(level) {
+    const { origImg, esrImg } = cache;
+    const w = esrImg.naturalWidth, h = esrImg.naturalHeight;
+
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    ctx.drawImage(origImg, 0, 0, w, h);
+    const o = ctx.getImageData(0, 0, w, h);
+    ctx.drawImage(esrImg, 0, 0, w, h);
+    const e = ctx.getImageData(0, 0, w, h);
+
+    const k = Math.max(0, Math.min(1, level / 100));
+    const od = o.data, ed = e.data;
+    for (let i = 0; i < od.length; i += 4) {
+      od[i]     = od[i]     * (1 - k) + ed[i]     * k;
+      od[i + 1] = od[i + 1] * (1 - k) + ed[i + 1] * k;
+      od[i + 2] = od[i + 2] * (1 - k) + ed[i + 2] * k;
+    }
+    ctx.putImageData(o, 0, 0);
+
+    // soft copy for unsharp mask
+    const b = document.createElement("canvas");
+    b.width = w;
+    b.height = h;
+    const bctx = b.getContext("2d", { willReadFrequently: true });
+    bctx.filter = "blur(" + Math.max(1, w * 0.0012) + "px)";
+    bctx.drawImage(c, 0, 0);
+    bctx.filter = "none";
+    const bd = bctx.getImageData(0, 0, w, h).data;
+
+    const amount = 0.45;   // sharpening
+    for (let p = 0, i = 0; p < w * h; p++, i += 4) {
+      // stable fine grain, same value on all channels
+      let hs = Math.imul(p + 0x9e3779b9, 0x85ebca6b);
+      hs ^= hs >>> 13;
+      hs = Math.imul(hs, 0xc2b2ae35);
+      hs ^= hs >>> 16;
+      const grain = (((hs >>> 0) / 4294967296) - 0.5) * 7;
+
+      for (let ch = 0; ch < 3; ch++) {
+        const cur = od[i + ch];
+        const v = cur + (cur - bd[i + ch]) * amount + grain;
+        od[i + ch] = v < 0 ? 0 : v > 255 ? 255 : v;
+      }
+    }
+    ctx.putImageData(o, 0, 0);
+
+    return await new Promise((resolve, reject) => {
+      c.toBlob(r => (r ? resolve(r) : reject(new Error("Export failed"))), "image/jpeg", 0.95);
+    });
+  }
+
+  /* ---------- replacement for runHockmanX2 ---------- */
+
+  window.runHockmanX2 = async function (file) {
+    if (!file) throw new Error("No photo selected");
+
+    say("Enhance your Image — Please wait...");
+    const small = await shrink(file, 1400);
+    const app = await getHockmanApp();
+
+    say("Enhance your Image — Please wait... Uploading photo");
+    const image = await handle_file(small.blob);
+
+    const maxSide = Math.max(small.img.naturalWidth, small.img.naturalHeight);
+    const scale = maxSide < 700 ? 4 : 2;
+
+    say("Enhance your Image — Please wait... Enhancing photo");
+    let result;
+    try {
+      result = await app.predict("/predict", [image, scale]);
+    } catch (err) {
+      if (scale === 4) throw err;
+      console.warn("x2 failed, trying x4:", err);
+      result = await app.predict("/predict", [image, 4]);
+    }
+
+    const output = result && result.data && result.data[0];
+    if (!output) throw new Error("API returned no image");
+
+    let url = output.url || output.path || output;
+    if (typeof url !== "string") throw new Error("Invalid image result from Enhance AI");
+    if (url.startsWith("/")) url = "https://nick088-real-esrgan-pytorch.hf.space" + url;
+    if (url.startsWith("http://")) url = "https://" + url.slice(7);
+
+    say("Downloading enhanced photo...");
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Could not download Enhance AI result");
+    const esrBlob = await res.blob();
+    if (!esrBlob || esrBlob.size === 0) throw new Error("Downloaded image is empty");
+
+    cache = { origImg: small.img, esrImg: await loadImage(esrBlob) };
+    pendingPanel = true;
+    return await blend(DEFAULT_LEVEL);
+  };
+
+  /* ---------- strength panel ---------- */
+
+  function addCss() {
+    if ($("enStyle")) return;
+    const s = document.createElement("style");
+    s.id = "enStyle";
+    s.textContent = `
+      #enhancePanel .enHead { font-size: 14px; font-weight: 800; color: #2b1d25; margin-bottom: 8px; }
+      #enhancePanel .enRow { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+      #enhancePanel .enRow label { width: 86px; font-size: 13px; font-weight: 700; color: #2b1d25; }
+      #enhancePanel .enRow input { flex: 1; min-width: 0; accent-color: #f42f91; }
+      #enhancePanel .enRow span { width: 30px; text-align: right; font-size: 12px; font-weight: 700; color: #c21868; }
+      #enhancePanel .enHint { display: flex; justify-content: space-between; font-size: 11px; color: #8a7480; margin: 0 40px 0 96px; }
+      #enhancePanel .enActions { display: flex; gap: 8px; margin-top: 10px; }
+      #enhancePanel .enBtn { flex: 1; min-height: 40px; border: 1.5px solid #f28ab9; border-radius: 12px;
+        background: #fff; color: #c21868; font-size: 13px; font-weight: 700; }
+      #enhancePanel .enBtn.enPrimary { background: linear-gradient(135deg, #f42f91, #ff6fb5);
+        border-color: #f42f91; color: #fff; }
+    `;
+    document.head.appendChild(s);
+  }
+
+  function ensurePanel() {
+    let panel = $("enhancePanel");
+    if (panel) return panel;
+    const anchor = $("hairColorPanel");
+    if (!anchor) return null;
+    addCss();
+
+    panel = document.createElement("div");
+    panel.id = "enhancePanel";
+    panel.className = "hairColorPanel enhancePanel";
+    panel.style.display = "none";
+    panel.innerHTML =
+      '<div class="enHead">Enhance</div>' +
+      '<div class="enRow"><label for="enSlider">AI Strength</label>' +
+        '<input id="enSlider" type="range" min="0" max="100" value="' + DEFAULT_LEVEL + '">' +
+        '<span id="enVal">' + DEFAULT_LEVEL + '</span></div>' +
+      '<div class="enHint"><span>Natural</span><span>Sharp AI</span></div>' +
+      '<div class="enActions"><button type="button" class="enBtn" id="enCancel">Keep first</button>' +
+        '<button type="button" class="enBtn enPrimary" id="enApply">Apply ✓</button></div>';
+    anchor.insertAdjacentElement("afterend", panel);
+
+    $("enSlider").addEventListener("input", e => {
+      const level = Number(e.target.value);
+      $("enVal").textContent = level;
+      clearTimeout(timer);
+      const mine = ++seq;
+      timer = setTimeout(async () => {
+        try {
+          const blob = await blend(level);
+          if (mine !== seq) return;
+          lastBlob = blob;
+          dirty = true;
+          if (previewUrl) URL.revokeObjectURL(previewUrl);
+          previewUrl = URL.createObjectURL(blob);
+          const p = $("preview");
+          if (p) p.src = previewUrl;
+        } catch (err) {
+          console.error(err);
+          say("Enhance preview failed.");
+        }
+      }, 200);
+    });
+
+    $("enApply").addEventListener("click", () => {
+      if (dirty && lastBlob) {
+        const b = lastBlob;
+        dirty = false;
+        lastBlob = null;
+        originalShowResult(b);
+        if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ""; }
+      }
+      closePanel(false);
+    });
+    $("enCancel").addEventListener("click", () => closePanel(true));
+
+    document.querySelectorAll(".tool").forEach(tool => {
+      tool.addEventListener("click", () => {
+        const pn = $("enhancePanel");
+        if (pn && pn.style.display !== "none") closePanel(true);
+      }, true);
+    });
+    return panel;
+  }
+
+  function closePanel(restore) {
+    clearTimeout(timer);
+    seq++;
+    const panel = $("enhancePanel");
+    if (restore && dirty && appliedBlob) {
+      const p = $("preview");
+      if (p) {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = URL.createObjectURL(appliedBlob);
+        p.src = previewUrl;
+      }
+    }
+    dirty = false;
+    lastBlob = null;
+    if (panel) panel.style.display = "none";
+  }
+
+  function openPanel(blob) {
+    const panel = ensurePanel();
+    if (!panel) return;
+    appliedBlob = blob;
+    dirty = false;
+    lastBlob = null;
+    $("enSlider").value = DEFAULT_LEVEL;
+    $("enVal").textContent = DEFAULT_LEVEL;
+    panel.style.display = "block";
+  }
+
+  // when Enhance puts its result on screen, open the strength panel
+  window.showResult = function (blob) {
+    originalShowResult(blob);
+    if (pendingPanel) {
+      pendingPanel = false;
+      openPanel(blob);
+    }
+  };
+})();
+
+
+/* =========================================================
+   ENHANCE: natural look (removes the "painting" effect)
+   Real-ESRGAN smooths skin and hair into a painted look.
+   After it finishes we mix the original's fine texture back in:
+     result = enhanced blended with original + original's fine detail + light grain
+   Tune ENH_NATURAL: 0 = raw AI result, 1 = most natural (more original texture).
+========================================================= */
+(() => {
+  "use strict";
+
+  const ENH_NATURAL = 0.65;
+  const MAX_SIDE = 2400;
+
+  if (typeof window.runHockmanX2 !== "function") return;
+  const original = window.runHockmanX2;
+
+  function toBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(b => (b ? resolve(b) : reject(new Error("Export failed"))), "image/jpeg", 0.95);
+    });
+  }
+
+  function drawScaled(img, w, h) {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const x = c.getContext("2d", { willReadFrequently: true });
+    x.imageSmoothingEnabled = true;
+    x.imageSmoothingQuality = "high";
+    x.drawImage(img, 0, 0, w, h);
+    return { canvas: c, ctx: x };
+  }
+
+  async function naturalize(file, enhBlob) {
+    const [origImg, enhImg] = await Promise.all([loadImage(file), loadImage(enhBlob)]);
+
+    // output size: 2x the original, never more than MAX_SIDE or the AI result
+    const ow = origImg.naturalWidth, oh = origImg.naturalHeight;
+    let k = Math.min(2, MAX_SIDE / Math.max(ow, oh));
+    k = Math.min(k, enhImg.naturalWidth / ow);
+    const w = Math.max(1, Math.round(ow * k));
+    const h = Math.max(1, Math.round(oh * k));
+
+    const E = drawScaled(enhImg, w, h);
+    const O = drawScaled(origImg, w, h);
+
+    // blurred copy of the original -> its fine detail = O - blurred
+    const B = document.createElement("canvas");
+    B.width = w;
+    B.height = h;
+    const bx = B.getContext("2d", { willReadFrequently: true });
+    bx.filter = "blur(" + Math.max(1.2, w * 0.0012) + "px)";
+    bx.drawImage(O.canvas, 0, 0);
+    bx.filter = "none";
+
+    const eImg = E.ctx.getImageData(0, 0, w, h);
+    const e = eImg.data;
+    const o = O.ctx.getImageData(0, 0, w, h).data;
+    const b = bx.getImageData(0, 0, w, h).data;
+
+    const N = ENH_NATURAL;
+    const mix = 0.15 + 0.35 * N;     // how much of the original replaces the AI result
+    const detail = 0.8 * N;          // original's fine detail added back
+    const grain = 4 * N;             // light film-like grain
+
+    for (let p = 0, i = 0; p < w * h; p++, i += 4) {
+      let hs = Math.imul(p + 0x9e3779b9, 0x85ebca6b);
+      hs ^= hs >>> 13;
+      hs = Math.imul(hs, 0xc2b2ae35);
+      hs ^= hs >>> 16;
+      const g = (((hs >>> 0) / 4294967296) - 0.5) * 2 * grain;
+
+      for (let c = 0; c < 3; c++) {
+        const v = e[i + c] * (1 - mix) + o[i + c] * mix + (o[i + c] - b[i + c]) * detail + g;
+        e[i + c] = v < 0 ? 0 : v > 255 ? 255 : v;
+      }
+    }
+
+    E.ctx.putImageData(eImg, 0, 0);
+    return await toBlob(E.canvas);
+  }
+
+  window.runHockmanX2 = async function (file) {
+    const enhanced = await original(file);
+    try {
+      if (typeof showStatus === "function") showStatus("Making it look natural...");
+      return await naturalize(file, enhanced);
+    } catch (err) {
+      console.error("Natural enhance failed, using AI result:", err);
+      return enhanced;
+    }
+  };
 })();
