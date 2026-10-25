@@ -2149,11 +2149,12 @@
 })();
 
 
-
 /* =========================================================
    ANDROID APP (Capacitor): Download button
-   A WebView cannot download blob links, so inside the app we save the photo
-   to the cache and open the Android share sheet (Save / Gallery / WhatsApp ...).
+   A WebView cannot download blob links, so inside the app:
+     Download -> saves the photo straight to the phone Gallery
+                 (album "AI Photo Editor"), using @capacitor-community/media.
+     If that fails -> falls back to the Android share sheet.
    In a normal browser nothing here runs.
 ========================================================= */
 (() => {
@@ -2163,6 +2164,8 @@
   const native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
   if (!native) return;
 
+  const ALBUM = "AI Photo Editor";
+
   function say(m) { if (typeof showStatus === "function") showStatus(m); }
 
   function currentBlob() {
@@ -2171,39 +2174,63 @@
     return window.__selectedPhotoFile || null;
   }
 
-  function toBase64(blob) {
+  function toDataUri(blob) {
     return new Promise((resolve, reject) => {
       const fr = new FileReader();
-      fr.onload = () => resolve(String(fr.result).split(",")[1]);
+      fr.onload = () => resolve(String(fr.result));
       fr.onerror = () => reject(new Error("Could not read photo"));
       fr.readAsDataURL(blob);
     });
   }
 
-  async function saveAndShare() {
+  async function albumId(Media) {
+    let list = await Media.getAlbums();
+    let album = (list.albums || []).find(a => a.name === ALBUM);
+    if (!album) {
+      await Media.createAlbum({ name: ALBUM });
+      list = await Media.getAlbums();
+      album = (list.albums || []).find(a => a.name === ALBUM);
+    }
+    if (!album) throw new Error("Album not found");
+    return album.identifier;
+  }
+
+  async function shareFallback(dataUri) {
+    const p = cap.Plugins || {};
+    if (!p.Filesystem || !p.Share) throw new Error("Share not available");
+    const file = await p.Filesystem.writeFile({
+      path: "AI-Photo-" + Date.now() + ".jpg",
+      data: dataUri.split(",")[1],
+      directory: "CACHE"
+    });
+    await p.Share.share({ title: "AI Photo Editor", url: file.uri, dialogTitle: "Save or share photo" });
+  }
+
+  async function savePhoto() {
     const blob = currentBlob();
     if (!blob) { say("Please edit the photo first."); return; }
 
-    const plugins = cap.Plugins || {};
-    if (!plugins.Filesystem || !plugins.Share) {
-      say("Save feature is not available in this build.");
-      return;
-    }
-
     try {
-      say("Preparing photo...");
-      const data = await toBase64(blob);
-      const name = "AI-Photo-" + Date.now() + ".jpg";
-      const file = await plugins.Filesystem.writeFile({
-        path: name,
-        data: data,
-        directory: "CACHE"
-      });
-      await plugins.Share.share({
-        title: "AI Photo Editor",
-        url: file.uri,
-        dialogTitle: "Save or share photo"
-      });
+      say("Saving photo...");
+      const dataUri = await toDataUri(blob);
+      const Media = (cap.Plugins || {}).Media;
+
+      if (Media) {
+        try {
+          const id = await albumId(Media);
+          await Media.savePhoto({
+            path: dataUri,
+            albumIdentifier: id,
+            fileName: "AI-Photo-" + Date.now()
+          });
+          say("Saved to Gallery ✓ (album: " + ALBUM + ")");
+          return;
+        } catch (err) {
+          console.error("Gallery save failed, using share sheet:", err);
+        }
+      }
+
+      await shareFallback(dataUri);
       say("Photo ready ✓");
     } catch (err) {
       console.error(err);
@@ -2216,6 +2243,6 @@
     if (!hit) return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    saveAndShare();
+    savePhoto();
   }, true);
 })();
