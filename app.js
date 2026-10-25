@@ -1,49 +1,22 @@
-let Client = null;
-let handle_file = null;
-
-
 /* =========================================================
    DOM
 ========================================================= */
 
-const fileInput =
-  document.getElementById("fileInput");
+const fileInput = document.getElementById("fileInput");
+const addPhoto = document.getElementById("addPhoto");
+const preview = document.getElementById("preview");
+const placeholder = document.getElementById("placeholder");
+const statusBox = document.getElementById("status");
+const downloadButton = document.getElementById("downloadButton");
 
-const addPhoto =
-  document.getElementById("addPhoto");
+const adjustmentsToggle = document.getElementById("adjustmentsToggle");
+const adjustmentsPanel = document.getElementById("adjustmentsPanel");
+const adjustmentsChevron = document.getElementById("adjustmentsChevron");
+const adjustmentsFrame = document.getElementById("adjustmentsFrame");
 
-const preview =
-  document.getElementById("preview");
-
-const placeholder =
-  document.getElementById("placeholder");
-
-const statusBox =
-  document.getElementById("status");
-
-const downloadButton =
-  document.getElementById("downloadButton");
-
-const adjustmentsToggle =
-  document.getElementById("adjustmentsToggle");
-
-const adjustmentsPanel =
-  document.getElementById("adjustmentsPanel");
-
-const adjustmentsChevron =
-  document.getElementById("adjustmentsChevron");
-
-const adjustmentsFrame =
-  document.getElementById("adjustmentsFrame");
-
-const smoothControl =
-  document.getElementById("smoothControl");
-
-const smoothSlider =
-  document.getElementById("smoothSlider");
-
-const smoothValue =
-  document.getElementById("smoothValue");
+const smoothControl = document.getElementById("smoothControl");
+const smoothSlider = document.getElementById("smoothSlider");
+const smoothValue = document.getElementById("smoothValue");
 
 const skinPanel = document.getElementById("skinPanel");
 const skinIntensitySlider = document.getElementById("skinIntensitySlider");
@@ -51,24 +24,12 @@ const skinIntensityValue = document.getElementById("skinIntensityValue");
 const skinApplyButton = document.getElementById("skinApply");
 const skinCancelButton = document.getElementById("skinCancel");
 
-
-const hairMenu =
-  document.getElementById("hairMenu");
-
-const hairGrow =
-  document.getElementById("hairGrow");
-
-const hairColor =
-  document.getElementById("hairColor");
-
-const hairColorPanel =
-  document.getElementById("hairColorPanel");
-
-const hairIntensitySlider =
-  document.getElementById("hairIntensitySlider");
-
-const hairIntensityValue =
-  document.getElementById("hairIntensityValue");
+const hairMenu = document.getElementById("hairMenu");
+const hairGrow = document.getElementById("hairGrow");
+const hairColor = document.getElementById("hairColor");
+const hairColorPanel = document.getElementById("hairColorPanel");
+const hairIntensitySlider = document.getElementById("hairIntensitySlider");
+const hairIntensityValue = document.getElementById("hairIntensityValue");
 
 
 /* =========================================================
@@ -76,15 +37,10 @@ const hairIntensityValue =
 ========================================================= */
 
 let selectedFile = null;
-
 let editedBlob = null;
-
 let adjustmentBaseBlob = null;
-
 let adjustmentTimer = null;
-
 let smoothTimer = null;
-
 let smoothBaseBlob = null;
 let skinBaseBlob = null;
 let selectedSkinPreset = "none";
@@ -114,13 +70,22 @@ function publishEditedBlob(blob) {
 
   window.__editedPhotoBlob = blob;
 
-  if (
-    window.Retouch &&
-    typeof window.Retouch.setCurrentBlob === "function"
-  ) {
+  if (window.Retouch && typeof window.Retouch.setCurrentBlob === "function") {
     window.Retouch.setCurrentBlob(blob);
   }
 }
+
+/* enhance_v2.js (separate file) uses these through window.AppBridge */
+window.AppBridge = {
+  loadImage: loadImage,
+  getCurrentPhotoFile: getCurrentPhotoFile,
+  getCurrentPhotoBlob: getCurrentPhotoBlob,
+  showStatus: showStatus,
+  showResult: showResult,
+  getPreview: function () { return preview; },
+  getStatusBox: function () { return statusBox; }
+};
+
 
 /* =========================================================
    UNDO + REDO PHOTO
@@ -146,6 +111,8 @@ function saveUndoState(blob) {
 function restorePhoto(blob) {
   if (!blob) return;
 
+  if (window.closeEnhancePanel) window.closeEnhancePanel(false);
+
   editedBlob = blob;
   adjustmentBaseBlob = blob;
   window.__editedPhotoBlob = blob;
@@ -169,8 +136,7 @@ function restorePhoto(blob) {
     statusBox.style.display = "none";
   }
 
-  if (window.Retouch &&
-      typeof window.Retouch.setCurrentBlob === "function") {
+  if (window.Retouch && typeof window.Retouch.setCurrentBlob === "function") {
     window.Retouch.setCurrentBlob(blob);
   }
 }
@@ -251,11 +217,11 @@ if (redoButton) {
    UNDO + RESET BUTTONS
 ========================================================= */
 
-document.querySelectorAll('.tool[data-tool="undo"]').forEach(button => {
+document.querySelectorAll('.tool[data-tool="undo"]').forEach(function (button) {
   button.addEventListener("click", undoLastEdit);
 });
 
-document.querySelectorAll('.tool[data-tool="reset"]').forEach(button => {
+document.querySelectorAll('.tool[data-tool="reset"]').forEach(function (button) {
   button.addEventListener("click", resetToOriginalPhoto);
 });
 
@@ -265,11 +231,9 @@ document.querySelectorAll('.tool[data-tool="reset"]').forEach(button => {
 ========================================================= */
 
 function showStatus(text) {
-
   if (!statusBox) return;
 
   statusBox.textContent = text;
-
   statusBox.style.display = "block";
 }
 
@@ -279,25 +243,18 @@ function showStatus(text) {
 ========================================================= */
 
 function showSmoothControl() {
-
   if (smoothControl) {
     smoothControl.classList.add("show");
   }
-
 }
 
-
 function hideSmoothControl() {
-
   if (smoothControl) {
     smoothControl.classList.remove("show");
   }
-
 }
 
-
 function resetSmoothSlider() {
-
   if (!smoothSlider) return;
 
   smoothSlider.value = 50;
@@ -305,7 +262,6 @@ function resetSmoothSlider() {
   if (smoothValue) {
     smoothValue.textContent = "50";
   }
-
 }
 
 
@@ -324,90 +280,56 @@ if (changePhotoButton && fileInput) {
 }
 
 if (addPhoto && fileInput) {
-
   addPhoto.addEventListener("click", function (event) {
-
     event.preventDefault();
-
     fileInput.click();
-
   });
-
 }
 
-
 if (fileInput) {
-
   fileInput.addEventListener("change", function () {
-
-    const file =
-      fileInput.files &&
-      fileInput.files[0];
+    const file = fileInput.files && fileInput.files[0];
 
     if (!file) {
       return;
     }
 
-
     if (!file.type.startsWith("image/")) {
-
-      showStatus(
-        "Please select an image file."
-      );
-
+      showStatus("Please select an image file.");
       return;
     }
 
+    if (window.closeEnhancePanel) window.closeEnhancePanel(false);
 
     selectedFile = file;
 
-     undoHistory.length = 0;
-
-     redoHistory.length = 0;
+    undoHistory.length = 0;
+    redoHistory.length = 0;
 
     window.__selectedPhotoFile = file;
 
     editedBlob = null;
-    
-     window.__editedPhotoBlob = file;
+
+    window.__editedPhotoBlob = file;
 
     adjustmentBaseBlob = file;
 
-
     if (preview) {
-
-      preview.src =
-        URL.createObjectURL(file);
-
-      preview.style.display =
-        "block";
-
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
     }
-
 
     if (placeholder) {
-
-      placeholder.style.display =
-        "none";
-
+      placeholder.style.display = "none";
     }
-
 
     if (downloadButton) {
-
-      downloadButton.style.display =
-        "none";
-
+      downloadButton.style.display = "none";
     }
-
 
     if (statusBox) {
-
-      statusBox.style.display =
-        "none";
-
+      statusBox.style.display = "none";
     }
-
 
     hideSmoothControl();
     if (skinPanel) skinPanel.style.display = "none";
@@ -416,188 +338,16 @@ if (fileInput) {
     resetSmoothSlider();
 
     resetAdjustmentValues();
-
   });
-
 }
-
 
 
 /* =========================================================
-   ENHANCE AI - REAL-ESRGAN PYTORCH
+   ENHANCE
+   Poora Enhance code ab enhance_v2.js me hai
+   (photo check + local enhance + AI detail layer).
+   Tool button neeche window.startEnhance() ko call karta hai.
 ========================================================= */
-
-const HOCKMAN_SPACE =
-  "Nick088/Real-ESRGAN_Pytorch";
-
-let hockmanAppPromise = null;
-
-
-async function getHockmanApp() {
-
-  if (!hockmanAppPromise) {
-
-    hockmanAppPromise = (async function () {
-
-      showStatus("Enhance your Image — Please wait...");
-
-      const gradio = await import(
-        "https://cdn.jsdelivr.net/npm/@gradio/client@2.7.0/+esm"
-      );
-
-      Client = gradio.Client;
-      handle_file = gradio.handle_file;
-
-      return await Client.connect(
-        HOCKMAN_SPACE,
-        {
-          events: ["data", "status"],
-
-          status_callback: function (s) {
-
-            if (!s) return;
-
-            if (
-              s.status === "sleeping"
-            ) {
-              showStatus("Waking Enhance AI...");
-            }
-
-            else if (
-              s.status === "building"
-            ) {
-              showStatus("Enhance AI is starting...");
-            }
-
-            else if (
-              s.status === "running"
-            ) {
-              showStatus("Enhance AI is ready...");
-            }
-
-            else if (
-              s.status === "error" ||
-              s.status === "space_error"
-            ) {
-              showStatus(
-                "Enhance AI Space error. Please try again."
-              );
-            }
-
-          }
-        }
-      );
-
-    })().catch(function (error) {
-
-      hockmanAppPromise = null;
-      throw error;
-
-    });
-
-  }
-
-  return await hockmanAppPromise;
-
-}
-
-
-
-async function runHockmanX2(file) {
-
-  if (!file) {
-    throw new Error("No photo selected");
-  }
-
-  showStatus("Enhance your Image — Please wait...");
-
-  const app = await getHockmanApp();
-
-  showStatus("Enhance your Image — Please wait... Uploading photo");
-
-  const image = await handle_file(file);
-
-  showStatus("Enhance your Image — Please wait... Enhancing photo");
-
-  let result;
-
-try {
-   showStatus("Enhance your Image — Please wait...");
-  
-result = await app.predict("/predict", [
-  image,
-  4
-]);
-
-
-  console.log("Real-ESRGAN API result:", result);
-
-} catch (error) {
-  console.error("REAL-ESRGAN PREDICT ERROR:", error);
-  console.error("Error name:", error?.name);
-  console.error("Error message:", error?.message);
-  console.error("Error stack:", error?.stack);
-
-  
-
-const details = [
-  "Name: " + (error?.name || "unknown"),
-  "Message: " + (error?.message || String(error)),
-  "Cause: " + (error?.cause?.message || "none"),
-  "Stack: " + (error?.stack || "unavailable")
-].join(" | ");
-
-showStatus("Enhance API error: " + details);
-throw error;
-
-
-}
-
-  const output = result?.data?.[0];
-
-  if (!output) {
-    throw new Error(
-      "API returned no image. Check the console result."
-    );
-  }
-
-  let outputURL =
-    output?.url ||
-    output?.path ||
-    output;
-
-  if (typeof outputURL !== "string") {
-    throw new Error("Invalid image result from Enhance AI");
-  }
-
-  if (outputURL.startsWith("/")) {
-    outputURL =
-      "https://nick088-real-esrgan-pytorch.hf.space" +
-      outputURL;
-  }
-
-  if (outputURL.startsWith("http://")) {
-    outputURL = "https://" + outputURL.slice(7);
-  }
-
-  showStatus("Downloading enhanced photo...");
-
-  const response = await fetch(outputURL);
-
-  if (!response.ok) {
-    throw new Error("Could not download Enhance AI result");
-  }
-
-  const blob = await response.blob();
-
-  if (!blob || blob.size === 0) {
-    throw new Error("Downloaded image is empty");
-  }
-
-  return blob;
-}
-
-
 
 
 /* =========================================================
@@ -605,46 +355,28 @@ throw error;
 ========================================================= */
 
 function showResult(blob) {
-
   if (!blob) return;
-
 
   saveUndoState(getCurrentPhotoBlob());
 
-editedBlob = blob;
-adjustmentBaseBlob = blob;
-publishEditedBlob(blob);
-
+  editedBlob = blob;
+  adjustmentBaseBlob = blob;
+  publishEditedBlob(blob);
 
   if (preview) {
-
-    preview.src =
-      URL.createObjectURL(blob);
-
-    preview.style.display =
-      "block";
-
+    preview.src = URL.createObjectURL(blob);
+    preview.style.display = "block";
   }
-
 
   if (placeholder) {
-
-    placeholder.style.display =
-      "none";
-
+    placeholder.style.display = "none";
   }
-
 
   if (downloadButton) {
-
-    downloadButton.style.display =
-      "block";
-
+    downloadButton.style.display = "block";
   }
 
-
   resetAdjustmentValues();
-
 }
 
 
@@ -653,46 +385,22 @@ publishEditedBlob(blob);
 ========================================================= */
 
 function loadImage(file) {
+  return new Promise(function (resolve, reject) {
+    const image = new Image();
+    const url = URL.createObjectURL(file);
 
-  return new Promise(
-    function (resolve, reject) {
+    image.onload = function () {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
 
-      const image =
-        new Image();
+    image.onerror = function () {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not load image"));
+    };
 
-      const url =
-        URL.createObjectURL(file);
-
-
-      image.onload =
-        function () {
-
-          URL.revokeObjectURL(url);
-
-          resolve(image);
-
-        };
-
-
-      image.onerror =
-        function () {
-
-          URL.revokeObjectURL(url);
-
-          reject(
-            new Error(
-              "Could not load image"
-            )
-          );
-
-        };
-
-
-      image.src = url;
-
-    }
-  );
-
+    image.src = url;
+  });
 }
 
 
@@ -700,677 +408,201 @@ function loadImage(file) {
    SMOOTH SKIN
 ========================================================= */
 
-async function smoothSkin(
-  file,
-  intensity = 50
-) {
+async function smoothSkin(file, intensity = 50) {
+  const img = await loadImage(file);
 
-  const img =
-    await loadImage(file);
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
 
-
-  const w =
-    img.naturalWidth;
-
-  const h =
-    img.naturalHeight;
-
-
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
-
-
+  const canvas = document.createElement("canvas");
   canvas.width = w;
-
   canvas.height = h;
 
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-  const ctx =
-    canvas.getContext(
-      "2d",
-      {
-        willReadFrequently: true
-      }
-    );
+  ctx.drawImage(img, 0, 0, w, h);
 
+  const original = ctx.getImageData(0, 0, w, h);
 
-  ctx.drawImage(
-    img,
-    0,
-    0,
-    w,
-    h
-  );
+  const scale = Math.min(1, 900 / w);
+  const sw = Math.max(1, Math.round(w * scale));
+  const sh = Math.max(1, Math.round(h * scale));
 
-
-  const original =
-    ctx.getImageData(
-      0,
-      0,
-      w,
-      h
-    );
-
-
-  const scale =
-    Math.min(
-      1,
-      900 / w
-    );
-
-
-  const sw =
-    Math.max(
-      1,
-      Math.round(w * scale)
-    );
-
-
-  const sh =
-    Math.max(
-      1,
-      Math.round(h * scale)
-    );
-
-
-  const work =
-    document.createElement(
-      "canvas"
-    );
-
-
+  const work = document.createElement("canvas");
   work.width = sw;
-
   work.height = sh;
 
+  const wc = work.getContext("2d", { willReadFrequently: true });
+  wc.drawImage(img, 0, 0, sw, sh);
 
-  const wc =
-    work.getContext(
-      "2d",
-      {
-        willReadFrequently: true
-      }
-    );
-
-
-  wc.drawImage(
-    img,
-    0,
-    0,
-    sw,
-    sh
-  );
-
-
-  const blur1 =
-    document.createElement(
-      "canvas"
-    );
-
-
+  // three blur passes: 5px -> 3px -> 1.5px
+  const blur1 = document.createElement("canvas");
   blur1.width = sw;
-
   blur1.height = sh;
+  const c1 = blur1.getContext("2d");
+  c1.filter = "blur(5px)";
+  c1.drawImage(work, 0, 0);
 
-
-  const c1 =
-    blur1.getContext("2d");
-
-
-  c1.filter =
-    "blur(5px)";
-
-
-  c1.drawImage(
-    work,
-    0,
-    0
-  );
-
-
-  const blur2 =
-    document.createElement(
-      "canvas"
-    );
-
-
+  const blur2 = document.createElement("canvas");
   blur2.width = sw;
-
   blur2.height = sh;
+  const c2 = blur2.getContext("2d");
+  c2.filter = "blur(3px)";
+  c2.drawImage(blur1, 0, 0);
 
-
-  const c2 =
-    blur2.getContext("2d");
-
-
-  c2.filter =
-    "blur(3px)";
-
-
-  c2.drawImage(
-    blur1,
-    0,
-    0
-  );
-
-
-  const blur3 =
-    document.createElement(
-      "canvas"
-    );
-
-
+  const blur3 = document.createElement("canvas");
   blur3.width = sw;
-
   blur3.height = sh;
+  const c3 = blur3.getContext("2d");
+  c3.filter = "blur(1.5px)";
+  c3.drawImage(blur2, 0, 0);
 
-
-  const c3 =
-    blur3.getContext("2d");
-
-
-  c3.filter =
-    "blur(1.5px)";
-
-
-  c3.drawImage(
-    blur2,
-    0,
-    0
-  );
-
-
-  const blurred =
-    document.createElement(
-      "canvas"
-    );
-
-
+  const blurred = document.createElement("canvas");
   blurred.width = w;
-
   blurred.height = h;
 
+  const bc = blurred.getContext("2d", { willReadFrequently: true });
+  bc.drawImage(blur3, 0, 0, w, h);
 
-  const bc =
-    blurred.getContext(
-      "2d",
-      {
-        willReadFrequently: true
-      }
-    );
-
-
-  bc.drawImage(
-    blur3,
-    0,
-    0,
-    w,
-    h
-  );
-
-
-  const mask =
-    document.createElement(
-      "canvas"
-    );
-
-
+  const mask = document.createElement("canvas");
   mask.width = w;
-
   mask.height = h;
 
-
-  const mc =
-    mask.getContext(
-      "2d",
-      {
-        willReadFrequently: true
-      }
-    );
-
+  const mc = mask.getContext("2d", { willReadFrequently: true });
 
   const fx = w * 0.50;
-
   const fy = h * 0.465;
-
   const fw = w * 0.405;
-
   const fh = h * 0.475;
 
-
-  const gradient =
-    mc.createRadialGradient(
-      fx,
-      fy,
-      fw * 0.18,
-      fx,
-      fy,
-      fw * 1.02
-    );
-
-
-  gradient.addColorStop(
-    0,
-    "rgba(255,255,255,1)"
+  const gradient = mc.createRadialGradient(
+    fx, fy, fw * 0.18,
+    fx, fy, fw * 1.02
   );
 
-  gradient.addColorStop(
-    0.48,
-    "rgba(255,255,255,.98)"
-  );
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
+  gradient.addColorStop(0.48, "rgba(255,255,255,.98)");
+  gradient.addColorStop(0.68, "rgba(255,255,255,.82)");
+  gradient.addColorStop(0.82, "rgba(255,255,255,.48)");
+  gradient.addColorStop(0.93, "rgba(255,255,255,.16)");
+  gradient.addColorStop(1, "rgba(255,255,255,0)");
 
-  gradient.addColorStop(
-    0.68,
-    "rgba(255,255,255,.82)"
-  );
-
-  gradient.addColorStop(
-    0.82,
-    "rgba(255,255,255,.48)"
-  );
-
-  gradient.addColorStop(
-    0.93,
-    "rgba(255,255,255,.16)"
-  );
-
-  gradient.addColorStop(
-    1,
-    "rgba(255,255,255,0)"
-  );
-
-
-  mc.fillStyle =
-    gradient;
-
+  mc.fillStyle = gradient;
 
   mc.beginPath();
-
-  mc.ellipse(
-    fx,
-    fy,
-    fw,
-    fh,
-    0,
-    0,
-    Math.PI * 2
-  );
-
+  mc.ellipse(fx, fy, fw, fh, 0, 0, Math.PI * 2);
   mc.fill();
 
+  mc.globalCompositeOperation = "destination-out";
 
-  mc.globalCompositeOperation =
-    "destination-out";
-
-
-  function cut(
-    x,
-    y,
-    rx,
-    ry
-  ) {
-
+  function cut(x, y, rx, ry) {
     mc.beginPath();
-
-    mc.ellipse(
-      x,
-      y,
-      rx,
-      ry,
-      0,
-      0,
-      Math.PI * 2
-    );
-
+    mc.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
     mc.fill();
-
   }
 
+  cut(w * 0.405, h * 0.395, w * 0.092, h * 0.045);
+  cut(w * 0.595, h * 0.395, w * 0.092, h * 0.045);
+  cut(w * 0.405, h * 0.345, w * 0.105, h * 0.026);
+  cut(w * 0.595, h * 0.345, w * 0.105, h * 0.026);
+  cut(w * 0.50, h * 0.505, w * 0.078, h * 0.135);
+  cut(w * 0.50, h * 0.625, w * 0.145, h * 0.060);
+  cut(w * 0.50, h * 0.675, w * 0.18, h * 0.055);
+  cut(w * 0.34, h * 0.695, w * 0.105, h * 0.065);
+  cut(w * 0.66, h * 0.695, w * 0.105, h * 0.065);
 
-  cut(
-    w * 0.405,
-    h * 0.395,
-    w * 0.092,
-    h * 0.045
-  );
+  mc.globalCompositeOperation = "source-over";
 
-
-  cut(
-    w * 0.595,
-    h * 0.395,
-    w * 0.092,
-    h * 0.045
-  );
-
-
-  cut(
-    w * 0.405,
-    h * 0.345,
-    w * 0.105,
-    h * 0.026
-  );
-
-
-  cut(
-    w * 0.595,
-    h * 0.345,
-    w * 0.105,
-    h * 0.026
-  );
-
-
-  cut(
-    w * 0.50,
-    h * 0.505,
-    w * 0.078,
-    h * 0.135
-  );
-
-
-  cut(
-    w * 0.50,
-    h * 0.625,
-    w * 0.145,
-    h * 0.060
-  );
-
-
-  cut(
-    w * 0.50,
-    h * 0.675,
-    w * 0.18,
-    h * 0.055
-  );
-
-
-  cut(
-    w * 0.34,
-    h * 0.695,
-    w * 0.105,
-    h * 0.065
-  );
-
-
-  cut(
-    w * 0.66,
-    h * 0.695,
-    w * 0.105,
-    h * 0.065
-  );
-
-
-  mc.globalCompositeOperation =
-    "source-over";
-
-
-  const softMask =
-    document.createElement(
-      "canvas"
-    );
-
-
+  const softMask = document.createElement("canvas");
   softMask.width = w;
-
   softMask.height = h;
 
+  const smc = softMask.getContext("2d", { willReadFrequently: true });
+  smc.filter = "blur(8px)";
+  smc.drawImage(mask, 0, 0);
 
-  const smc =
-    softMask.getContext(
-      "2d",
-      {
-        willReadFrequently: true
-      }
-    );
+  const maskData = smc.getImageData(0, 0, w, h).data;
+  const blurData = bc.getImageData(0, 0, w, h).data;
+  const source = original.data;
 
+  const result = ctx.createImageData(w, h);
+  const output = result.data;
 
-  smc.filter =
-    "blur(8px)";
+  const amount = Math.max(1, Math.min(100, Number(intensity) || 50));
 
+  const strengthBase = 0.08 + Math.pow(amount / 100, 0.72) * 0.92;
 
-  smc.drawImage(
-    mask,
-    0,
-    0
-  );
-
-
-  const maskData =
-    smc.getImageData(
-      0,
-      0,
-      w,
-      h
-    ).data;
-
-
-  const blurData =
-    bc.getImageData(
-      0,
-      0,
-      w,
-      h
-    ).data;
-
-
-  const source =
-    original.data;
-
-
-  const result =
-    ctx.createImageData(
-      w,
-      h
-    );
-
-
-  const output =
-    result.data;
-
-
-  const amount =
-    Math.max(
-      1,
-      Math.min(
-        100,
-        Number(intensity) || 50
-      )
-    );
-
-
-  const strengthBase =
-    0.08 +
-    Math.pow(
-      amount / 100,
-      0.72
-    ) * 0.92;
-
-
-  for (
-    let i = 0;
-    i < source.length;
-    i += 4
-  ) {
-
-    const maskValue =
-      maskData[i + 3] / 255;
-
+  for (let i = 0; i < source.length; i += 4) {
+    const maskValue = maskData[i + 3] / 255;
 
     if (maskValue <= 0.003) {
-
-      output[i] =
-        source[i];
-
-      output[i + 1] =
-        source[i + 1];
-
-      output[i + 2] =
-        source[i + 2];
-
-      output[i + 3] =
-        255;
-
+      output[i] = source[i];
+      output[i + 1] = source[i + 1];
+      output[i + 2] = source[i + 2];
+      output[i + 3] = 255;
       continue;
-
     }
 
+    const r = source[i];
+    const g = source[i + 1];
+    const b = source[i + 2];
 
-    const r =
-      source[i];
+    const br = blurData[i];
+    const bg = blurData[i + 1];
+    const bb = blurData[i + 2];
 
-    const g =
-      source[i + 1];
+    const difference = Math.abs(r - br) + Math.abs(g - bg) + Math.abs(b - bb);
 
-    const b =
-      source[i + 2];
-
-
-    const br =
-      blurData[i];
-
-    const bg =
-      blurData[i + 1];
-
-    const bb =
-      blurData[i + 2];
-
-
-    const difference =
-      Math.abs(r - br) +
-      Math.abs(g - bg) +
-      Math.abs(b - bb);
-
-
-    let strength =
-      strengthBase *
-      maskValue;
-
+    let strength = strengthBase * maskValue;
 
     if (difference > 95) {
-
       strength *= 0.36;
-
-    }
-
-    else if (difference > 70) {
-
+    } else if (difference > 70) {
       strength *= 0.52;
-
-    }
-
-    else if (difference > 48) {
-
+    } else if (difference > 48) {
       strength *= 0.72;
-
-    }
-
-    else if (difference > 30) {
-
+    } else if (difference > 30) {
       strength *= 0.88;
-
     }
 
+    strength = Math.min(0.94, strength);
 
-    strength =
-      Math.min(
-        0.94,
-        strength
-      );
-
-
-    output[i] =
-      Math.round(
-        r * (1 - strength) +
-        br * strength
-      );
-
-
-    output[i + 1] =
-      Math.round(
-        g * (1 - strength) +
-        bg * strength
-      );
-
-
-    output[i + 2] =
-      Math.round(
-        b * (1 - strength) +
-        bb * strength
-      );
-
-
-    output[i + 3] =
-      255;
-
+    output[i] = Math.round(r * (1 - strength) + br * strength);
+    output[i + 1] = Math.round(g * (1 - strength) + bg * strength);
+    output[i + 2] = Math.round(b * (1 - strength) + bb * strength);
+    output[i + 3] = 255;
   }
 
+  ctx.putImageData(result, 0, 0);
 
-  ctx.putImageData(
-    result,
-    0,
-    0
-  );
-
-
-  return await new Promise(
-    function (resolve) {
-
-      canvas.toBlob(
-        resolve,
-        "image/jpeg",
-        0.94
-      );
-
-    }
-  );
-
+  return await new Promise(function (resolve) {
+    canvas.toBlob(resolve, "image/jpeg", 0.94);
+  });
 }
 
-
 function showSmoothResult(blob) {
-
   if (!blob) return;
 
-saveUndoState(getCurrentPhotoBlob());
-  
-  editedBlob =
-    blob;
+  saveUndoState(getCurrentPhotoBlob());
 
-   adjustmentBaseBlob = blob;
-publishEditedBlob(blob);
+  editedBlob = blob;
+  adjustmentBaseBlob = blob;
+  publishEditedBlob(blob);
 
   if (preview) {
-
-    preview.src =
-      URL.createObjectURL(blob);
-
-    preview.style.display =
-      "block";
-
+    preview.src = URL.createObjectURL(blob);
+    preview.style.display = "block";
   }
-
 
   if (placeholder) {
-
-    placeholder.style.display =
-      "none";
-
+    placeholder.style.display = "none";
   }
-
 
   if (downloadButton) {
-
-    downloadButton.style.display =
-      "block";
-
+    downloadButton.style.display = "block";
   }
 
-
-  showStatus(
-    "Smooth Skin applied ✓"
-  );
-
+  showStatus("Smooth Skin applied ✓");
 }
 
 
@@ -1379,90 +611,35 @@ publishEditedBlob(blob);
 ========================================================= */
 
 if (smoothSlider) {
+  smoothSlider.addEventListener("input", function () {
+    const file = smoothBaseBlob || getCurrentPhotoBlob();
 
-  smoothSlider.addEventListener(
-    "input",
-    function () {
+    const value = Number(smoothSlider.value);
 
-      const file = smoothBaseBlob || getCurrentPhotoBlob();
-
-
-      const value =
-        Number(
-          smoothSlider.value
-        );
-
-
-      if (smoothValue) {
-
-        smoothValue.textContent =
-          value;
-
-      }
-
-
-      if (!file) {
-
-        showStatus(
-          "Please select a photo first."
-        );
-
-        return;
-
-      }
-
-
-      clearTimeout(
-        smoothTimer
-      );
-
-
-      smoothTimer =
-        setTimeout(
-          async function () {
-
-            try {
-
-              showStatus(
-                "Applying Skin Smooth " +
-                value +
-                "%..."
-              );
-
-
-              const blob =
-                await smoothSkin(
-                  file,
-                  value
-                );
-
-
-              showSmoothResult(
-                blob
-              );
-
-            }
-
-            catch (error) {
-
-              console.error(
-                error
-              );
-
-
-              showStatus(
-                "Smooth Skin failed. Please try again."
-              );
-
-            }
-
-          },
-          120
-        );
-
+    if (smoothValue) {
+      smoothValue.textContent = value;
     }
-  );
 
+    if (!file) {
+      showStatus("Please select a photo first.");
+      return;
+    }
+
+    clearTimeout(smoothTimer);
+
+    smoothTimer = setTimeout(async function () {
+      try {
+        showStatus("Applying Skin Smooth " + value + "%...");
+
+        const blob = await smoothSkin(file, value);
+
+        showSmoothResult(blob);
+      } catch (error) {
+        console.error(error);
+        showStatus("Smooth Skin failed. Please try again.");
+      }
+    }, 120);
+  });
 }
 
 
@@ -1483,221 +660,99 @@ const adjustmentIds = [
   "clarity"
 ];
 
-
 const adjustmentValues = {};
 
-
-adjustmentIds.forEach(
-  function (id) {
-
-    adjustmentValues[id] = 0;
-
-  }
-);
-
+adjustmentIds.forEach(function (id) {
+  adjustmentValues[id] = 0;
+});
 
 function resetAdjustmentValues() {
+  adjustmentIds.forEach(function (id) {
+    adjustmentValues[id] = 0;
+  });
 
-  adjustmentIds.forEach(
-    function (id) {
-
-      adjustmentValues[id] = 0;
-
-    }
-  );
-
-
-  if (
-    adjustmentsFrame &&
-    adjustmentsFrame.contentWindow
-  ) {
-
+  if (adjustmentsFrame && adjustmentsFrame.contentWindow) {
     adjustmentsFrame.contentWindow.postMessage(
       {
         type: "setValues",
-        values: {
-          ...adjustmentValues
-        }
+        values: { ...adjustmentValues }
       },
       window.location.origin
     );
-
   }
-
 }
 
-
 if (adjustmentsToggle) {
-
-  adjustmentsToggle.addEventListener(
-    "click",
-    function () {
-
+  adjustmentsToggle.addEventListener("click", function () {
     if (window.Retouch && typeof window.Retouch.close === "function") {
       window.Retouch.close();
     }
 
-      const opened =
-        adjustmentsPanel.classList.toggle(
-          "open"
-        );
+    const opened = adjustmentsPanel.classList.toggle("open");
 
+    adjustmentsToggle.classList.toggle("open", opened);
 
-      adjustmentsToggle.classList.toggle(
-        "open",
-        opened
-      );
-
-
-      if (adjustmentsChevron) {
-
-        adjustmentsChevron.textContent =
-          opened
-            ? "⌄"
-            : "›";
-
-      }
-
+    if (adjustmentsChevron) {
+      adjustmentsChevron.textContent = opened ? "⌄" : "›";
     }
-  );
-
+  });
 }
 
-
 function sendAdjustmentState() {
-
-  if (
-    adjustmentsFrame &&
-    adjustmentsFrame.contentWindow
-  ) {
-
+  if (adjustmentsFrame && adjustmentsFrame.contentWindow) {
     adjustmentsFrame.contentWindow.postMessage(
       {
         type: "setValues",
-        values: {
-          ...adjustmentValues
-        }
+        values: { ...adjustmentValues }
       },
       window.location.origin
     );
-
   }
-
 }
 
-
-window.addEventListener(
-  "message",
-  async function (event) {
-
-    if (
-      !adjustmentsFrame ||
-      event.source !==
-      adjustmentsFrame.contentWindow
-    ) {
-
-      return;
-
-    }
-
-
-    const data =
-      event.data || {};
-
-
-    if (
-      data.type ===
-      "adjustmentReady"
-    ) {
-
-      sendAdjustmentState();
-
-      return;
-
-    }
-
-
-    if (
-      data.type ===
-      "adjustmentChange"
-    ) {
-
-      if (
-        !adjustmentIds.includes(
-          data.id
-        )
-      ) {
-
-        return;
-
-      }
-
-
-      adjustmentValues[data.id] =
-        Number(data.value) || 0;
-
-
-      if (!adjustmentBaseBlob) {
-
-        return;
-
-      }
-
-
-      clearTimeout(
-        adjustmentTimer
-      );
-
-
-      adjustmentTimer =
-        setTimeout(
-          async function () {
-
-            try {
-
-              showStatus(
-                "Applying adjustment..."
-              );
-
-
-              await applyAdjustments();
-
-            }
-
-            catch (error) {
-
-              console.error(
-                error
-              );
-
-
-              showStatus(
-                "Adjustment failed. Please try again."
-              );
-
-            }
-
-          },
-          120
-        );
-
-
-      return;
-
-    }
-
-
-    if (
-      data.type ===
-      "resetAdjustments"
-    ) {
-
-      resetAdjustmentValues();
-
-    }
-
+window.addEventListener("message", async function (event) {
+  if (!adjustmentsFrame || event.source !== adjustmentsFrame.contentWindow) {
+    return;
   }
-);
+
+  const data = event.data || {};
+
+  if (data.type === "adjustmentReady") {
+    sendAdjustmentState();
+    return;
+  }
+
+  if (data.type === "adjustmentChange") {
+    if (!adjustmentIds.includes(data.id)) {
+      return;
+    }
+
+    adjustmentValues[data.id] = Number(data.value) || 0;
+
+    if (!adjustmentBaseBlob) {
+      return;
+    }
+
+    clearTimeout(adjustmentTimer);
+
+    adjustmentTimer = setTimeout(async function () {
+      try {
+        showStatus("Applying adjustment...");
+
+        await applyAdjustments();
+      } catch (error) {
+        console.error(error);
+        showStatus("Adjustment failed. Please try again.");
+      }
+    }, 120);
+
+    return;
+  }
+
+  if (data.type === "resetAdjustments") {
+    resetAdjustmentValues();
+  }
+});
 
 
 /* =========================================================
@@ -1705,205 +760,73 @@ window.addEventListener(
 ========================================================= */
 
 function clamp(value) {
-
-  return Math.max(
-    0,
-    Math.min(
-      255,
-      value
-    )
-  );
-
+  return Math.max(0, Math.min(255, value));
 }
 
-
-function rgbToHsv(
-  r,
-  g,
-  b
-) {
-
+function rgbToHsv(r, g, b) {
   r /= 255;
   g /= 255;
   b /= 255;
 
-
-  const max =
-    Math.max(
-      r,
-      g,
-      b
-    );
-
-
-  const min =
-    Math.min(
-      r,
-      g,
-      b
-    );
-
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
 
   let h = 0;
-
   let s = 0;
-
   const v = max;
-
-  const d =
-    max - min;
-
+  const d = max - min;
 
   if (max !== 0) {
-
-    s =
-      d / max;
-
+    s = d / max;
   }
-
 
   if (d !== 0) {
-
     if (max === r) {
-
-      h =
-        (g - b) /
-        d +
-        (g < b ? 6 : 0);
-
+      h = (g - b) / d + (g < b ? 6 : 0);
+    } else if (max === g) {
+      h = (b - r) / d + 2;
+    } else {
+      h = (r - g) / d + 4;
     }
-
-    else if (max === g) {
-
-      h =
-        (b - r) /
-        d +
-        2;
-
-    }
-
-    else {
-
-      h =
-        (r - g) /
-        d +
-        4;
-
-    }
-
 
     h /= 6;
-
   }
 
-
-  return {
-    h,
-    s,
-    v
-  };
-
+  return { h, s, v };
 }
 
-
-function hsvToRgb(
-  h,
-  s,
-  v
-) {
-
+function hsvToRgb(h, s, v) {
   let r;
-
   let g;
-
   let b;
 
-
-  const i =
-    Math.floor(
-      h * 6
-    );
-
-
-  const f =
-    h * 6 - i;
-
-
-  const p =
-    v * (1 - s);
-
-
-  const q =
-    v * (1 - f * s);
-
-
-  const t =
-    v *
-    (1 - (1 - f) * s);
-
+  const i = Math.floor(h * 6);
+  const f = h * 6 - i;
+  const p = v * (1 - s);
+  const q = v * (1 - f * s);
+  const t = v * (1 - (1 - f) * s);
 
   switch (i % 6) {
-
     case 0:
-
-      r = v;
-      g = t;
-      b = p;
-
+      r = v; g = t; b = p;
       break;
-
-
     case 1:
-
-      r = q;
-      g = v;
-      b = p;
-
+      r = q; g = v; b = p;
       break;
-
-
     case 2:
-
-      r = p;
-      g = v;
-      b = t;
-
+      r = p; g = v; b = t;
       break;
-
-
     case 3:
-
-      r = p;
-      g = q;
-      b = v;
-
+      r = p; g = q; b = v;
       break;
-
-
     case 4:
-
-      r = t;
-      g = p;
-      b = v;
-
+      r = t; g = p; b = v;
       break;
-
-
     default:
-
-      r = v;
-      g = p;
-      b = q;
-
+      r = v; g = p; b = q;
   }
 
-
-  return {
-    r: r * 255,
-    g: g * 255,
-    b: b * 255
-  };
-
+  return { r: r * 255, g: g * 255, b: b * 255 };
 }
 
 
@@ -1912,447 +835,183 @@ function hsvToRgb(
 ========================================================= */
 
 async function applyAdjustments() {
-
   if (!adjustmentBaseBlob) {
     return;
   }
 
-
-  const img =
-    await loadImage(
-      adjustmentBaseBlob
-    );
-
+  const img = await loadImage(adjustmentBaseBlob);
 
   const maxWidth = 1400;
 
+  const scale = Math.min(1, maxWidth / img.naturalWidth);
 
-  const scale =
-    Math.min(
-      1,
-      maxWidth /
-      img.naturalWidth
-    );
+  const width = Math.max(1, Math.round(img.naturalWidth * scale));
+  const height = Math.max(1, Math.round(img.naturalHeight * scale));
 
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
 
-  const width =
-    Math.max(
-      1,
-      Math.round(
-        img.naturalWidth *
-        scale
-      )
-    );
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
+  ctx.drawImage(img, 0, 0, width, height);
 
-  const height =
-    Math.max(
-      1,
-      Math.round(
-        img.naturalHeight *
-        scale
-      )
-    );
+  const imageData = ctx.getImageData(0, 0, width, height);
 
+  const data = imageData.data;
 
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
+  const brightness = Number(adjustmentValues.brightness);
+  const contrast = Number(adjustmentValues.contrast);
+  const warmth = Number(adjustmentValues.warmth);
+  const saturation = Number(adjustmentValues.saturation);
+  const temperature = Number(adjustmentValues.temperature);
+  const vibrance = Number(adjustmentValues.vibrance);
+  const tint = Number(adjustmentValues.tint);
+  const shadows = Number(adjustmentValues.shadows);
+  const sharpness = Number(adjustmentValues.sharpness);
+  const clarity = Number(adjustmentValues.clarity);
 
+  const contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
 
-  canvas.width =
-    width;
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i];
+    let g = data[i + 1];
+    let b = data[i + 2];
 
-  canvas.height =
-    height;
-
-
-  const ctx =
-    canvas.getContext(
-      "2d",
-      {
-        willReadFrequently: true
-      }
-    );
-
-
-  ctx.drawImage(
-    img,
-    0,
-    0,
-    width,
-    height
-  );
-
-
-  const imageData =
-    ctx.getImageData(
-      0,
-      0,
-      width,
-      height
-    );
-
-
-  const data =
-    imageData.data;
-
-
-  const brightness =
-    Number(
-      adjustmentValues.brightness
-    );
-
-
-  const contrast =
-    Number(
-      adjustmentValues.contrast
-    );
-
-
-  const warmth =
-    Number(
-      adjustmentValues.warmth
-    );
-
-
-  const saturation =
-    Number(
-      adjustmentValues.saturation
-    );
-
-
-  const temperature =
-    Number(
-      adjustmentValues.temperature
-    );
-
-
-  const vibrance =
-    Number(
-      adjustmentValues.vibrance
-    );
-
-
-  const tint =
-    Number(
-      adjustmentValues.tint
-    );
-
-
-  const shadows =
-    Number(
-      adjustmentValues.shadows
-    );
-
-   const sharpness =
-  Number(
-    adjustmentValues.sharpness
-  );
-
-const clarity =
-  Number(
-    adjustmentValues.clarity
-  );
-
-
-  const contrastFactor =
-    (
-      259 *
-      (contrast + 255)
-    ) /
-    (
-      255 *
-      (259 - contrast)
-    );
-
-
-  for (
-    let i = 0;
-    i < data.length;
-    i += 4
-  ) {
-
-    let r =
-      data[i];
-
-    let g =
-      data[i + 1];
-
-    let b =
-      data[i + 2];
-
-
-    const bright =
-      brightness * 0.5;
-
+    const bright = brightness * 0.5;
 
     r += bright;
     g += bright;
     b += bright;
 
+    r = contrastFactor * (r - 128) + 128;
+    g = contrastFactor * (g - 128) + 128;
+    b = contrastFactor * (b - 128) + 128;
 
-    r =
-      contrastFactor *
-      (r - 128) +
-      128;
-
-
-    g =
-      contrastFactor *
-      (g - 128) +
-      128;
-
-
-    b =
-      contrastFactor *
-      (b - 128) +
-      128;
-
-
-    const warm =
-      warmth * 0.65;
-
+    const warm = warmth * 0.65;
 
     r += warm;
-
     b -= warm;
-
     g += warm * 0.1;
 
-
-    const temp =
-      temperature * 0.55;
-
+    const temp = temperature * 0.55;
 
     r += temp * 0.75;
-
     g += temp * 0.08;
-
     b -= temp * 0.9;
 
-
-    const tintAmount =
-      tint * 0.6;
-
+    const tintAmount = tint * 0.6;
 
     r += tintAmount;
-
     b += tintAmount;
-
     g -= tintAmount;
 
+    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
-    const luminance =
-      0.2126 * r +
-      0.7152 * g +
-      0.0722 * b;
+    const shadowFactor = Math.max(0, Math.min(1, (145 - luminance) / 145));
 
-
-    const shadowFactor =
-      Math.max(
-        0,
-        Math.min(
-          1,
-          (145 - luminance) /
-          145
-        )
-      );
-
-
-    const shadowAmount =
-      shadows *
-      1.25 *
-      shadowFactor;
-
+    const shadowAmount = shadows * 1.25 * shadowFactor;
 
     r += shadowAmount;
     g += shadowAmount;
     b += shadowAmount;
 
+    let hsv = rgbToHsv(clamp(r), clamp(g), clamp(b));
 
-    let hsv =
-      rgbToHsv(
-        clamp(r),
-        clamp(g),
-        clamp(b)
-      );
+    hsv.s = Math.max(
+      0,
+      Math.min(
+        1,
+        hsv.s * (saturation >= 0 ? 1 + saturation / 100 : 1 + saturation / 120)
+      )
+    );
 
-
-    hsv.s =
-      Math.max(
-        0,
-        Math.min(
-          1,
-          hsv.s *
-          (
-            saturation >= 0
-              ? 1 + saturation / 100
-              : 1 + saturation / 120
-          )
-        )
-      );
-
-
-    const vibranceAmount =
-      vibrance / 100;
-
+    const vibranceAmount = vibrance / 100;
 
     if (vibranceAmount > 0) {
-
-      hsv.s =
-        Math.min(
-          1,
-          hsv.s +
-          vibranceAmount *
-          (1 - hsv.s) *
-          0.75
-        );
-
+      hsv.s = Math.min(1, hsv.s + vibranceAmount * (1 - hsv.s) * 0.75);
+    } else {
+      hsv.s = Math.max(0, hsv.s + vibranceAmount * 0.35);
     }
 
-    else {
+    const rgb = hsvToRgb(hsv.h, hsv.s, hsv.v);
 
-      hsv.s =
-        Math.max(
-          0,
-          hsv.s +
-          vibranceAmount *
-          0.35
-        );
-
-    }
-
-
-    const rgb =
-      hsvToRgb(
-        hsv.h,
-        hsv.s,
-        hsv.v
-      );
-
-
-    data[i] =
-      clamp(
-        rgb.r
-      );
-
-
-    data[i + 1] =
-      clamp(
-        rgb.g
-      );
-
-
-    data[i + 2] =
-      clamp(
-        rgb.b
-      );
-
+    data[i] = clamp(rgb.r);
+    data[i + 1] = clamp(rgb.g);
+    data[i + 2] = clamp(rgb.b);
   }
 
-// Sharpness and Clarity processing
-const sharpData = new Uint8ClampedArray(data);
+  // Sharpness and Clarity processing
+  const sharpData = new Uint8ClampedArray(data);
 
-const sharpAmount = sharpness / 100;
-const clarityAmount = clarity / 100;
+  const sharpAmount = sharpness / 100;
+  const clarityAmount = clarity / 100;
 
-if (sharpAmount !== 0 || clarityAmount !== 0) {
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const i = (y * width + x) * 4;
+  if (sharpAmount !== 0 || clarityAmount !== 0) {
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const i = (y * width + x) * 4;
 
-      const top = ((y - 1) * width + x) * 4;
-      const bottom = ((y + 1) * width + x) * 4;
-      const left = (y * width + x - 1) * 4;
-      const right = (y * width + x + 1) * 4;
+        const top = ((y - 1) * width + x) * 4;
+        const bottom = ((y + 1) * width + x) * 4;
+        const left = (y * width + x - 1) * 4;
+        const right = (y * width + x + 1) * 4;
 
-      const lum = (p) =>
-        0.2126 * sharpData[p] +
-        0.7152 * sharpData[p + 1] +
-        0.0722 * sharpData[p + 2];
+        const lum = function (p) {
+          return (
+            0.2126 * sharpData[p] +
+            0.7152 * sharpData[p + 1] +
+            0.0722 * sharpData[p + 2]
+          );
+        };
 
-      const centerLum = lum(i);
+        const centerLum = lum(i);
 
-      const avgLum = (
-        lum(top) +
-        lum(bottom) +
-        lum(left) +
-        lum(right)
-      ) / 4;
+        const avgLum = (lum(top) + lum(bottom) + lum(left) + lum(right)) / 4;
 
-      const detail = centerLum - avgLum;
-      const clarityBoost = detail * clarityAmount * 3.5;
+        const detail = centerLum - avgLum;
+        const clarityBoost = detail * clarityAmount * 3.5;
 
-      for (let c = 0; c < 3; c++) {
-        const average = (
-          sharpData[top + c] +
-          sharpData[bottom + c] +
-          sharpData[left + c] +
-          sharpData[right + c]
-        ) / 4;
+        for (let c = 0; c < 3; c++) {
+          const average = (
+            sharpData[top + c] +
+            sharpData[bottom + c] +
+            sharpData[left + c] +
+            sharpData[right + c]
+          ) / 4;
 
-        const edge = sharpData[i + c] - average;
+          const edge = sharpData[i + c] - average;
 
-        data[i + c] = clamp(
-          sharpData[i + c] +
-          edge * sharpAmount * 4.1 +
-          clarityBoost
-        );
+          data[i + c] = clamp(
+            sharpData[i + c] +
+            edge * sharpAmount * 4.1 +
+            clarityBoost
+          );
+        }
       }
     }
   }
-  }
-   
-  ctx.putImageData(
-    imageData,
-    0,
-    0
-  );
 
+  ctx.putImageData(imageData, 0, 0);
 
-  editedBlob = await new Promise(
-  function (resolve) {
-    canvas.toBlob(
-      resolve,
-      "image/jpeg",
-      0.94
-    );
-  }
-);
+  editedBlob = await new Promise(function (resolve) {
+    canvas.toBlob(resolve, "image/jpeg", 0.94);
+  });
 
-publishEditedBlob(editedBlob);
-
+  publishEditedBlob(editedBlob);
 
   if (preview) {
-
-    preview.src =
-      URL.createObjectURL(
-        editedBlob
-      );
-
-    preview.style.display =
-      "block";
-
+    preview.src = URL.createObjectURL(editedBlob);
+    preview.style.display = "block";
   }
-
 
   if (placeholder) {
-
-    placeholder.style.display =
-      "none";
-
+    placeholder.style.display = "none";
   }
-
 
   if (downloadButton) {
-
-    downloadButton.style.display =
-      "block";
-
+    downloadButton.style.display = "block";
   }
-
 }
 
 
@@ -2361,106 +1020,49 @@ publishEditedBlob(editedBlob);
 ========================================================= */
 
 let FilesetResolver = null;
-
 let ImageSegmenter = null;
-
 let hairSegmenter = null;
-
 let hairSegmenterPromise = null;
 
-
 async function getHairSegmenter() {
-
   if (!hairSegmenterPromise) {
+    hairSegmenterPromise = (async function () {
+      showStatus("Loading Hair AI...");
 
-    hairSegmenterPromise =
-      (async function () {
+      const mp = await import(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.mjs"
+      );
 
-        showStatus(
-          "Loading Hair AI..."
-        );
+      FilesetResolver = mp.FilesetResolver;
+      ImageSegmenter = mp.ImageSegmenter;
 
+      if (!FilesetResolver || !ImageSegmenter) {
+        throw new Error("MediaPipe Image Segmenter could not be loaded.");
+      }
 
-        const mp =
-          await import(
-            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.mjs"
-          );
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+      );
 
-
-        FilesetResolver =
-          mp.FilesetResolver;
-
-        ImageSegmenter =
-          mp.ImageSegmenter;
-
-
-        if (
-          !FilesetResolver ||
-          !ImageSegmenter
-        ) {
-
-          throw new Error(
-            "MediaPipe Image Segmenter could not be loaded."
-          );
-
-        }
-
-
-        const vision =
-          await FilesetResolver.forVisionTasks(
-            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-          );
-
-
-        const segmenter =
-          await ImageSegmenter.createFromOptions(
-            vision,
-            {
-
-              baseOptions: {
-
-                modelAssetPath:
-                  "./hair_segmenter.tflite"
-
-              },
-
-
-              runningMode:
-                "IMAGE",
-
-
-              outputCategoryMask:
-                true,
-
-
-              outputConfidenceMasks:
-                true
-
-            }
-          );
-
-
-        return segmenter;
-
-      })()
-      .catch(function (error) {
-
-        hairSegmenterPromise =
-          null;
-
-        throw error;
-
+      const segmenter = await ImageSegmenter.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: "./hair_segmenter.tflite"
+        },
+        runningMode: "IMAGE",
+        outputCategoryMask: true,
+        outputConfidenceMasks: true
       });
 
+      return segmenter;
+    })().catch(function (error) {
+      hairSegmenterPromise = null;
+      throw error;
+    });
   }
 
-
-  hairSegmenter =
-    await hairSegmenterPromise;
-
+  hairSegmenter = await hairSegmenterPromise;
 
   return hairSegmenter;
-
 }
 
 
@@ -2468,207 +1070,86 @@ async function getHairSegmenter() {
    HSL
 ========================================================= */
 
-function rgbToHsl(
-  r,
-  g,
-  b
-) {
-
+function rgbToHsl(r, g, b) {
   r /= 255;
   g /= 255;
   b /= 255;
 
-
-  const max =
-    Math.max(
-      r,
-      g,
-      b
-    );
-
-
-  const min =
-    Math.min(
-      r,
-      g,
-      b
-    );
-
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
 
   let h = 0;
-
   let s = 0;
 
-
-  const l =
-    (max + min) / 2;
-
+  const l = (max + min) / 2;
 
   if (max !== min) {
+    const d = max - min;
 
-    const d =
-      max - min;
-
-
-    s =
-      l > 0.5
-        ? d / (2 - max - min)
-        : d / (max + min);
-
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
 
     switch (max) {
-
       case r:
-
-        h =
-          (g - b) /
-          d +
-          (g < b ? 6 : 0);
-
+        h = (g - b) / d + (g < b ? 6 : 0);
         break;
-
-
       case g:
-
-        h =
-          (b - r) /
-          d +
-          2;
-
+        h = (b - r) / d + 2;
         break;
-
-
       case b:
-
-        h =
-          (r - g) /
-          d +
-          4;
-
+        h = (r - g) / d + 4;
         break;
-
     }
 
-
     h /= 6;
-
   }
 
-
-  return {
-    h,
-    s,
-    l
-  };
-
+  return { h, s, l };
 }
 
-
-function hueToRgb(
-  p,
-  q,
-  t
-) {
-
+function hueToRgb(p, q, t) {
   if (t < 0) {
     t += 1;
   }
-
 
   if (t > 1) {
     t -= 1;
   }
 
-
   if (t < 1 / 6) {
-    return p +
-      (q - p) *
-      6 *
-      t;
+    return p + (q - p) * 6 * t;
   }
-
 
   if (t < 1 / 2) {
     return q;
   }
 
-
   if (t < 2 / 3) {
-    return p +
-      (q - p) *
-      (2 / 3 - t) *
-      6;
+    return p + (q - p) * (2 / 3 - t) * 6;
   }
 
-
   return p;
-
 }
 
-
-function hslToRgb(
-  h,
-  s,
-  l
-) {
-
+function hslToRgb(h, s, l) {
   let r;
   let g;
   let b;
 
-
   if (s === 0) {
-
     r = l;
     g = l;
     b = l;
+  } else {
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
 
+    const p = 2 * l - q;
+
+    r = hueToRgb(p, q, h + 1 / 3);
+    g = hueToRgb(p, q, h);
+    b = hueToRgb(p, q, h - 1 / 3);
   }
 
-  else {
-
-    const q =
-      l < 0.5
-        ? l * (1 + s)
-        : l + s - l * s;
-
-
-    const p =
-      2 * l - q;
-
-
-    r =
-      hueToRgb(
-        p,
-        q,
-        h + 1 / 3
-      );
-
-
-    g =
-      hueToRgb(
-        p,
-        q,
-        h
-      );
-
-
-    b =
-      hueToRgb(
-        p,
-        q,
-        h - 1 / 3
-      );
-
-  }
-
-
-  return {
-    r: r * 255,
-    g: g * 255,
-    b: b * 255
-  };
-
+  return { r: r * 255, g: g * 255, b: b * 255 };
 }
 
 
@@ -2676,715 +1157,228 @@ function hslToRgb(
    HAIR COLOR
 ========================================================= */
 
-let selectedHairColor =
-  "#111111";
+let selectedHairColor = "#111111";
 
-
-let selectedHairIntensity =
-  50;
-
+let selectedHairIntensity = 50;
 
 async function applyHairColorLocal() {
-
   if (!getCurrentPhotoBlob()) {
-
-    showStatus(
-      "Please select a photo first."
-    );
-
+    showStatus("Please select a photo first.");
     return;
-
   }
-
 
   try {
+    showStatus("Detecting hair...");
 
-    showStatus(
-      "Detecting hair..."
-    );
+    const segmenter = await getHairSegmenter();
 
+    const currentPhoto = getCurrentPhotoBlob();
 
-    const segmenter =
-      await getHairSegmenter();
-
-
-    const currentPhoto =
-  getCurrentPhotoBlob();
-
-if (!currentPhoto) {
-  showStatus("Please select a photo first.");
-  return;
-}
-
-const img =
-  await loadImage(
-    currentPhoto
-  );
-
-
-    const width =
-      img.naturalWidth;
-
-
-    const height =
-      img.naturalHeight;
-
-
-    const canvas =
-      document.createElement(
-        "canvas"
-      );
-
-
-    canvas.width =
-      width;
-
-    canvas.height =
-      height;
-
-
-    const ctx =
-      canvas.getContext(
-        "2d",
-        {
-          willReadFrequently: true
-        }
-      );
-
-
-    ctx.drawImage(
-      img,
-      0,
-      0,
-      width,
-      height
-    );
-
-
-    const result =
-      segmenter.segment(
-        img
-      );
-
-
-    let confidenceData =
-      null;
-
-    let categoryData =
-      null;
-
-    let maskWidth =
-      0;
-
-    let maskHeight =
-      0;
-
-
-    if (
-      result.confidenceMasks &&
-      result.confidenceMasks.length > 1
-    ) {
-
-      const hairMask =
-        result.confidenceMasks[1];
-
-
-      confidenceData =
-        hairMask.getAsFloat32Array();
-
-
-      maskWidth =
-        hairMask.width;
-
-
-      maskHeight =
-        hairMask.height;
-
+    if (!currentPhoto) {
+      showStatus("Please select a photo first.");
+      return;
     }
 
+    const img = await loadImage(currentPhoto);
 
-    if (
-      !confidenceData &&
-      result.categoryMask
-    ) {
+    const width = img.naturalWidth;
+    const height = img.naturalHeight;
 
-      categoryData =
-        result.categoryMask
-          .getAsUint8Array();
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
 
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      maskWidth =
-        result.categoryMask.width;
+    ctx.drawImage(img, 0, 0, width, height);
 
+    const result = segmenter.segment(img);
 
-      maskHeight =
-        result.categoryMask.height;
+    let confidenceData = null;
+    let categoryData = null;
+    let maskWidth = 0;
+    let maskHeight = 0;
 
+    if (result.confidenceMasks && result.confidenceMasks.length > 1) {
+      const hairMask = result.confidenceMasks[1];
+
+      confidenceData = hairMask.getAsFloat32Array();
+
+      maskWidth = hairMask.width;
+      maskHeight = hairMask.height;
     }
 
+    if (!confidenceData && result.categoryMask) {
+      categoryData = result.categoryMask.getAsUint8Array();
 
-    if (
-      !confidenceData &&
-      !categoryData
-    ) {
+      maskWidth = result.categoryMask.width;
+      maskHeight = result.categoryMask.height;
+    }
 
-      if (
-        result.close
-      ) {
-
+    if (!confidenceData && !categoryData) {
+      if (result.close) {
         result.close();
-
       }
 
-
-      throw new Error(
-        "Hair mask was not returned."
-      );
-
+      throw new Error("Hair mask was not returned.");
     }
 
+    const maskCanvas = document.createElement("canvas");
+    maskCanvas.width = maskWidth;
+    maskCanvas.height = maskHeight;
 
-    const maskCanvas =
-      document.createElement(
-        "canvas"
-      );
+    const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
 
+    const maskImage = maskCtx.createImageData(maskWidth, maskHeight);
 
-    maskCanvas.width =
-      maskWidth;
+    const maskPixels = maskImage.data;
 
-    maskCanvas.height =
-      maskHeight;
-
-
-    const maskCtx =
-      maskCanvas.getContext(
-        "2d",
-        {
-          willReadFrequently: true
-        }
-      );
-
-
-    const maskImage =
-      maskCtx.createImageData(
-        maskWidth,
-        maskHeight
-      );
-
-
-    const maskPixels =
-      maskImage.data;
-
-
-    for (
-      let i = 0;
-      i < maskWidth * maskHeight;
-      i++
-    ) {
-
+    for (let i = 0; i < maskWidth * maskHeight; i++) {
       let value = 0;
 
-
       if (confidenceData) {
-
-        value =
-          Math.max(
-            0,
-            Math.min(
-              1,
-              confidenceData[i]
-            )
-          );
-
+        value = Math.max(0, Math.min(1, confidenceData[i]));
+      } else {
+        value = categoryData[i] === 1 ? 1 : 0;
       }
-
-      else {
-
-        value =
-          categoryData[i] === 1
-            ? 1
-            : 0;
-
-      }
-
 
       if (value < 0.35) {
-
         value = 0;
-
       }
 
-
-      maskPixels[i * 4] =
-        255;
-
-      maskPixels[i * 4 + 1] =
-        255;
-
-      maskPixels[i * 4 + 2] =
-        255;
-
-      maskPixels[i * 4 + 3] =
-        Math.round(
-          value * 255
-        );
-
+      maskPixels[i * 4] = 255;
+      maskPixels[i * 4 + 1] = 255;
+      maskPixels[i * 4 + 2] = 255;
+      maskPixels[i * 4 + 3] = Math.round(value * 255);
     }
 
+    maskCtx.putImageData(maskImage, 0, 0);
 
-    maskCtx.putImageData(
-      maskImage,
-      0,
-      0
-    );
+    const fullMask = document.createElement("canvas");
+    fullMask.width = width;
+    fullMask.height = height;
 
+    const fullMaskCtx = fullMask.getContext("2d", { willReadFrequently: true });
 
-    const fullMask =
-      document.createElement(
-        "canvas"
-      );
+    fullMaskCtx.filter = "blur(1.2px)";
 
+    fullMaskCtx.drawImage(maskCanvas, 0, 0, width, height);
 
-    fullMask.width =
-      width;
+    const finalMask = fullMaskCtx.getImageData(0, 0, width, height).data;
 
-    fullMask.height =
-      height;
+    const imageData = ctx.getImageData(0, 0, width, height);
 
+    const data = imageData.data;
 
-    const fullMaskCtx =
-      fullMask.getContext(
-        "2d",
-        {
-          willReadFrequently: true
-        }
-      );
+    const hex = selectedHairColor.replace("#", "");
 
+    const tr = parseInt(hex.substring(0, 2), 16);
+    const tg = parseInt(hex.substring(2, 4), 16);
+    const tb = parseInt(hex.substring(4, 6), 16);
 
-    fullMaskCtx.filter =
-      "blur(1.2px)";
+    const targetHsl = rgbToHsl(tr, tg, tb);
 
+    const intensity = selectedHairIntensity / 100;
 
-    fullMaskCtx.drawImage(
-      maskCanvas,
-      0,
-      0,
-      width,
-      height
-    );
+    let targetSaturation = targetHsl.s;
 
+    let lightBoost = 0;
 
-    const finalMask =
-      fullMaskCtx.getImageData(
-        0,
-        0,
-        width,
-        height
-      ).data;
-
-
-    const imageData =
-      ctx.getImageData(
-        0,
-        0,
-        width,
-        height
-      );
-
-
-    const data =
-      imageData.data;
-
-
-    const hex =
-      selectedHairColor
-        .replace(
-          "#",
-          ""
-        );
-
-
-    const tr =
-      parseInt(
-        hex.substring(0, 2),
-        16
-      );
-
-
-    const tg =
-      parseInt(
-        hex.substring(2, 4),
-        16
-      );
-
-
-    const tb =
-      parseInt(
-        hex.substring(4, 6),
-        16
-      );
-
-
-    const targetHsl =
-      rgbToHsl(
-        tr,
-        tg,
-        tb
-      );
-
-
-    const intensity =
-      selectedHairIntensity /
-      100;
-
-
-    let targetSaturation =
-      targetHsl.s;
-
-
-    let lightBoost =
-      0;
-
-
-    if (
-      selectedHairColor ===
-      "#111111"
-    ) {
-
+    if (selectedHairColor === "#111111") {
       targetSaturation = 0;
-
       lightBoost = -0.12;
-
-    }
-
-
-    else if (
-      selectedHairColor ===
-      "#5b321b"
-    ) {
-
-      targetSaturation =
-        Math.min(
-          1,
-          targetHsl.s * 1.05
-        );
-
+    } else if (selectedHairColor === "#5b321b") {
+      targetSaturation = Math.min(1, targetHsl.s * 1.05);
       lightBoost = -0.02;
-
-    }
-
-
-    else if (
-      selectedHairColor ===
-      "#d6b36a"
-    ) {
-
-      targetSaturation =
-        Math.min(
-          1,
-          targetHsl.s * 0.85
-        );
-
+    } else if (selectedHairColor === "#d6b36a") {
+      targetSaturation = Math.min(1, targetHsl.s * 0.85);
       lightBoost = 0.10;
-
+    } else if (selectedHairColor === "#8b2f1f") {
+      targetSaturation = Math.min(1, targetHsl.s * 1.05);
+      lightBoost = 0.01;
     }
 
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const pixelIndex = (y * width + x) * 4;
 
-    else if (
-      selectedHairColor ===
-      "#8b2f1f"
-    ) {
+        const maskX = Math.min(maskWidth - 1, Math.floor(x * maskWidth / width));
+        const maskY = Math.min(maskHeight - 1, Math.floor(y * maskHeight / height));
 
-      targetSaturation =
-        Math.min(
+        const maskIndex = (maskY * maskWidth + maskX) * 4;
+
+        const rawAlpha = finalMask[maskIndex + 3] / 255;
+
+        if (rawAlpha < 0.30) {
+          continue;
+        }
+
+        const alpha = Math.min(1, Math.max(0, (rawAlpha - 0.30) / 0.70));
+
+        const r = data[pixelIndex];
+        const g = data[pixelIndex + 1];
+        const b = data[pixelIndex + 2];
+
+        const originalHsl = rgbToHsl(r, g, b);
+
+        let newLightness = originalHsl.l;
+
+        if (lightBoost > 0) {
+          newLightness = Math.min(0.88, newLightness + lightBoost * intensity);
+        }
+
+        if (lightBoost < 0) {
+          newLightness = Math.max(0.06, newLightness + lightBoost * intensity);
+        }
+
+        const saturation = Math.min(
           1,
-          targetHsl.s * 1.05
+          originalHsl.s * 0.35 + targetSaturation * 0.65
         );
 
-      lightBoost = 0.01;
+        const recolored = hslToRgb(targetHsl.h, saturation, newLightness);
 
-    }
+        const strength = Math.min(0.72, alpha * (0.10 + intensity * 0.62));
 
-
-    for (
-      let y = 0;
-      y < height;
-      y++
-    ) {
-
-      for (
-        let x = 0;
-        x < width;
-        x++
-      ) {
-
-        const pixelIndex =
-          (
-            y * width +
-            x
-          ) * 4;
-
-
-        const maskX =
-          Math.min(
-            maskWidth - 1,
-            Math.floor(
-              x *
-              maskWidth /
-              width
-            )
-          );
-
-
-        const maskY =
-          Math.min(
-            maskHeight - 1,
-            Math.floor(
-              y *
-              maskHeight /
-              height
-            )
-          );
-
-
-        const maskIndex =
-          (
-            maskY *
-            maskWidth +
-            maskX
-          ) * 4;
-
-
-        const rawAlpha =
-          finalMask[
-            maskIndex + 3
-          ] / 255;
-
-
-        if (
-          rawAlpha < 0.30
-        ) {
-
-          continue;
-
-        }
-
-
-        const alpha =
-          Math.min(
-            1,
-            Math.max(
-              0,
-              (
-                rawAlpha -
-                0.30
-              ) / 0.70
-            )
-          );
-
-
-        const r =
-          data[pixelIndex];
-
-
-        const g =
-          data[pixelIndex + 1];
-
-
-        const b =
-          data[pixelIndex + 2];
-
-
-        const originalHsl =
-          rgbToHsl(
-            r,
-            g,
-            b
-          );
-
-
-        let newLightness =
-          originalHsl.l;
-
-
-        if (
-          lightBoost > 0
-        ) {
-
-          newLightness =
-            Math.min(
-              0.88,
-              newLightness +
-              lightBoost *
-              intensity
-            );
-
-        }
-
-
-        if (
-          lightBoost < 0
-        ) {
-
-          newLightness =
-            Math.max(
-              0.06,
-              newLightness +
-              lightBoost *
-              intensity
-            );
-
-        }
-
-
-        const saturation =
-          Math.min(
-            1,
-            originalHsl.s *
-            0.35 +
-            targetSaturation *
-            0.65
-          );
-
-
-        const recolored =
-          hslToRgb(
-            targetHsl.h,
-            saturation,
-            newLightness
-          );
-
-
-        const strength =
-          Math.min(
-            0.72,
-            alpha *
-            (
-              0.10 +
-              intensity *
-              0.62
-            )
-          );
-
-
-        data[pixelIndex] =
-          Math.round(
-            r *
-            (1 - strength) +
-            recolored.r *
-            strength
-          );
-
-
-        data[pixelIndex + 1] =
-          Math.round(
-            g *
-            (1 - strength) +
-            recolored.g *
-            strength
-          );
-
-
-        data[pixelIndex + 2] =
-          Math.round(
-            b *
-            (1 - strength) +
-            recolored.b *
-            strength
-          );
-
+        data[pixelIndex] = Math.round(r * (1 - strength) + recolored.r * strength);
+        data[pixelIndex + 1] = Math.round(g * (1 - strength) + recolored.g * strength);
+        data[pixelIndex + 2] = Math.round(b * (1 - strength) + recolored.b * strength);
       }
-
     }
 
+    ctx.putImageData(imageData, 0, 0);
 
-    ctx.putImageData(
-      imageData,
-      0,
-      0
-    );
-
-
-    if (
-      result.close
-    ) {
-
+    if (result.close) {
       result.close();
-
     }
 
+    const blob = await new Promise(function (resolve) {
+      canvas.toBlob(resolve, "image/jpeg", 0.94);
+    });
 
-    const blob =
-      await new Promise(
-        function (resolve) {
+    editedBlob = blob;
 
-          canvas.toBlob(
-            resolve,
-            "image/jpeg",
-            0.94
-          );
-
-        }
-      );
-
-
-    editedBlob =
-      blob;
-     
-     publishEditedBlob(blob);
-
+    publishEditedBlob(blob);
 
     if (preview) {
-
-      preview.src =
-        URL.createObjectURL(
-          blob
-        );
-
-      preview.style.display =
-        "block";
-
+      preview.src = URL.createObjectURL(blob);
+      preview.style.display = "block";
     }
-
 
     if (placeholder) {
-
-      placeholder.style.display =
-        "none";
-
+      placeholder.style.display = "none";
     }
-
 
     if (downloadButton) {
-
-      downloadButton.style.display =
-        "block";
-
+      downloadButton.style.display = "block";
     }
 
-
     if (statusBox) statusBox.style.display = "none";
+  } catch (error) {
+    console.error(error);
 
+    showStatus("Hair Color failed: " + (error.message || "Please try again."));
   }
-
-  catch (error) {
-
-    console.error(
-      error
-    );
-
-
-    showStatus(
-      "Hair Color failed: " +
-      (
-        error.message ||
-        "Please try again."
-      )
-    );
-
-  }
-
 }
 
 
@@ -3392,94 +1386,38 @@ const img =
    HAIR COLOR BUTTONS
 ========================================================= */
 
-document
-  .querySelectorAll(
-    ".hairColorOption"
-  )
-  .forEach(
-    function (button) {
-
-      button.addEventListener(
-        "click",
-        function () {
-
-          if (!selectedFile) {
-
-            showStatus(
-              "Please select a photo first."
-            );
-
-            return;
-
-          }
-
-
-          selectedHairColor =
-            button.dataset.color;
-
-
-          selectedHairIntensity =
-            Number(
-              hairIntensitySlider.value
-            );
-
-
-          applyHairColorLocal();
-
-        }
-      );
-
+document.querySelectorAll(".hairColorOption").forEach(function (button) {
+  button.addEventListener("click", function () {
+    if (!selectedFile) {
+      showStatus("Please select a photo first.");
+      return;
     }
-  );
 
+    selectedHairColor = button.dataset.color;
+
+    selectedHairIntensity = Number(hairIntensitySlider.value);
+
+    applyHairColorLocal();
+  });
+});
 
 if (hairIntensitySlider) {
+  hairIntensitySlider.addEventListener("input", function () {
+    selectedHairIntensity = Number(hairIntensitySlider.value);
 
-  hairIntensitySlider.addEventListener(
-    "input",
-    function () {
-
-      selectedHairIntensity =
-        Number(
-          hairIntensitySlider.value
-        );
-
-
-      if (hairIntensityValue) {
-
-        hairIntensityValue.textContent =
-          selectedHairIntensity;
-
-      }
-
-
-      if (
-        selectedFile &&
-        selectedHairColor
-      ) {
-
-        clearTimeout(
-          window.hairColorTimer
-        );
-
-
-        window.hairColorTimer =
-          setTimeout(
-            function () {
-
-              applyHairColorLocal();
-
-            },
-            150
-          );
-
-      }
-
+    if (hairIntensityValue) {
+      hairIntensityValue.textContent = selectedHairIntensity;
     }
-  );
 
+    if (selectedFile && selectedHairColor) {
+      clearTimeout(window.hairColorTimer);
+
+      window.hairColorTimer = setTimeout(function () {
+        applyHairColorLocal();
+      }, 150);
+    }
+  });
 }
-
 
 
 /* =========================================================
@@ -3503,7 +1441,7 @@ function openSkinPanel() {
   selectedSkinPreset = "none";
   if (skinIntensitySlider) skinIntensitySlider.value = "50";
   if (skinIntensityValue) skinIntensityValue.textContent = "50";
-  document.querySelectorAll(".skinPreset").forEach(btn => {
+  document.querySelectorAll(".skinPreset").forEach(function (btn) {
     btn.classList.toggle("selected", btn.dataset.skinPreset === "none");
   });
   if (skinPanel) skinPanel.style.display = "block";
@@ -3522,8 +1460,7 @@ function closeSkinPanel(restoreBase = true) {
 
 
 async function renderRefinedSkin(file, intensity = 50) {
-  
-   const img = await loadImage(file);
+  const img = await loadImage(file);
   const w = img.naturalWidth;
   const h = img.naturalHeight;
 
@@ -3549,9 +1486,7 @@ async function renderRefinedSkin(file, intensity = 50) {
   softCanvas.width = sw;
   softCanvas.height = sh;
 
-  const softCtx = softCanvas.getContext("2d", {
-    willReadFrequently: true
-  });
+  const softCtx = softCanvas.getContext("2d", { willReadFrequently: true });
 
   if (!softCtx) {
     throw new Error("Could not create skin texture layer");
@@ -3567,13 +1502,13 @@ async function renderRefinedSkin(file, intensity = 50) {
   const src = source.data;
   const out = new Uint8ClampedArray(src);
 
-  const ellipseContains = (x, y, cx, cy, rx, ry) => {
+  const ellipseContains = function (x, y, cx, cy, rx, ry) {
     const dx = (x - cx) / rx;
     const dy = (y - cy) / ry;
     return dx * dx + dy * dy <= 1;
   };
 
-  const isProtectedFeature = (x, y) => {
+  const isProtectedFeature = function (x, y) {
     // Approximate eye and eyebrow protection.
     if (ellipseContains(x, y, sw * 0.405, sh * 0.395, sw * 0.095, sh * 0.050)) return true;
     if (ellipseContains(x, y, sw * 0.595, sh * 0.395, sw * 0.095, sh * 0.050)) return true;
@@ -3586,9 +1521,12 @@ async function renderRefinedSkin(file, intensity = 50) {
     return false;
   };
 
-  const luminance = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
-  const median = values => {
-    values.sort((a, b) => a - b);
+  const luminance = function (r, g, b) {
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  };
+
+  const median = function (values) {
+    values.sort(function (a, b) { return a - b; });
     return values[Math.floor(values.length / 2)];
   };
 
@@ -3607,13 +1545,10 @@ async function renderRefinedSkin(file, intensity = 50) {
       // Conservative skin-colour heuristic.
       if (!(r > 45 && g > 25 && r >= g * 0.92 && g >= b * 0.78)) continue;
 
-      const reds = [];
-      const greens = [];
-      const blues = [];
       const lights = [];
-const rednesses = [];
-     
-       for (let dy = -1; dy <= 1; dy++) {
+      const rednesses = [];
+
+      for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
 
@@ -3622,67 +1557,50 @@ const rednesses = [];
           const ng = src[ni + 1];
           const nb = src[ni + 2];
 
-          reds.push(nr);
-          greens.push(ng);
-          blues.push(nb);
           lights.push(luminance(nr, ng, nb));
-           rednesses.push(nr - ng);
+          rednesses.push(nr - ng);
         }
       }
 
-      
-const centerLight = luminance(r, g, b);
-const localMedian = median(lights.slice());
-const localSpread = Math.max(...lights) - Math.min(...lights);
+      const centerLight = luminance(r, g, b);
+      const localMedian = median(lights.slice());
+      const localSpread = Math.max(...lights) - Math.min(...lights);
 
-// Compare redness against the surrounding pixels.
-const localRedness = median(rednesses.slice());
-const redExcess = (r - g) - localRedness;
+      // Compare redness against the surrounding pixels.
+      const localRedness = median(rednesses.slice());
+      const redExcess = (r - g) - localRedness;
 
-// Avoid strong edges, shadows and major colour differences.
-if (
-  redExcess < 3 ||
-  redExcess > 45 ||
-  Math.abs(centerLight - localMedian) > 75 ||
-  localSpread > 70
-) continue;
+      // Avoid strong edges, shadows and major colour differences.
+      if (
+        redExcess < 3 ||
+        redExcess > 45 ||
+        Math.abs(centerLight - localMedian) > 75 ||
+        localSpread > 70
+      ) continue;
 
+      // Subtle colour smoothing while preserving fine skin detail.
+      const sr = softData[i];
+      const sg = softData[i + 1];
+      const sb = softData[i + 2];
 
-  // Subtle colour smoothing while preserving fine skin detail.
-  const sr = softData[i];
-  const sg = softData[i + 1];
-  const sb = softData[i + 2];
+      const originalLight = luminance(r, g, b);
+      const softLight = luminance(sr, sg, sb);
 
-  const originalLight = luminance(r, g, b);
-  const softLight = luminance(sr, sg, sb);
+      // Blend colour gently; retain most original texture.
+      const colourBlend = strength * 0.22;
+      const detailStrength = 0.90;
 
-  // Blend colour gently; retain most original texture.
-  const colourBlend = strength * 0.22;
-  const detailStrength = 0.90;
+      const detail = (originalLight - softLight) * detailStrength;
 
-  const detail = (originalLight - softLight) * detailStrength;
-
-  out[i] = Math.round(
-    r * (1 - colourBlend) +
-    sr * colourBlend + detail
-  );
-
-  out[i + 1] = Math.round(
-    g * (1 - colourBlend) +
-    sg * colourBlend + detail
-  );
-
-  out[i + 2] = Math.round(
-    b * (1 - colourBlend) +
-    sb * colourBlend + detail
-  );
-   
+      out[i] = Math.round(r * (1 - colourBlend) + sr * colourBlend + detail);
+      out[i + 1] = Math.round(g * (1 - colourBlend) + sg * colourBlend + detail);
+      out[i + 2] = Math.round(b * (1 - colourBlend) + sb * colourBlend + detail);
     }
   }
 
   source.data.set(out);
   ctx.putImageData(source, 0, 0);
-   console.log("Refined processing finished", sw, sh);
+  console.log("Refined processing finished", sw, sh);
 
   // Return at the original photo dimensions.
   const output = document.createElement("canvas");
@@ -3694,14 +1612,13 @@ if (
 
   outCtx.drawImage(work, 0, 0, w, h);
 
-  return await new Promise((resolve, reject) => {
-    output.toBlob(blob => {
+  return await new Promise(function (resolve, reject) {
+    output.toBlob(function (blob) {
       if (blob) resolve(blob);
       else reject(new Error("Could not export refined photo"));
     }, "image/jpeg", 0.94);
   });
 }
-
 
 
 async function renderSkinFinish(file, presetName, intensity) {
@@ -3718,9 +1635,7 @@ async function renderSkinFinish(file, presetName, intensity) {
   canvas.width = w;
   canvas.height = h;
 
-  const ctx = canvas.getContext("2d", {
-    willReadFrequently: true
-  });
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
   if (!ctx) throw new Error("Canvas is not supported");
 
@@ -3728,13 +1643,9 @@ async function renderSkinFinish(file, presetName, intensity) {
 
   const imageData = ctx.getImageData(0, 0, w, h);
   const data = imageData.data;
-  const cfg = skinPresetSettings[presetName] ||
-              skinPresetSettings.none;
+  const cfg = skinPresetSettings[presetName] || skinPresetSettings.none;
 
-  const f = Math.max(
-    0,
-    Math.min(1, (Number(intensity) || 50) / 100)
-  );
+  const f = Math.max(0, Math.min(1, (Number(intensity) || 50) / 100));
 
   if (presetName === "none" || f === 0) {
     return file;
@@ -3765,8 +1676,7 @@ async function renderSkinFinish(file, presetName, intensity) {
       let b = data[i + 2];
 
       // Conservative skin-colour estimate.
-      if (!(r > 45 && g > 25 &&
-            r >= g * 0.92 && g >= b * 0.78)) {
+      if (!(r > 45 && g > 25 && r >= g * 0.92 && g >= b * 0.78)) {
         continue;
       }
 
@@ -3789,8 +1699,8 @@ async function renderSkinFinish(file, presetName, intensity) {
 
   ctx.putImageData(imageData, 0, 0);
 
-  return await new Promise((resolve, reject) => {
-    canvas.toBlob(blob => {
+  return await new Promise(function (resolve, reject) {
+    canvas.toBlob(function (blob) {
       if (blob) resolve(blob);
       else reject(new Error("Could not export skin finish"));
     }, "image/jpeg", 0.94);
@@ -3803,13 +1713,13 @@ function queueSkinPreview() {
   const seq = ++skinPreviewSequence;
   clearTimeout(skinPreviewTimer);
   const preset = selectedSkinPreset;
-  const intensity = Number(skinIntensitySlider?.value || 50);
-   showStatus("Preset: " + preset + " | Intensity: " + intensity);
+  const intensity = Number((skinIntensitySlider && skinIntensitySlider.value) || 50);
+  showStatus("Preset: " + preset + " | Intensity: " + intensity);
   if (skinIntensityValue) skinIntensityValue.textContent = String(intensity);
-  skinPreviewTimer = setTimeout(async () => {
+  skinPreviewTimer = setTimeout(async function () {
     try {
-       console.log("Skin preview:", preset, intensity);
-       const blob = await renderSkinFinish(skinBaseBlob, preset, intensity);
+      console.log("Skin preview:", preset, intensity);
+      const blob = await renderSkinFinish(skinBaseBlob, preset, intensity);
       if (!blob || seq !== skinPreviewSequence) return;
       if (preview) preview.src = URL.createObjectURL(blob);
       window.__skinPreviewBlob = blob;
@@ -3820,10 +1730,10 @@ function queueSkinPreview() {
   }, 90);
 }
 
-document.querySelectorAll(".skinPreset").forEach(button => {
-  button.addEventListener("click", () => {
+document.querySelectorAll(".skinPreset").forEach(function (button) {
+  button.addEventListener("click", function () {
     selectedSkinPreset = button.dataset.skinPreset || "none";
-    document.querySelectorAll(".skinPreset").forEach(btn => {
+    document.querySelectorAll(".skinPreset").forEach(function (btn) {
       btn.classList.toggle("selected", btn === button);
     });
     queueSkinPreview();
@@ -3835,14 +1745,14 @@ if (skinIntensitySlider) {
 }
 
 if (skinCancelButton) {
-  skinCancelButton.addEventListener("click", () => {
+  skinCancelButton.addEventListener("click", function () {
     closeSkinPanel(true);
     showStatus("Skin edits cancelled.");
   });
 }
 
 if (skinApplyButton) {
-  skinApplyButton.addEventListener("click", async () => {
+  skinApplyButton.addEventListener("click", async function () {
     if (!skinBaseBlob) {
       showStatus("Please select a photo first.");
       return;
@@ -3853,7 +1763,7 @@ if (skinApplyButton) {
       const blob = await renderSkinFinish(
         skinBaseBlob,
         selectedSkinPreset,
-        Number(skinIntensitySlider?.value || 50)
+        Number((skinIntensitySlider && skinIntensitySlider.value) || 50)
       );
       if (!blob) throw new Error("Could not create edited photo");
       showResult(blob);
@@ -3873,224 +1783,122 @@ if (skinApplyButton) {
    AI TOOL BUTTONS
 ========================================================= */
 
-document
-  .querySelectorAll(".tool")
-  .forEach(
-    function (tool) {
-
-      tool.addEventListener(
-        "click",
-        async function () {
-
-          if (!selectedFile) {
-
-            showStatus(
-              "Please select a photo first."
-            );
-
-            return;
-
-          }
-
-
-          const type =
-            tool.dataset.tool;
-
-           if (tool.id === "adjustmentsToggle") {
-  return;
-           }
-
-           
-if (
-  type !== "retouch" &&
-  window.Retouch &&
-  typeof window.Retouch.close === "function"
-) {
-  window.Retouch.close();
-}
-
-           
-           if (adjustmentsPanel) {
-  adjustmentsPanel.classList.remove("open");
-}
-
-if (adjustmentsToggle) {
-  adjustmentsToggle.classList.remove("open");
-}
-
-if (adjustmentsChevron) {
-  adjustmentsChevron.textContent = "›";
-}
-
-
-          if (
-            type === "smooth"
-          ) {
-smoothBaseBlob = getCurrentPhotoBlob();
-            if (hairMenu) {
-
-              hairMenu.style.display =
-                "none";
-
-            }
-
-
-            if (hairColorPanel) {
-
-              hairColorPanel.style.display =
-                "none";
-
-            }
-
-
-            showSmoothControl();
-
-
-            if (statusBox) statusBox.style.display = "none";
-
-
-            return;
-
-          }
-
-
-          hideSmoothControl();
-
-          if (type === "skin") {
-            if (hairMenu) hairMenu.style.display = "none";
-            if (hairColorPanel) hairColorPanel.style.display = "none";
-            openSkinPanel();
-            return;
-          }
-
-          if (
-            type === "enhance"
-          ) {
-
-            if (hairMenu) {
-
-              hairMenu.style.display =
-                "none";
-
-            }
-
-
-            if (hairColorPanel) {
-
-              hairColorPanel.style.display =
-                "none";
-
-            }
-
-
-            try {
-
-              showStatus(
-                "Starting Enhance AI..."
-              );
-
-
-              const currentFile = getCurrentPhotoFile();
-
-if (!currentFile) {
-  showStatus("पहले फोटो चुनें।");
-  return;
-}
-
-const blob = await runHockmanX2(currentFile);
-
-
-              showResult(
-                blob
-              );
-
-
-              showStatus(
-                "AI Enhance complete ✓"
-              );
-
-            }
-
-            catch (error) {
-
-              console.error(
-                error
-              );
-
-
-              showStatus(
-                "Enhance failed: " +
-                (
-                  error.message ||
-                  "Please try again."
-                )
-              );
-
-            }
-
-
-            return;
-
-          }
-
-
-          if (
-            type === "hair"
-          ) {
-
-            hideSmoothControl();
-
-
-            if (hairColorPanel) {
-
-              hairColorPanel.style.display =
-                "none";
-
-            }
-
-
-            if (hairMenu) {
-
-              hairMenu.style.display =
-                "flex";
-
-            }
-
-
-            if (statusBox) statusBox.style.display = "none";
-
-            return;
-
-          }
-
-
-                    if (type === "retouch") {
-
-            if (hairMenu) {
-              hairMenu.style.display = "none";
-            }
-
-            if (hairColorPanel) {
-              hairColorPanel.style.display = "none";
-            }
-
-            if (
-              window.Retouch &&
-              typeof window.Retouch.open === "function"
-            ) {
-              window.Retouch.open();
-            }
-
-            return;
-                    }
-
-        }
-      );
-
+document.querySelectorAll(".tool").forEach(function (tool) {
+  tool.addEventListener("click", async function () {
+    if (!selectedFile) {
+      showStatus("Please select a photo first.");
+      return;
     }
-  );
 
+    const type = tool.dataset.tool;
 
+    if (tool.id === "adjustmentsToggle") {
+      return;
+    }
+
+    // Enhance panel khula ho to dusre tool par band karo
+    if (type !== "enhance" && window.closeEnhancePanel) {
+      window.closeEnhancePanel(true);
+    }
+
+    if (
+      type !== "retouch" &&
+      window.Retouch &&
+      typeof window.Retouch.close === "function"
+    ) {
+      window.Retouch.close();
+    }
+
+    if (adjustmentsPanel) {
+      adjustmentsPanel.classList.remove("open");
+    }
+
+    if (adjustmentsToggle) {
+      adjustmentsToggle.classList.remove("open");
+    }
+
+    if (adjustmentsChevron) {
+      adjustmentsChevron.textContent = "›";
+    }
+
+    if (type === "smooth") {
+      smoothBaseBlob = getCurrentPhotoBlob();
+
+      if (hairMenu) {
+        hairMenu.style.display = "none";
+      }
+
+      if (hairColorPanel) {
+        hairColorPanel.style.display = "none";
+      }
+
+      showSmoothControl();
+
+      if (statusBox) statusBox.style.display = "none";
+
+      return;
+    }
+
+    hideSmoothControl();
+
+    if (type === "skin") {
+      if (hairMenu) hairMenu.style.display = "none";
+      if (hairColorPanel) hairColorPanel.style.display = "none";
+      openSkinPanel();
+      return;
+    }
+
+    if (type === "enhance") {
+      if (hairMenu) {
+        hairMenu.style.display = "none";
+      }
+
+      if (hairColorPanel) {
+        hairColorPanel.style.display = "none";
+      }
+
+      if (typeof window.startEnhance === "function") {
+        window.startEnhance();
+      } else {
+        showStatus("Enhance load nahi hua. index.html me enhance_v2.js check karo.");
+      }
+
+      return;
+    }
+
+    if (type === "hair") {
+      hideSmoothControl();
+
+      if (hairColorPanel) {
+        hairColorPanel.style.display = "none";
+      }
+
+      if (hairMenu) {
+        hairMenu.style.display = "flex";
+      }
+
+      if (statusBox) statusBox.style.display = "none";
+
+      return;
+    }
+
+    if (type === "retouch") {
+      if (hairMenu) {
+        hairMenu.style.display = "none";
+      }
+
+      if (hairColorPanel) {
+        hairColorPanel.style.display = "none";
+      }
+
+      if (window.Retouch && typeof window.Retouch.open === "function") {
+        window.Retouch.open();
+      }
+
+      return;
+    }
+  });
+});
 
 
 /* =========================================================
@@ -4098,43 +1906,22 @@ const blob = await runHockmanX2(currentFile);
 ========================================================= */
 
 if (hairColor) {
-
-  hairColor.addEventListener(
-    "click",
-    function () {
-
-      if (!selectedFile) {
-
-        showStatus(
-          "Please select a photo first."
-        );
-
-        return;
-
-      }
-
-
-      if (hairMenu) {
-
-        hairMenu.style.display =
-          "none";
-
-      }
-
-
-      if (hairColorPanel) {
-
-        hairColorPanel.style.display =
-          "block";
-
-      }
-
-
-      if (statusBox) statusBox.style.display = "none";
-
+  hairColor.addEventListener("click", function () {
+    if (!selectedFile) {
+      showStatus("Please select a photo first.");
+      return;
     }
-  );
 
+    if (hairMenu) {
+      hairMenu.style.display = "none";
+    }
+
+    if (hairColorPanel) {
+      hairColorPanel.style.display = "block";
+    }
+
+    if (statusBox) statusBox.style.display = "none";
+  });
 }
 
 
@@ -4143,67 +1930,30 @@ if (hairColor) {
 ========================================================= */
 
 if (downloadButton) {
-
-  downloadButton.addEventListener(
-    "click",
-    function () {
-
-      if (!editedBlob) {
-
-        showStatus(
-          "Please edit the photo first."
-        );
-
-        return;
-
-      }
-
-
-      const url =
-        URL.createObjectURL(
-          editedBlob
-        );
-
-
-      const link =
-        document.createElement(
-          "a"
-        );
-
-
-      link.href =
-        url;
-
-
-      link.download =
-        "AI-Edited-Photo.jpg";
-
-
-      document.body.appendChild(
-        link
-      );
-
-
-      link.click();
-
-
-      link.remove();
-
-
-      setTimeout(
-        function () {
-
-          URL.revokeObjectURL(
-            url
-          );
-
-        },
-        1000
-      );
-
+  downloadButton.addEventListener("click", function () {
+    if (!editedBlob) {
+      showStatus("Please edit the photo first.");
+      return;
     }
-  );
 
+    const url = URL.createObjectURL(editedBlob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+
+    link.download = "AI-Edited-Photo.jpg";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 1000);
+  });
 }
 
 
@@ -4214,15 +1964,9 @@ if (downloadButton) {
 hideSmoothControl();
 
 if (downloadButton) {
-
-  downloadButton.style.display =
-    "none";
-
+  downloadButton.style.display = "none";
 }
 
 if (statusBox) {
-
-  statusBox.style.display =
-    "none";
-
+  statusBox.style.display = "none";
 }
