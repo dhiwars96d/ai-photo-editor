@@ -120,7 +120,7 @@ async function runHockmanX2(file, scale) {
 
 const ENH_MAX_SIDE = 2048;      // working size (long side)
 const ENH_AI_INPUT_MAX = 1400;  // size sent to the Space
-const ENH_SHARP_MIN = 250;      // score >= this  -> "sharp"
+const ENH_SHARP_MIN = 99999;     // score >= this  -> "sharp"
 const ENH_BLURRY_MAX = 80;      // score <  this  -> "blurry"
 const ENH_LOWRES_SIDE = 900;    // smaller photo  -> treated as "blurry"
 
