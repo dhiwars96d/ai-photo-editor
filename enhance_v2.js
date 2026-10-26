@@ -120,8 +120,10 @@ async function runHockmanX2(file, scale) {
 
 const ENH_MAX_SIDE = 2048;      // working size (long side)
 const ENH_AI_INPUT_MAX = 1400;  // size sent to the Space
-const ENH_SHARP_MIN = 99999;     // score >= this  -> "sharp"
-const ENH_BLURRY_MAX = 80;      // score <  this  -> "blurry"
+const ENH_SHARP_MIN = 1500;     // score >= this  -> "sharp"   (AI nahi chalega)  [abhi andaza]
+const ENH_BLURRY_MAX = 400;     // score <  this  -> "blurry"                       [abhi andaza]
+const ENH_FORCE_MODE = null;    // TEST ke liye: "soft" ya "blurry" likho to har photo par AI chalega
+                                // (null = auto). Test ke baad wapas null kar do.
 const ENH_LOWRES_SIDE = 900;    // smaller photo  -> treated as "blurry"
 
 // Max values (at slider = 100). Tune these after testing.
@@ -289,6 +291,8 @@ function buildEnhanceState(base, mode, score) {
 // AI output -> only its fine-detail layer (colour is thrown away)
 async function attachAiDetail(st, aiBlob) {
   const img = await B().loadImage(aiBlob);
+  st.aiW = img.naturalWidth;
+  st.aiH = img.naturalHeight;
   const c = document.createElement("canvas");
   c.width = st.w;
   c.height = st.h;
@@ -316,7 +320,8 @@ async function makeAiInputBlob(base) {
   const ctx = t.getContext("2d");
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(base, 0, 0, w, h);
-  return await canvasToBlob(t, 0.92);
+  const blob = await canvasToBlob(t, 0.92);
+  return { blob: blob, w: w, h: h };
 }
 
 
@@ -476,7 +481,7 @@ function setEnhanceInfo() {
 
   const M = ENH_MODES[st.mode];
   let text = "Auto: " + M.label + " (score " + Math.round(st.score) + ")";
-  if (M.ai > 0) text += st.aiReady ? " + AI detail ✓" : " — AI detail aa raha hai...";
+  if (M.ai > 0) text += st.aiReady ? " | " + (st.aiNote || "AI detail ✓") : " — AI detail aa raha hai (~10s)...";
   el.textContent = text;
 }
 
@@ -588,6 +593,7 @@ async function startEnhance() {
              : score < ENH_BLURRY_MAX ? "blurry"
              : "soft";
     if (Math.max(base.width, base.height) < ENH_LOWRES_SIDE) mode = "blurry";
+    if (ENH_FORCE_MODE && ENH_MODES[ENH_FORCE_MODE]) mode = ENH_FORCE_MODE;
 
     console.log("Enhance check:", { score: score, mode: mode, w: base.width, h: base.height });
 
@@ -605,13 +611,22 @@ async function startEnhance() {
     // Blurry / soft photos: get AI detail once, then slider only re-blends.
     try {
       B().showStatus("AI detail le rahe hain...");
-      const inBlob = await makeAiInputBlob(base);
-      const inFile = new File([inBlob], "enhance-input.jpg", { type: "image/jpeg" });
+      const inInfo = await makeAiInputBlob(base);
+      const inFile = new File([inInfo.blob], "enhance-input.jpg", { type: "image/jpeg" });
 
+      const t0 = performance.now();
       const aiOut = await runHockmanX2(inFile, 2);
+      const secs = (performance.now() - t0) / 1000;
       if (token !== enhanceToken || enhanceState !== st) return;
 
       await attachAiDetail(st, aiOut);
+
+      // AI ne sach me bada (x2) output diya ya wahi photo lauta di?
+      const sameSize = Math.abs(st.aiW - inInfo.w) < 4 && Math.abs(st.aiH - inInfo.h) < 4;
+      st.aiNote = sameSize
+        ? "⚠ AI ne wahi size ki photo lauta di (" + inInfo.w + "px)"
+        : "AI x2 ✓ " + secs.toFixed(1) + "s (" + inInfo.w + "→" + st.aiW + "px)";
+      console.log("Enhance AI:", { input: [inInfo.w, inInfo.h], output: [st.aiW, st.aiH], seconds: secs });
       setEnhanceInfo();
       await updateEnhancePreview();
       B().showStatus("AI detail ready ✓");
