@@ -25,6 +25,11 @@ const SHARP_SCORE_MIN = 600;
 const ESRGAN_SPACE = "Nick088/Real-ESRGAN_Pytorch";
 const ESRGAN_SCALE = 2;
 
+// CodeFormer ZeroGPU Space hai: bina login ke roz sirf ~2 minute GPU milta hai.
+// Quota khatam ho jaye to free Hugging Face account ka token yahan daalo
+// ("hf_..."). DHYAN: app me token rakhna surakshit nahi, sirf apne test ke liye.
+const HF_TOKEN = "";
+
 const CODEFORMER_SPACE = "sczhou/CodeFormer";
 // 0 = zyada AI-saaf, 1 = original chehra zyada. Natural ke liye 0.6 - 0.8
 const CODEFORMER_FIDELITY = 0.7;
@@ -34,6 +39,21 @@ const CF_MAX_SHORT = 1050;
 
 
 function B() { return window.AppBridge; }
+
+// Gradio client ka error kabhi Error hota hai, kabhi object. Padhne layak text banao.
+function errText(e) {
+  let t = "";
+  if (!e) t = "unknown error";
+  else if (typeof e === "string") t = e;
+  else if (e.message) t = String(e.message);
+  else {
+    try { t = JSON.stringify(e); } catch (_) { t = String(e); }
+  }
+  if (/quota|GPU/i.test(t)) {
+    t += " [ZeroGPU quota khatam lagta hai: kal try karo ya HF_TOKEN lagao]";
+  }
+  return t.length > 220 ? t.slice(0, 220) + "..." : t;
+}
 
 let busy = false;
 let gradioPromise = null;
@@ -59,7 +79,7 @@ function getApp(space, label) {
     appPromises[space] = (async function () {
       B().showStatus(label + " — connecting...");
       const gradio = await loadGradio();
-      return await gradio.Client.connect(space, {
+      const opts = {
         events: ["data", "status"],
         status_callback: function (s) {
           if (!s) return;
@@ -69,7 +89,9 @@ function getApp(space, label) {
             B().showStatus(label + " — Space error.");
           }
         }
-      });
+      };
+      if (HF_TOKEN) opts.hf_token = HF_TOKEN;
+      return await gradio.Client.connect(space, opts);
     })().catch(function (e) { delete appPromises[space]; throw e; });
   }
   return appPromises[space];
@@ -260,16 +282,26 @@ async function startEnhance() {
 
     let blob;
     let used;
+    let cfError = "";
 
     if (mode === "codeformer") {
       try {
         blob = await runCodeFormer(file);
         used = "CodeFormer";
       } catch (e) {
-        console.error("CodeFormer failed, falling back:", e);
-        B().showStatus("CodeFormer nahi chala (" + (e.message || "error") + "). Real-ESRGAN laga rahe hain...");
+        console.error("CodeFormer failed:", e);
+        cfError = errText(e);
+
+        // sirf CodeFormer test mode me fallback nahi, taaki error dikhe
+        if (ENHANCE_MODE === "codeformer") {
+          B().showStatus("CodeFormer error: " + cfError);
+          return;
+        }
+
+        B().showStatus("CodeFormer nahi chala: " + cfError);
+        await new Promise(function (r) { setTimeout(r, 2500); });
         blob = await runEsrgan(file);
-        used = "Real-ESRGAN (fallback)";
+        used = "Real-ESRGAN (CodeFormer fail)";
       }
     } else {
       blob = await runEsrgan(file);
@@ -277,10 +309,13 @@ async function startEnhance() {
     }
 
     B().showResult(blob);
-    B().showStatus("AI Enhance complete ✓ — " + used + note);
+    B().showStatus(
+      "AI Enhance complete ✓ — " + used + note +
+      (cfError ? " | CodeFormer error: " + cfError : "")
+    );
   } catch (error) {
     console.error("Enhance error:", error);
-    B().showStatus("Enhance failed: " + (error.message || "Please try again."));
+    B().showStatus("Enhance failed: " + errText(error));
   } finally {
     busy = false;
   }
