@@ -1,6 +1,7 @@
 name: Build Android APK
 
 # Manual button: Actions -> "Build Android APK" -> Run workflow
+# Result: Releases page -> AI-Photo-Editor.apk  (share this file with friends)
 on:
   workflow_dispatch:
 
@@ -30,8 +31,8 @@ jobs:
           mkdir -p cap-build/www
           rsync -a \
             --exclude='.git' --exclude='.github' --exclude='api' \
-            --exclude='cap-build' --exclude='node_modules' \
-            --exclude='README.md' --exclude='cloudflare-test.html' \
+            --exclude='cap-build' --exclude='node_modules' --exclude='keystore' \
+            --exclude='play-store' --exclude='README.md' --exclude='cloudflare-test.html' \
             --exclude='package.json' --exclude='package-lock.json' \
             ./ cap-build/www/
           ls -la cap-build/www
@@ -53,8 +54,10 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: App icon
+      - name: App icon and version
         working-directory: cap-build
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
           pip install pillow
           python3 - <<'PY'
@@ -71,15 +74,34 @@ jobs:
               im.save(folder + "/ic_launcher.png")
               im.save(folder + "/ic_launcher_round.png")
           PY
+          # higher versionCode on every build, so a new APK installs over the old one
+          sed -i -E "s/versionCode[ =]+[0-9]+/versionCode ${RUN_NUMBER}/" android/app/build.gradle
+          sed -i -E "s/versionName[ =]+\"[^\"]*\"/versionName \"1.0.${RUN_NUMBER}\"/" android/app/build.gradle
 
-      - name: Build APK
-        working-directory: cap-build/android
+      - name: Build and sign APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
+          cd cap-build/android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-
-      - name: Name the APK
-        run: cp cap-build/android/app/build/outputs/apk/debug/app-debug.apk AI-Photo-Editor.apk
+          if [ -f ../../keystore/upload.keystore.enc ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            echo "Building release APK signed with your own key (updates install over old versions)"
+            ./gradlew assembleRelease --no-daemon
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+              -in ../../keystore/upload.keystore.enc -out ../upload.keystore \
+              -pass env:KEYSTORE_PASSWORD
+            BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+            "$ANDROID_HOME/build-tools/$BT/apksigner" sign \
+              --ks ../upload.keystore --ks-key-alias upload \
+              --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEYSTORE_PASSWORD \
+              --out ../../AI-Photo-Editor.apk \
+              app/build/outputs/apk/release/app-release-unsigned.apk
+            rm ../upload.keystore
+          else
+            echo "No keystore found: building debug APK (friends must uninstall the old one before updating)"
+            ./gradlew assembleDebug --no-daemon
+            cp app/build/outputs/apk/debug/app-debug.apk ../../AI-Photo-Editor.apk
+          fi
 
       - name: Save APK as download
         uses: actions/upload-artifact@v4
